@@ -27,8 +27,8 @@ LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,1,55,3
- PRODUCTVERSION 1,1,55,3
+ FILEVERSION 1,1,56,1
+ PRODUCTVERSION 1,1,56,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -44,11 +44,11 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "SFTP Plugin for Total Commander"
-            VALUE "FileVersion", "1.1.55.3"
+            VALUE "FileVersion", "1.1.56.1"
             VALUE "InternalName", "plugin_sftp"
             VALUE "OriginalFilename", "plugin_sftp.wfx"
             VALUE "ProductName", "plugin_sftp"
-            VALUE "ProductVersion", "1.1.55.3"
+            VALUE "ProductVersion", "1.1.56.1"
         END
     END
     BLOCK "VarFileInfo"

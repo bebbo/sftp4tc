@@ -27,8 +27,8 @@ LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,1,55,3
- PRODUCTVERSION 1,1,55,3
+ FILEVERSION 1,1,56,1
+ PRODUCTVERSION 1,1,56,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -45,11 +45,11 @@ BEGIN
         BEGIN
             VALUE "CompanyName", " "
             VALUE "FileDescription", "PuTTY's SFTP for TotalCommander's SFTP plugin"
-            VALUE "FileVersion", "1.1.55.3"
+            VALUE "FileVersion", "1.1.56.1"
             VALUE "InternalName", "psftp"
             VALUE "OriginalFilename", "psftp.dll"
             VALUE "ProductName", "psftp"
-            VALUE "ProductVersion", "1.1.55.3"
+            VALUE "ProductVersion", "1.1.56.1"
         END
     END
     BLOCK "VarFileInfo"
