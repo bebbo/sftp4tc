@@ -32,7 +32,7 @@ Source: ..\..\..\password_crypter\src\Static_Release\password_crypter.dll; DestD
 Source: \wxWidgets\lib\wxmsw24.dll; DestDir: {sys}; Flags: promptifolder; Components: support_files
 Source: ..\..\..\vcredist\msvcr71.dll; DestDir: {sys}; Flags: restartreplace uninsneveruninstall sharedfile; Components: support_files
 Source: ..\..\..\vcredist\msvcrt.dll; DestDir: {sys}; Flags: restartreplace uninsneveruninstall sharedfile; Components: support_files
-Source: C:\eclipse3\workspace\TC Plugin Installer\bin\TC_Plug_Installer.exe; DestDir: {app}; Components: SFTP_Plugin
+Source: ..\..\..\TC Plugin Installer\bin\TC_Plug_Installer.exe; DestDir: {app}; Components: SFTP_Plugin
 
 [Components]
 Name: SFTP_Plugin; Description: SFTP Plugin files; Flags: fixed; Types: custom compact full
