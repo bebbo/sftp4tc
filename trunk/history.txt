@@ -1,3 +1,10 @@
+VERSION 1.2.56.2
+[11.1.2005]
++FIXED Connection editor's few bugs
+/CHANGED Crypter Master Password dialogs corrected
++FIXED Installer tries to remove everything installed
++FIXED Some disconnection fixes
+
 VERSION 1.2.56.1
 [23.12.2004]
 +FIXED Aborting file move was deleting the source file

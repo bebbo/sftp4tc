@@ -55,6 +55,7 @@ private:
   DECLARE_EVENT_TABLE()
 
   void ClearAndDisable();
+  void Enable();
 
   bool dlgres;
   struct config_properties *mProperties;
@@ -64,6 +65,8 @@ private:
   bool mSave;
 
   wxListBox *lstConnections;
+
+  wxButton *btnDelete;
 
   //connections details
   wxTextCtrl *edtTitle, *edtHost, *edtPort, *edtUsername, *edtPassword,

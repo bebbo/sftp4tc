@@ -1,4 +1,4 @@
-// Microsoft Visual C++ generated resource script.
+//Microsoft Developer Studio generated resource script.
 //
 #include "resource.h"
 
@@ -13,7 +13,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Deutsch (Deutschland) resources
+// German (Germany) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
 #ifdef _WIN32
@@ -27,18 +27,18 @@ LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE 
+1 TEXTINCLUDE MOVEABLE PURE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE 
+2 TEXTINCLUDE MOVEABLE PURE 
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE 
+3 TEXTINCLUDE MOVEABLE PURE 
 BEGIN
     "\r\n"
     "\0"
@@ -47,14 +47,15 @@ END
 #endif    // APSTUDIO_INVOKED
 
 
+#ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,1,0,0
- PRODUCTVERSION 1,1,0,0
+ FILEVERSION 1,2,0,0
+ PRODUCTVERSION 1,2,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -69,13 +70,18 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "FileDescription", "SFTP Plugin for TotalCommander configuration dialog"
-            VALUE "FileVersion", "1, 1, 0, 0"
-            VALUE "InternalName", "wfx_sftp_cfg"
-            VALUE "LegalCopyright", "Copyright © 2004"
-            VALUE "OriginalFilename", "wfx_sftp_cfg.dll"
-            VALUE "ProductName", "SFTP Plugin for TotalCommander configuration dialog"
-            VALUE "ProductVersion", "1, 1, 0, 0"
+            VALUE "Comments", "\0"
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "SFTP Plugin for TotalCommander configuration dialog\0"
+            VALUE "FileVersion", "1.2.0.0\0"
+            VALUE "InternalName", "wfx_sftp_cfg\0"
+            VALUE "LegalCopyright", "Copyright © 2004\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "wfx_sftp_cfg.dll\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "SFTP Plugin for TotalCommander configuration dialog\0"
+            VALUE "ProductVersion", "1.2.0.0\0"
+            VALUE "SpecialBuild", "\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -84,7 +90,9 @@ BEGIN
     END
 END
 
-#endif    // Deutsch (Deutschland) resources
+#endif    // !_MAC
+
+#endif    // German (Germany) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

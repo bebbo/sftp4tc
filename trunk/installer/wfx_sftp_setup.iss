@@ -49,15 +49,15 @@ Source: psftp.dll; DestDir: {app}; Components: SFTP_Plugin
 Source: wfx_sftp_cfg.dll; DestDir: {app}; Components: SFTP_CFG
 Source: ..\..\properties_dlg\wfx_sftp_cfg.xrc; DestDir: {app}\rc; Components: SFTP_CFG
 Source: ..\..\..\password_crypter\src\Static_Release\password_crypter.dll; DestDir: {app}; Components: PASSWORD_CRYPTER; AfterInstall: AfterPWDCrypterInstall
-Source: \wxWidgets\lib\wxmsw24.dll; DestDir: {sys}; Flags: promptifolder; Components: support_files
-Source: ..\..\..\vcredist\msvcr71.dll; DestDir: {sys}; Flags: restartreplace uninsneveruninstall sharedfile; Components: support_files
-Source: ..\..\..\vcredist\msvcrt.dll; DestDir: {sys}; Flags: restartreplace uninsneveruninstall sharedfile; Components: support_files
+;Source: \wxWidgets\lib\wxmsw24.dll; DestDir: {sys}; Flags: promptifolder; Components: support_files
+;Source: ..\..\..\vcredist\msvcr71.dll; DestDir: {sys}; Flags: restartreplace uninsneveruninstall sharedfile; Components: support_files
+;Source: ..\..\..\vcredist\msvcrt.dll; DestDir: {sys}; Flags: restartreplace uninsneveruninstall sharedfile; Components: support_files
 
 [Components]
 Name: SFTP_Plugin; Description: {cm:PluginFilesDesc}; Flags: fixed; Types: custom compact full
 Name: SFTP_CFG; Description: {cm:ConfigDialog}; Types: custom full
 Name: PASSWORD_CRYPTER; Description: {cm:PasswordCrypter}; Types: full custom
-Name: support_files; Description: {cm:RuntimeSupportFiles}; Types: full
+;Name: support_files; Description: {cm:RuntimeSupportFiles}; Types: full
 
 [Tasks]
 Name: all_users_setup_tc; Description: {cm:all_users_setup_tc}; GroupDescription: setup_tc_group_desc; Flags: checkedonce; Components: SFTP_Plugin

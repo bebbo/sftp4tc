@@ -9,3 +9,4 @@ EXPORTS
 	__map__psftp_memory_hole__stopfen
 	__map__set_Server_config_Struct
 	__map__setTransferMode
+	__map__disconnected

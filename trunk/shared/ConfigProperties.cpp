@@ -18,21 +18,21 @@ void SaveProperties(struct config_properties *aProperties)
       aProperties->ConfigIniFile);
   }
 
-  int aid=1;
-  for(int i=0; i < aProperties->ServerCount; i++) {
+  int aid=1, i;
+  for(i=0; i < aProperties->ServerCount; i++) {
     if (!aProperties->ServerInfos[i].is_imported_from_any_datasrc)
     {
       if (aProperties->ServerInfos[i].id!=-1)
-        SaveServerInfo(aid++, &aProperties->ServerInfos[i], 
-          aProperties);
+        SaveServerInfo(aid++, &aProperties->ServerInfos[i], aProperties);
     }
   }
-  for(int i=0; i < aProperties->ServerCount; i++) {
+  for(i=0; i < aProperties->ServerCount; i++) {
     if (!aProperties->ServerInfos[i].is_imported_from_any_datasrc)
     {
       if (aProperties->ServerInfos[i].id==-1) {
         sprintf(buf, "%d", aid++);
         WritePrivateProfileSection(buf, "", aProperties->ConfigIniFile);
+		
       }
     }
   }

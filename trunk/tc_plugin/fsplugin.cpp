@@ -8,6 +8,7 @@
 #include "ServerInfo.h"
 #include "share.h"
 #include "passwd_crypter.h"
+#include "ConfigProperties.h"
 
 //Plugin's caption, shown in TC's list
 #define FSPLUGIN_CAPTION "Secure FTP Connections"
@@ -88,7 +89,7 @@ unsigned int get_IDbyPath(char *path);
 int get_sftpServer_ID_by_Title(char *Title);
 int wcplg_sftp_do_commando_byID(char *sftp_cmd, char *serverOutput, int ID);
 bool any_connection_active();
-int LoadServers();
+void LoadServers();
 int get_sftpServer_ID_by_Path(char *Path);
 void check_Concurrent_Connection(char *Path);
 int file_exists_on_remote_server(char *RemoteFile);
@@ -96,6 +97,10 @@ int get_basename_from_Path(char *buf, char *Path);
 void free_CurrentDirStruct(fxp_names * P_DirStruct, int ID);
 bool SetFileTime__(char *fullFilePath, FILETIME * LastWriteTime);
 void XconvertServerTitle(char *title);
+
+char *SimpleCaption = "PasswordCrypter's master-password";
+char *CaptionAskFirst = "PasswordCrypter's master-password (enter new one)";
+char *CaptionAskSecond = "PasswordCrypter's master-password (verification)";
 
 //---------------------------------------------------------------------
 
@@ -261,7 +266,7 @@ int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc,
   PluginNumber = PluginNr;
 
   //initialize all servers
-  SftpConfig.ServerCount = LoadServers();
+  LoadServers();
   init_server_dll_handlers();
   unlink_ALL_dll_tmp_files();
   ResetAlreadyConnected();
@@ -339,9 +344,9 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
     // Connection selected
     if (!any_connection_active()) //Load Servers if there is no active connection
     {
-      SftpConfig.ServerCount = LoadServers();
+      LoadServers();
     }
-
+   
     lf->currentIndex = 0;
     lf->sumIndex = SftpConfig.ServerCount + 1;
     strcpy(FindData->cFileName, SftpConfig.ServerInfos[lf->currentIndex].title);
@@ -696,7 +701,7 @@ bool addnewserver(char *servertitle)
   WritePrivateProfileString(section_name, "set_mtime_after_put", "1",
                             SftpConfig.ConfigIniFile);
 
-  SftpConfig.ServerCount = LoadServers();
+  LoadServers();
   return true;
 }
 //---------------------------------------------------------------------
@@ -791,7 +796,7 @@ bool deletethisconnection(char *servertitle)
       // delete last section
       sprintf(section_name_old, "%i", SftpConfig.ServerCount - 1 - SftpConfig.ImportedSessions);
       WritePrivateProfileString(section_name_old, NULL, NULL, SftpConfig.ConfigIniFile);
-      SftpConfig.ServerCount = LoadServers();
+      LoadServers();
       return TRUE;
     }
   }
@@ -1805,12 +1810,13 @@ bool any_connection_active()
 
 //---------------------------------------------------------------------
 
-int LoadServers()
+void LoadServers()
 {
   int max_sections = MAX_Server_Count;
   int i;
   int ID = 0;
   int imported_num = 0;
+  char buf_divers[4000];
   char section_name[MAX_Server_INFO];
   char buf_title[MAX_Server_INFO];
   char buf_host[MAX_Server_INFO];
@@ -1822,7 +1828,6 @@ int LoadServers()
   char buf_use_key_auth[MAX_Server_INFO];
   char buf_dont_ask4_username[MAX_Server_INFO];
   char buf_dont_ask4_password[MAX_Server_INFO];
-  char buf_divers[MAX_Server_INFO];
   char buf_keyfilename[MAX_Server_INFO];
   char buf_dont_ask4_passphrase[MAX_Server_INFO];
   char buf_proxy_type[MAX_Server_INFO];
@@ -1836,21 +1841,28 @@ int LoadServers()
   char buf_set_chmod_after_put[MAX_Server_INFO];
   char buf_set_chmod_after_mkdir[MAX_Server_INFO];
   char buf_set_mtime_after_put[MAX_Server_INFO];
-  BOOL retry;
+  BOOL retry, load, new_passwd=false;
+    
+  char caption[4000];
 
   do {
+    char buf_test[4000];
     retry = false;
+    load = false;
     //Check for password crypter library
     GetPrivateProfileString(INI_CONFIG_SECTION_NAME,
                           INI_CONFIG_USE_PASSWORD_CRYPTER, "", buf_divers,
                           MAX_Server_INFO, SftpConfig.ConfigIniFile);
+    GetPrivateProfileString(INI_CONFIG_SECTION_NAME,
+                          INI_CONFIG_TEST_PASSWORD, "", buf_test,
+                          4000, SftpConfig.ConfigIniFile);
 
     if (strlen(buf_divers)>0) {
       if (stricmp(buf_divers, SftpConfig.PasswordCrypterPath)!=0) {
-        strcpy(SftpConfig.PasswordCrypterPath, buf_divers);
+        strncpy(SftpConfig.PasswordCrypterPath, buf_divers, MAX_Server_INFO);
         hPasswdCrypter = LoadLibrary(buf_divers);
         if (hPasswdCrypter) {
-          BOOL load;
+          new_passwd=false;
           hSetupPasswordCrypter = (tSetupPasswordCrypter)
             GetProcAddress(hPasswdCrypter, "SetupPasswordCrypter");
           SftpConfig.EncryptPassword = (tEncryptPassword)
@@ -1861,27 +1873,44 @@ int LoadServers()
             (SftpConfig.DecryptPassword)) {
             buf_divers[0]=0;
             //what to do, if user cancel this?
-            load = RequestProc(PluginNumber, RT_Password, "PasswordCrypter's master-password", 
+            if (strlen(buf_test)>0) 
+              strcpy(caption, SimpleCaption);
+            else {
+              strcpy(caption, CaptionAskFirst);
+              new_passwd = true;
+            }
+            load = RequestProc(PluginNumber, RT_Password, caption, 
               NULL, buf_divers, sizeof(buf_divers) - 1);
-            if (!load) {
+            if (load) {
+              if (new_passwd) { 
+                load = RequestProc(PluginNumber, RT_Password, strcpy(caption, CaptionAskSecond), 
+                   NULL, buf_test, sizeof(buf_test) - 1);
+                if (strcmp(buf_divers,buf_test)==0) {
+                  strcpy(SftpConfig.PasswordCrypterPassword, buf_divers);
+                  hSetupPasswordCrypter(buf_divers);
+                } else {
+                  retry = RequestProc(PluginNumber, RT_MsgYesNo, 
+                    "Passwordcrypter's master-password verification failed!", "Retry?", NULL, 0);
+                  load = false;
+                  SftpConfig.PasswordCrypterPath[0] = 0;
+                }
+              }
+            } else {
               SftpConfig.PasswordCrypterPath[0] = 0;
               SftpConfig.PasswordCrypterPassword[0] = 0;
             }
           } else {
             SftpConfig.PasswordCrypterPath[0] = 0;
-            load = 0;
+            load = false;
           }
 
-          if (load) {
-            char buf_test[4000], buf_test2[4000];
+          if (load && (!new_passwd)) {
+            char buf_test2[4000];
+
             memset(buf_test, 0, sizeof(buf_test));
 
-            strcpy(SftpConfig.PasswordCrypterPassword, buf_divers);
-            hSetupPasswordCrypter(buf_divers);
-
-            GetPrivateProfileString(INI_CONFIG_SECTION_NAME,
-                            INI_CONFIG_TEST_PASSWORD, "", buf_test,
-                            4000, SftpConfig.ConfigIniFile);
+            strncpy(SftpConfig.PasswordCrypterPassword, buf_divers, MAX_Server_INFO);
+            hSetupPasswordCrypter(SftpConfig.PasswordCrypterPassword);
 
             if (strlen(buf_test)>0) {
               memset(buf_test2, 0, sizeof(buf_test2));
@@ -2011,7 +2040,7 @@ int LoadServers()
       strcpy(SftpConfig.ServerInfos[ID].host, buf_host);
       strcpy(SftpConfig.ServerInfos[ID].host_cached, buf_host);
       strcpy(SftpConfig.ServerInfos[ID].username, buf_username);
-      if ((hPasswdCrypter) && (strlen(buf_password)>0)) {
+      if ((hPasswdCrypter) && (!new_passwd) && (strlen(buf_password)>0)) {
         SftpConfig.DecryptPassword(buf_password, SftpConfig.ServerInfos[ID].password);
       } else {
         strncpy(SftpConfig.ServerInfos[ID].password, buf_password, 
@@ -2216,7 +2245,10 @@ int LoadServers()
     SftpConfig.ImportedSessions = imported_num;
     ID += imported_num;
   }
-  SftpConfig.DoImportPuttySessions = buf_divers[0];
+  if (strlen(buf_divers)>0)
+    SftpConfig.DoImportPuttySessions = buf_divers[0];
+  else
+    SftpConfig.DoImportPuttySessions = '0';
 
   // DO ssh.com Import ?
   strcpy(buf_divers, "");
@@ -2275,7 +2307,9 @@ int LoadServers()
 
   MakeServerTitlesUnique(ID);
 
-  return ID;
+  SftpConfig.ServerCount = ID;
+
+  if (new_passwd) SaveProperties(&SftpConfig);
 }
 
 //---------------------------------------------------------------------

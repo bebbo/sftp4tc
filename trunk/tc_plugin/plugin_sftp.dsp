@@ -92,11 +92,19 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=..\shared\ConfigProperties.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\fsplugin.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=.\fsplugin.def
+# End Source File
+# Begin Source File
+
+SOURCE=..\shared\ServerInfo.cpp
 # End Source File
 # Begin Source File
 

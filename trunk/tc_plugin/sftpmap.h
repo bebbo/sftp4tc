@@ -72,6 +72,7 @@ typedef void (__stdcall CALLBACK *
               TD_SFTP_DLL_FNCT_SetSftpServerAccountInfo)
   (SftpServerAccountInfo ServerAccountInfo);
 typedef void (CALLBACK * TD_SFTP_DLL_FNCT_SetTransferMode)(bool binary);
+typedef int (CALLBACK * TD_SFTP_DLL_FNCT_Disconnected)(void);
 
 void Unload_PSFTP_DLL_HANDLER(int ServerId);
 void *__wcplg_sftp_get_current_dir_struct(void);
