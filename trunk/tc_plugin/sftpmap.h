@@ -13,7 +13,7 @@ int get_PluginNumber();
 
 #define QUICK_CONNECTION "Quick connection"
 
-struct SftpServerAccountInfo *getP_allServer(void);
+struct SftpServerAccountInfo *GetAllServers(void);
 int wcplg_sftp_connect(char *user, char *password, char *host, int port,
                        SftpServerAccountInfo * allServers,
                        int CurrentServerId);
@@ -57,6 +57,23 @@ struct my_fxp_names {
   struct fxp_name **names;
 };
 
+typedef int (__stdcall CALLBACK * TD_SFTP_DLL_FNCT_CONNECT) (char *,
+                                                             char *,
+                                                             char *, int);
+typedef int (__stdcall CALLBACK * TD_SFTP_DLL_FNCT_DO_SFTP) (char *,
+                                                             char *);
+typedef my_fxp_names *(__stdcall CALLBACK *
+                       TD_SFTP_DLL_FNCT_GET_CURRENT_DIR_STRUCT) (void);
+typedef char *(__stdcall CALLBACK * TD_SFTP_DLL_FNCT_GLASTERRMSG) (void);
+typedef int (__stdcall CALLBACK *
+             TD_SFTP_DLL_FNCT_init_ProgressProc) (tProgressProc
+                                                  AP_ProgressProc,
+                                                  int Awc_PluginNr);
+typedef void (__stdcall CALLBACK *
+              TD_SFTP_DLL_FNCT_SetSftpServerAccountInfo)
+  (SftpServerAccountInfo ServerAccountInfo);
+typedef void (CALLBACK * TD_SFTP_DLL_FNCT_SetTransferMode)(bool binary);
+
 void Unload_PSFTP_DLL_HANDLER(int ServerId);
 void *__wcplg_sftp_get_current_dir_struct(void);
 void winSlash2unix(char *s);
@@ -70,3 +87,12 @@ void unlink_dll_tmp_file(int id);
 void unlink_ALL_dll_tmp_files(void);
 int file_exists(char *fname);
 int Risdir(char *Path);
+
+bool IsAlreadyConnected();
+void ResetAlreadyConnected();
+
+void DISABLE_LOGGING_ONCE();
+
+void trim_host_from_hoststring(char *hoststring);
+void trim_port_from_hoststring(char *hoststring);
+int do_logging();

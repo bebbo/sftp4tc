@@ -1,165 +1,3 @@
-/*
-VERSION 1.1.56.2
-[3.11.2004]
-*ADDED set "last modified time(mtime)" after put (default on)
-
-VERSION 1.1.56.1
-[27.10.2004]
-*ADDED properties dialog connection
-+FIXED Text Transfer Mode (1 character on a line was skipped)
-/UPDATED to PuTTY 0.56 (first beta)
-
-VERSION 1.1.55.3
-[19.10.2004]
-?TODO  Translate german comments to english ones
-/UPDATED using GNU's indent for source files now. (-lp -nut -ci2 -i2 -ts2 -kr) Not 
-       for all PuTTY files, but for some of them, too.
-*ADDED Dumb transfer mode. If one set "Text mode" he should be sure, that it's the best choice 
-       for him. There's no check for host's default mode. Assuming *nix.
-*ADDED CHMOD after PUT/MKDIR
-
-VERSION 1.1.55.2
-[21.9. 2004]
-+FIXED copying DLL without admin rights
-
-VERSION 1.1.55.1 
-[2.9. 2004]
-/UPDATED TO PuTTY 0.55 (first beta)
-
-VERSION 1.09	[24. Jan 2004]
-+FIXED "quote cd" (Leszek Skorczynski <skorczyl@wp.pl>)
-*ADDED Version number (MK)
-
-VERSION 1.08b   [10.Mar.2003]
-+FIXED sftp cd & sftp ls & "quote root"
-*ADDED some New Connection Dlgs 
-
-VERSION 1.08a	[28.Feb.2003]
-+FIXED Connect/Disconnect design is a little bit wrong, so now happen no troubles anymore, but it's not the best solution
-+FIXED permission denied/remote disconnect(idle,...) problem solved
-
-VERSION 1.08	[21.Feb.2003]
-?TODO ask Christian about MSGTYPEs and DISCONNECTION - something wrong there...
-?TODO ask him about ability to force other path after connection
-?TODO maybe it doesn't work under w98, maybe it just misses some libraries
-*ADDED quote root <directory>
-*ADDED reconnection ability
-
-VERSION 1.07d  [19.Feb.2003]
-/CHANGED UnixTimeToLocalTime to M$ compatible mode
-
-VERSION 1.07b  [07.Feb.2003]
-?TODO check FsExecuteFile
-?TODO check Import-routines for Key-Auth import
-?TODO check the Plugin-start (only performance fixed)
-+FIXED FsInit performance
-*ADDED Support for OPENSSH (and possibly for sshcom) private keys.
-*ADDED support for SOCKS-PROXY v5
-/CHANGED cleaned Code
-
-VERSION 1.06   [17.Jan.2003]
-*ADDED ini parameter "keyfilename" to override defaults for the host  (putty session framework), tested just with a key without passphrase and in putty format (.PPK)
-+FIXED plugin shows the whole directory list now
-+FIXED it should work with SSH 2.0(OpenSSH 3.4p1)   -   checked on FreeBSD 4.7
-/CHANGED shared.h and shared.c moved to a separate shared folder "shared" - now ther's just one copy of that file (and the Server struct)!!!
-/CHANGED Ported to latest PuttySource (0.53b)
-
-VERSION 1.05
-+FIXED Y2K Problem in UnixTimeToLocalTime() changed 		if (st.wYear<30  || (st.wYear<200 && st.wYear>=100)) to if ((st.wYear>=30 && st.wYear<=99) || (st.wYear<200 && st.wYear>=100)) 
-+FIXED root commando works good now
-*ADDED import session from putty && ssh.com (optional)
-*ADDED Host Key Warnigs
-*ADDED custom ini path
-+Small cosmetics
-
-VERSION 1.04   [12.Nov.2002]
-*ADDED - optional: use_key_auth and dont_ask4_username as config flags in wcx_sftp.ini, possible values are 0 or 1,  default = 0
-
-VERSION 1.03   [11.Nov.2002]
-/CHANGED - MAX_Server=500 (preview was 100 only)
-
-VERSION 1.02
-+FIXED Server Title can not contain / and \     will replaced with _
-?TODO wcplg_sftp_disconnect wenn connect nicht success "verbindung trennen" noch da
-
-VERSION 1.01
-+FIXED *.dll 2 *.wfx
-
-VERSION 1.00   [09.10.2002 Berlin - Hans]
-?TODO RequestProc mit RT_MsgYesNo Funzt nicht, gibt immer FALSE zurück
-*ADDED Add Connection (Port syntax Host[:Port])
-
-
-*************************************************************************************************
-OLD LOG:
-*************************************************************************************************
-
-31.8.2002 Christian Ghisler
-FIXED - make work with plugin interface changes
-FIXED - cleanup code
-ADDED - FsGetDefRootName
-ADDED - pseudo-file to open ini for editing
-ADDED - handle 'quote' command for command line, currently only for 'cd' command to set new root, e.g.  cd /
-
-26.03.2002 Berlin, Hans <hans.petrich@tronic-media.com>
-TODO's
-FIXED - time atri wrong
-FIXED - dir size wrong
- - escaping in cmd string for " \ * and like this 
-FIXED - handle symbolic links on sftp server ?
-FIXED - Correct Error handling
-FIXED - disconnect while an open sftp session handling
-FIXED  - double window in wc makes problem i.e left side is plugin and right side too
-FIXED - progresbar ?!?!?!
-FIXED  - fileoverwrite file del etc. ask or not ?? what to do ???
-FIXED - rmdir error "!"
- - ask username and password, HOW, how 2 store password ???
- - form dialog for edit wcx_sftp.ini
-FIXED  - where i am *.dll ?!?!
-FIXED  - change file atri 
-FIXED  - what todo when 0 servers in *.ini
- - title in allServers: no duplicates 
- - psftp are slow ?? it's not cpu and not network traffic
-FIXED  - psftp have memory leak, have to fix this perhaps in psftp.c or sftp.c 
- - creating README & INSTALL 
-FIXED  - How 2 disconnect a sftp session
-FIXED  - other place for wcx_sftp.ini & psftp.dll ???
- - parse the cmd 4 unsecure chars !!!!
- - crypt password in wcx_sftp.ini.ini ?!?!? or disable password storing
-FIXED  - add quick connection like ftp quick connection
-NONE - scp support ?!?!
- - background download support via psftp.exe or scp (via createProcess or system() or like this) batchfile
-FIXED - Private Key Authentikaction support ??? psftp doesn't support it realy, FIX ME anytime
-BOGUS - define pluginroot in wcx_sftp.ini ???
- - socks support, anytime ?!??!?
- - connection timeout ?!? what 2do ?
-FIXED - does psftp support compressing ???
-FIXED  - tmp file in wcplg_sftp_do_commando, FIX ME P-L-E-A-S-E 
- - cleaning the code !!!
-FIXED - hostkey abfrage, TESTEN !!!
- - cmd box API function ???
-FIXED  - Folder permission check bevor chdir FIX ME PLZ
-FIXED  - in psftp.dll stdout umleiten zu char *logBuf und dann an LogProc() weiterleiten
- - if psftp.dll connect 2 an open NON ssh [22] port, psftp hangs forever
- - get_sftpServer_ID_by_Path(): title nach sonderzeichen parsen und rausschneiden, doppelte title einträge vermeiden!
-FIXED - "Bookmark" funst ned, müsste aba an WC selbst geändert werden, have 2 talk with Ghisler
- - WC merkt sich nicht die "aktuelle Position" wenn man z.B.: von plugion nach C: und dann wieda zu Plugin geht, have 2 talk with Ghisler
- - ftp <-> plugin filetransfer funst ned, API!, have 2 talk with Ghisler
-FIXED - !!!alle delete aktionen  deaktivieren wenn der user nicht in seinem ensprechendem sftp dir drinn ist!!! 
- - wie komm ich an das windowscommander tmp $wc ran ???
-FIXED - progressbar noch abstimmen
- - fsrenmv(): fehler abfangen wenn user im serverRoot folder moven oder renamen will
-FIXED  - Verbinfungsleiste "oben ", geht manchmal ned wech obwohl disconnect gedrückt) API error ?  have 2 talk with Ghisler
-FIXED  - Manchmal Segfault error wenn in dir wechseln will wo keine berechtigung 
-FIXED  - SetLastError(ERROR_ACCESS_DENIED) in fsFindFirst !!! wechselt nach C zurück ?!?!?
-FIXED  - Nach chmod: dir refresh zeigt aktuelle werte nicht an obwohl auf server gesetzt, cached by WC ?!
-FIXED - DWORD    dwFileAttributes=FILE_ATTRIBUTE_REPARSE_POINT; wc sollte link als symbol auch anzeigen
-FIXED - API fehler, wenn man die Filelisten sortiert und dann fasfifirst called
-FIXED - Drag & Drop funst irgendwie ned
-FIXED - API Bug FsPutFile() gibt als LocalFile noch ''' hinzu ?!?!?
-- Testing 
-*/
-
 #include "stdafx.h"
 #include "fsplugin.h"
 #include "sftpmap.h"
@@ -168,19 +6,13 @@ FIXED - API Bug FsPutFile() gibt als LocalFile noch ''' hinzu ?!?!?
 #include "putty_proxy.h"
 #include "properties_dlg.h"
 
-extern "C" {
-#include "share.h"
-}
-
 //Plugin's caption, shown in TC's list
 #define FSPLUGIN_CAPTION "Secure FTP Connections"
 
-//Registry keys for TotalCommander
-#define GHISLER_TC_REGP	"Software\\Ghisler\\Total Commander"
-#define GHISLER_TC_REGP_SFTP_K	"SFtpIniName"
 //Registry keys for this plugin
 #define PETRICH_TC_REGP	"Software\\petrich\\tc_sftp_plugin"
 #define PETRICH_TC_REGP_SFTP_K	"SFtpIniName"
+
 //Registry keys for PuTTY - Session importing
 #define PUTTY_REG_POS "Software\\SimonTatham\\PuTTY"
 #define PUTTY_REG_PARENT "Software\\SimonTatham"
@@ -191,114 +23,21 @@ static const char *const puttystr = PUTTY_REG_POS "\\Sessions";
 //
 static char hex[17] = "0123456789ABCDEF";  //17 because of terminating 0-character
 
-struct enumsettings {
-  HKEY key;
-  int i;
-};
-
-void *open_settings_r(char *sessionname);
-static void gpps(void *handle, char *name, char *def, char *val, int len);
-static void gppi(void *handle, char *name, int def, int *i);
-char *read_setting_s(void *handle, char *key, char *buffer, int buflen);
-int read_setting_i(void *handle, char *key, int defvalue);
-char *enum_settings_next(void *handle, char *buffer, int buflen);
-static void mungestr(char *in, char *out);
-static void unmungestr(char *in, char *out, int outlen);
-void *enum_settings_start(void);
-int loadPuttySectionToSftpPluginServerInfoStruct(struct
-                                                 SftpServerAccountInfo
-                                                 *ServerAccountInfo,
-                                                 char *PuttySectionName);
-int do_import_putty_saved_session_to_plugin_session(int current_ID,
-                                                    char *import_mode);
-int do_import_sshcom_saved_session_to_plugin_session(int lastInsert_ID,
-                                                     char *dir_location);
-
-struct SftpServerAccountInfo allServer[MAX_Server];
-
 #define S_IFLNK 0x0A000
 #define DefaultIniFileName "wcx_sftp.ini"
 #define NO_SERVER_ID -1
 
-HMODULE hDllModule;
-
 //Links in the first level of plugin's fs
 //
-#define DefineNewConnection_define "Edit connections.lnk"
-#define DefineNewConnection_selected "\\Edit connections.lnk"
+#define DefineEditConnection_define "Edit connections.lnk"
+#define DefineEditConnection_selected "\\Edit connections.lnk"
 
 #define DefineAddConnection_define "Add connections.lnk"
 #define DefineAddConnection_selected "\\Add connections.lnk"
 
-int octal_permissions_2_tc_integral(unsigned long octal_val);
-int wcplg_sftp_connect_byID(unsigned int id);
-void __stdcall dbg(char *msg);
-void dbg_v(char *msg, char *param);
-unsigned int get_IDbyPath(char *path);
-
-int get_sftpServer_ID_by_Title(char *Title);
-int wcplg_sftp_do_commando_byID(char *sftp_cmd, char *serverOutput,
-                                int ID);
-
-bool any_connection_active();
-int init_servers_from_iniFile();
-int get_sftpServer_ID_by_Path(char *Path);
-void check_Concurrent_Connection(char *Path);
-int file_exists_on_remote_server(char *RemoteFile);
-int get_basename_from_Path(char *buf, char *Path);
-void free_CurrentDirStruct(fxp_names * P_DirStruct, int ID);
-
-bool SetFileTime__(char *fullFilePath, FILETIME * LastWriteTime);
-void XconvertServerTitle(char *title);
-
-char iniFname[MAX_PATH];
-bool delete_only_connection = FALSE;
-
-int Imported_ids_num = 0;
-#define INI_CONFIG__SECTION_NAME "config"
 #define INI_CONFIG_IMPORT_PUTTY_SSH_SESS "import_putty_ssh_sessions"
 #define INI_CONFIG_IMPORT_SSHCOM_SSH_SESS "import_sshcom_ssh_sessions"
-int is_title_in_all_server_double(int numServer, int currentServerId, char *title);
-
-int get_custom_users_sftp_inifile_from_reg(char *iniFname);
-
-//Plugin's initialization values
-int PluginNumber;
-tProgressProc ProgressProc;
-tLogProc LogProc;
-tRequestProc RequestProc;
-
-//copy maximum of maxlen characters
-static char *strlcpy(char *p, char *p2, int maxlen)
-{
-  if ((int) strlen(p2) >= maxlen) {
-    strncpy(p, p2, maxlen);
-    p[maxlen] = 0;
-  } else
-    strcpy(p, p2);
-  return p;
-}
-
-BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call,
-                      LPVOID lpReserved)
-{
-  switch (ul_reason_for_call) {
-  case DLL_PROCESS_ATTACH:
-    //Get the ini's filename
-    if (get_custom_users_sftp_inifile_from_reg(iniFname) == -1) {
-      hDllModule = (HMODULE) hModule;
-      GetModuleFileName(hDllModule, iniFname, sizeof(iniFname) - 1);
-      char *p = strrchr(iniFname, '\\');
-      if (p)
-        p++;
-      else
-        p = iniFname;
-      strcpy(p, DefaultIniFileName);
-    }
-    break;
-  }
-  return TRUE;
-}
+#define INI_CONFIG_SECTION_NAME "config"
 
 typedef struct {
   char Path[MAX_PATH];
@@ -310,12 +49,197 @@ typedef struct {
   fxp_names *CurrentDirStruct;
 } tLastFindStuct, *pLastFindStuct;
 
-int Num_allServer = 0;
+struct enumsettings {
+  HKEY key;
+  int i;
+};
+
+struct SftpServerAccountInfo AllServers[MAX_Server];
+
+HMODULE hDllModule;
+char iniFname[MAX_PATH];
+bool delete_only_connection = FALSE;
+int Imported_ids_num = 0;
+
+//Plugin's initialization values
+int PluginNumber;
+tProgressProc ProgressProc;
+tLogProc LogProc;
+tRequestProc RequestProc;
+
+int ServerCount = 0;
 int CurrentServer_ID = -1;
-void make_unique_title_in_allServers(int numServer);
 HMODULE hDialogDLL = 0;
 tProperties hProperties = 0;
-extern bool already_connected;
+tFreeCfgDLL hFreeCfgDLL = 0;
+static int DllInitialised = 0;
+
+int ImportPuttySession(struct SftpServerAccountInfo *ServerAccountInfo, char *PuttySectionName);
+int ImportPuttySessions(int current_ID, char *import_mode);
+int ImportSSHcomSessions(int lastInsert_ID, char *dir_location);
+
+int octal_permissions_2_tc_integral(unsigned long octal_val);
+int wcplg_sftp_connect_byID(unsigned int id);
+unsigned int get_IDbyPath(char *path);
+int get_sftpServer_ID_by_Title(char *Title);
+int wcplg_sftp_do_commando_byID(char *sftp_cmd, char *serverOutput, int ID);
+bool any_connection_active();
+int LoadServers();
+int get_sftpServer_ID_by_Path(char *Path);
+void check_Concurrent_Connection(char *Path);
+int file_exists_on_remote_server(char *RemoteFile);
+int get_basename_from_Path(char *buf, char *Path);
+void free_CurrentDirStruct(fxp_names * P_DirStruct, int ID);
+bool SetFileTime__(char *fullFilePath, FILETIME * LastWriteTime);
+void XconvertServerTitle(char *title);
+
+//---------------------------------------------------------------------
+
+//copy maximum of maxlen characters
+static char *strlcpy(char *p, char *p2, size_t maxlen)
+{
+  if (strlen(p2) >= maxlen) {
+    strncpy(p, p2, maxlen);
+    p[maxlen] = 0;
+  } else
+    strcpy(p, p2);
+  return p;
+}
+
+//---------------------------------------------------------------------
+
+int get_custom_users_sftp_inifile_from_reg(char *iniFname)
+{
+  int ret = -1;
+  HKEY subkey1;
+  DWORD type, buflen = MAX_PATH;
+
+  if (RegOpenKey(HKEY_CURRENT_USER, PETRICH_TC_REGP, &subkey1) ==
+      ERROR_SUCCESS) {
+    if (RegQueryValueEx
+        (subkey1, PETRICH_TC_REGP_SFTP_K, 0, &type,
+         (unsigned char *) iniFname, &buflen) == ERROR_SUCCESS) {
+      ret = 0;
+    }
+
+  }
+
+  RegCloseKey(subkey1);
+
+  return ret;
+}
+
+//---------------------------------------------------------------------
+
+void __stdcall dbg(char *msg)
+{
+  if (msg == NULL)
+    return;
+  RequestProc(PluginNumber, RT_MsgOK, "DBG", msg, NULL, 0);
+}
+
+//---------------------------------------------------------------------
+
+void dbg_v(char *msg, char *param)
+{
+  char buf[MAX_MSG_BUFFER];
+  _snprintf(buf, MAX_MSG_BUFFER, msg, param);
+  dbg(buf);
+}
+
+//---------------------------------------------------------------------
+
+void err_v(char *msg, char *param)
+{
+  char buf[MAX_MSG_BUFFER];
+  _snprintf(buf, MAX_MSG_BUFFER, msg, param);
+  dbg(buf);
+
+  RequestProc(PluginNumber, RT_MsgOK, "Error", buf, NULL, 0);
+}
+
+//---------------------------------------------------------------------
+
+BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+{
+  switch (ul_reason_for_call) {
+  case DLL_PROCESS_ATTACH:
+    {
+      DllInitialised++;
+      //Get the ini's filename
+      if (get_custom_users_sftp_inifile_from_reg(iniFname) == -1) {
+        hDllModule = (HMODULE) hModule;
+        GetModuleFileName(hDllModule, iniFname, sizeof(iniFname) - 1);
+        char *p = strrchr(iniFname, '\\');
+        if (p)
+          p++;
+        else
+          p = iniFname;
+        strcpy(p, DefaultIniFileName);
+      }
+      break;
+    }
+  case DLL_PROCESS_DETACH:
+    {
+      DllInitialised--;
+      if (DllInitialised == 0) try {
+        if (hDialogDLL) {
+          hFreeCfgDLL();
+          FreeLibrary(hDialogDLL);
+          hDialogDLL = NULL;
+          hProperties = NULL;
+          hFreeCfgDLL = NULL;
+        }
+      } catch (...) {
+      }
+    }
+  }
+  return TRUE;
+}
+//---------------------------------------------------------------------
+
+int ServerTitleExists(int numServer, int currentServerId, char *title)
+{
+  int i;
+  for (i = 0; i < numServer; i++) {
+    if (i != currentServerId && strcmp(AllServers[i].title, title) == 0) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+//---------------------------------------------------------------------
+
+void MakeServerTitlesUnique(int numServer)
+{
+  int i;
+  char buf[MAX_Server_INFO];
+  char buf2[MAX_Server_INFO];
+
+  for (i = 0; i < numServer; i++) {
+    int dbl = 0;
+    strcpy(buf, AllServers[i].title);
+    while (1)                   // :-)
+    {
+      if (ServerTitleExists(numServer, i, buf) == 1) {
+        dbl++;
+        sprintf(buf2, "%d", (dbl + 1));
+        strcpy(buf, AllServers[i].title);
+        strcat(buf, " (");
+        strcat(buf, buf2);
+        strcat(buf, ")");
+        continue;
+      }
+      if (dbl > 0) {
+        strcpy(AllServers[i].title, buf);
+      }
+      break;
+    }
+  }
+}
+
+//---------------------------------------------------------------------
 
 int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc,
                      tLogProc pLogProc, tRequestProc pRequestProc)
@@ -327,10 +251,10 @@ int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc,
   PluginNumber = PluginNr;
 
   //initialize all servers
-  Num_allServer = init_servers_from_iniFile();
+  ServerCount = LoadServers();
   init_server_dll_handlers();
   unlink_ALL_dll_tmp_files();
-  already_connected = false;
+  ResetAlreadyConnected();
 
   //dialog dll present?
   char cDir[MAX_CMD_BUFFER], cDLL[MAX_CMD_BUFFER];
@@ -343,14 +267,19 @@ int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc,
   hDialogDLL = LoadLibrary(cDLL);
   if (hDialogDLL) {
     hProperties = (tProperties)GetProcAddress(hDialogDLL, PROPERTIES_FUNCTION);
-    if (hProperties==NULL)
+    tInitialize hInitialize = (tInitialize)GetProcAddress(hDialogDLL, INITIALIZE_FUNCTION);
+    hFreeCfgDLL = (tFreeCfgDLL)GetProcAddress(hDialogDLL, FREE_FUNCTION);
+    if ((hProperties==NULL) ||(hInitialize==NULL) || (hFreeCfgDLL==NULL))
     {
       FreeLibrary(hDialogDLL);
       hDialogDLL=0;
+    } else {
+      hInitialize(hDialogDLL);
     }
   }
   return 0;
 }
+//---------------------------------------------------------------------
 
 bool UnixTimeToLocalTime(long *mtime, LPFILETIME ft)
 {
@@ -379,6 +308,7 @@ bool UnixTimeToLocalTime(long *mtime, LPFILETIME ft)
   } else
     return false;
 }
+//---------------------------------------------------------------------
 
 HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
 {
@@ -398,12 +328,12 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
     // Connection selected
     if (!any_connection_active()) //Load Servers if there is no active connection
     {
-      Num_allServer = init_servers_from_iniFile();
+      ServerCount = LoadServers();
     }
 
     lf->currentIndex = 0;
-    lf->sumIndex = Num_allServer + 1;
-    strcpy(FindData->cFileName, allServer[lf->currentIndex].title);
+    lf->sumIndex = ServerCount + 1;
+    strcpy(FindData->cFileName, AllServers[lf->currentIndex].title);
 
     FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
     FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
@@ -430,7 +360,7 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
     char *lPath = Path;
 
     strlcpy(lf->Path, Path, MAX_PATH);
-    lPath += (1 + strlen(allServer[CurrentServer_ID].title)); //skip backslash and title ('\CONNECTION')
+    lPath += (1 + strlen(AllServers[CurrentServer_ID].title)); //skip backslash and title ('\CONNECTION')
 
     //prepare command line
     if (strcmp(lPath, "") == 0)
@@ -529,6 +459,7 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
   }
   return INVALID_HANDLE_VALUE;
 }
+//---------------------------------------------------------------------
 
 BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData)
 {
@@ -543,7 +474,7 @@ BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData)
     //copy entry
     if (lf->currentIndex == lf->sumIndex - 1) {
       lf->currentIndex++;
-      strcpy(FindData->cFileName, DefineNewConnection_define);
+      strcpy(FindData->cFileName, DefineEditConnection_define);
       FindData->dwFileAttributes = 0;
     } else {
       if (lf->currentIndex == lf->sumIndex - 2) {
@@ -552,7 +483,7 @@ BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData)
         FindData->dwFileAttributes = 0;
       } else {
         lf->currentIndex++;
-        strcpy(FindData->cFileName, allServer[lf->currentIndex].title);
+        strcpy(FindData->cFileName, AllServers[lf->currentIndex].title);
         FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
       }
     }
@@ -616,6 +547,7 @@ BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData)
   dbg("FIX ME: this is not a regular listing mode!");
   return false;
 }
+//---------------------------------------------------------------------
 
 int __stdcall FsFindClose(HANDLE Hdl)
 {
@@ -629,6 +561,7 @@ int __stdcall FsFindClose(HANDLE Hdl)
 
   return 0;
 }
+//---------------------------------------------------------------------
 
 //free all buffers
 void free_CurrentDirStruct(fxp_names * P_DirStruct, int ServerID)
@@ -644,6 +577,7 @@ void free_CurrentDirStruct(fxp_names * P_DirStruct, int ServerID)
   int n;
   n = psftp_memory_hole__stopfen(ServerID); //well, this seems not to be used and what about n? :-(
 }
+//---------------------------------------------------------------------
 
 bool addnewserver(char *servertitle)
 {
@@ -654,13 +588,6 @@ bool addnewserver(char *servertitle)
   bool wantcompression;
 
   servertitle_[0] = '\0';
-
-  /*
-     if (any_connection_active()) {
-     RequestProc(PluginNumber,RT_MsgOK,"New Connection","Please close all open connections first!",NULL,0);
-     return false;
-     }
-   */
 
   host[0] = 0;
   user[0] = 0;
@@ -716,7 +643,7 @@ bool addnewserver(char *servertitle)
                 "Do you want to compress the data connection (only recommended for slow connections)?",
                 NULL, 0) == TRUE;
 
-  sprintf(section_name, "%i", Num_allServer - Imported_ids_num);
+  sprintf(section_name, "%i", ServerCount - Imported_ids_num);
   WritePrivateProfileString(section_name, "title", servertitle_, iniFname);
   WritePrivateProfileString(section_name, "host", host, iniFname);
   WritePrivateProfileString(section_name, "username", user, iniFname);
@@ -749,9 +676,10 @@ bool addnewserver(char *servertitle)
   WritePrivateProfileString(section_name, "set_mtime_after_put", "1",
                             iniFname);
 
-  Num_allServer = init_servers_from_iniFile();
+  ServerCount = LoadServers();
   return true;
 }
+//---------------------------------------------------------------------
 
 #define MOVE_INFO(KEY) GetPrivateProfileString(section_name_old, KEY, "", copybuf, \
                                 MAX_Server_INFO, iniFname); \
@@ -767,16 +695,10 @@ bool addnewserver(char *servertitle)
                                 MAX_Server_INFO, iniFname); \
         WritePrivateProfileString(section_name_new, KEY, PARAM, \
                                   iniFname); 
+//---------------------------------------------------------------------
 
 bool deletethisconnection(char *servertitle)
 {
-  /*
-     if (any_connection_active()) {
-     RequestProc(PluginNumber,RT_MsgOK,"Delete connection","Please close all open connections first!",NULL,0);
-     return false;
-     }
-   */
-
   int i, j, Sid;
   char section_name_old[MAX_Server_INFO];
   char section_name_new[MAX_Server_INFO];
@@ -788,14 +710,14 @@ bool deletethisconnection(char *servertitle)
                 NULL, 0);
     return false;
   }
-  if (allServer[Sid].is_imported_from_any_datasrc == 1) {
-    if (allServer[Sid].is_imported_from_putty_registry == 1) {
+  if (AllServers[Sid].is_imported_from_any_datasrc == 1) {
+    if (AllServers[Sid].is_imported_from_putty_registry == 1) {
       RequestProc(PluginNumber, RT_MsgOK, "Delete connection",
                   "This connection is imported from the PuTTY Session Database - can not delete",
                   NULL, 0);
       return false;
     }
-    if (allServer[Sid].is_imported_from_sshcom_registry == 1) {
+    if (AllServers[Sid].is_imported_from_sshcom_registry == 1) {
       RequestProc(PluginNumber, RT_MsgOK, "Delete connection",
                   "This connection is imported from the ssh.com Session Database - can not delete",
                   NULL, 0);
@@ -806,9 +728,9 @@ bool deletethisconnection(char *servertitle)
     return false;
   }
 
-  for (i = 0; i < Num_allServer - 1 - Imported_ids_num; i++) {
-    if (strcmp(allServer[i].title, servertitle) == 0) {
-      if (allServer[i].is_imported_from_any_datasrc == 1) {
+  for (i = 0; i < ServerCount - 1 - Imported_ids_num; i++) {
+    if (strcmp(AllServers[i].title, servertitle) == 0) {
+      if (AllServers[i].is_imported_from_any_datasrc == 1) {
         RequestProc(PluginNumber, RT_MsgOK, "Delete connection",
                     "This connection is imported from the PuTTY Session Database - can not delete",
                     NULL, 0);
@@ -817,7 +739,7 @@ bool deletethisconnection(char *servertitle)
       // Delete server i by moving all sections 1 up
       // What about Section rename?
       i++;                      // It's 1-based in the ini file!
-      for (j = i; j < Num_allServer - Imported_ids_num; j++) {
+      for (j = i; j < ServerCount - Imported_ids_num; j++) {
         sprintf(section_name_old, "%i", j + 1);
         sprintf(section_name_new, "%i", j);
         char copybuf[MAX_Server_INFO];
@@ -847,20 +769,20 @@ bool deletethisconnection(char *servertitle)
         MOVE_INFO_PARAM("set_mtime_after_put", "1")
       }
       // delete last section
-      sprintf(section_name_old, "%i",
-              Num_allServer - 1 - Imported_ids_num);
+      sprintf(section_name_old, "%i", ServerCount - 1 - Imported_ids_num);
       WritePrivateProfileString(section_name_old, NULL, NULL, iniFname);
-      Num_allServer = init_servers_from_iniFile();
+      ServerCount = LoadServers();
       return TRUE;
     }
   }
   return FALSE;
 }
+//---------------------------------------------------------------------
 
 int remote_chmod(char *RemoteName, unsigned int value)
 {
   check_Concurrent_Connection(RemoteName);
-  char *lRemoteName = RemoteName + (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  char *lRemoteName = RemoteName + (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
   char sftp_cmd[MAX_CMD_BUFFER];
 
   _snprintf(sftp_cmd, MAX_CMD_BUFFER, "chmod %d \"%s\"", value, lRemoteName);
@@ -873,11 +795,12 @@ int remote_chmod(char *RemoteName, unsigned int value)
     
   return FS_EXEC_ERROR;
 }
+//---------------------------------------------------------------------
 
 int remote_mtime(char *RemoteName, unsigned long value)
 {
   check_Concurrent_Connection(RemoteName);
-  char *lRemoteName = RemoteName + (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  char *lRemoteName = RemoteName + (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
   char sftp_cmd[MAX_CMD_BUFFER];
 
   _snprintf(sftp_cmd, MAX_CMD_BUFFER, "mtime %d \"%s\"", value, lRemoteName);
@@ -890,6 +813,7 @@ int remote_mtime(char *RemoteName, unsigned long value)
     
   return FS_EXEC_ERROR;
 }
+//---------------------------------------------------------------------
 
 BOOL __stdcall FsMkDir(char *Path)
 {
@@ -902,7 +826,7 @@ BOOL __stdcall FsMkDir(char *Path)
 
   check_Concurrent_Connection(Path);
 
-  lPath += (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  lPath += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
 
   sprintf(cmd_buf, "mkdir \"%s\"", lPath);
 
@@ -910,34 +834,46 @@ BOOL __stdcall FsMkDir(char *Path)
 
   if (wcplg_sftp_do_commando_byID(cmd_buf, NULL, CurrentServer_ID) == SFTP_SUCCESS)
   {
-    if (allServer[CurrentServer_ID].set_chmod_after_mkdir)
-      remote_chmod(Path, allServer[CurrentServer_ID].chmod_value_mkdir); 
+    if (AllServers[CurrentServer_ID].set_chmod_after_mkdir)
+      remote_chmod(Path, AllServers[CurrentServer_ID].chmod_value_mkdir); 
     return true;
   }
   return false;
 }
+//---------------------------------------------------------------------
 
 void DefineAndAddConnection()
 {
-  /*
-     if (any_connection_active())
-     {
-     RequestProc(PluginNumber,RT_MsgOK,"Edit Connection","Please close all open connections first!",NULL,0);
-     } else {
-   */
-  ShellExecute(0, "open", iniFname, NULL, "c:\\", SW_SHOW);
-  /*
-     }
-   */
-}
+  iniFname;
+  HANDLE myFile;
 
-char *strlcat(char *p, char *p2, int maxlen)
+  myFile = CreateFile(iniFname, // file name
+    GENERIC_READ,     // access mode
+    FILE_SHARE_READ,  // share mode
+    NULL,             // security descriptor
+    OPEN_ALWAYS,      // how to create
+    FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, // file attributes
+    NULL); // handle to template file
+
+  if (myFile == INVALID_HANDLE_VALUE)
+  {
+    err_v("Error opening '%s'", iniFname);
+  } else {
+    CloseHandle(myFile);
+  }
+
+  ShellExecute(0, "open", iniFname, NULL, "c:\\", SW_SHOW);
+}
+//---------------------------------------------------------------------
+
+char *strlcat(char *p, char *p2, size_t maxlen)
 {
-  int restlen = maxlen - strlen(p);
+  size_t restlen = maxlen - strlen(p);
   if (restlen > 0)
     strlcpy(p + strlen(p), p2, restlen);
   return p;
 }
+//---------------------------------------------------------------------
 
 void formcorrectpath(char *completepath)
 {
@@ -983,6 +919,7 @@ void formcorrectpath(char *completepath)
     }
   } while (p);
 }
+//---------------------------------------------------------------------
 
 //This function needs a real revision
 int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
@@ -994,13 +931,24 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
   char *lRemoteName = RemoteName;
 
   if (stricmp(Verb, "open") == 0) {
-    if (strcmp(DefineNewConnection_selected, RemoteName) == 0) {
-      DefineAndAddConnection();
+    if (strcmp(DefineEditConnection_selected, RemoteName) == 0) {
+      if (hDialogDLL) {
+        hProperties(0, AllServers, ServerCount, Imported_ids_num);
+      } else {
+        DefineAndAddConnection();
+      }
+      
       return FS_EXEC_OK;
     }
 
     if (strcmp(DefineAddConnection_selected, RemoteName) == 0) {
-      if (addnewserver(NULL) == true) {
+      bool ret = false;
+      if (hDialogDLL) {
+        ret = hProperties(1, AllServers, ServerCount, Imported_ids_num);
+      } else {
+        ret = addnewserver(NULL);
+      }
+      if (ret) {
         RemoteName[1] = '\0';
         return FS_EXEC_SYMLINK;
       }
@@ -1019,11 +967,11 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
 
     if (CurrentServer_ID == -1)
       return FS_EXEC_ERROR;
-    strcpy(allServer[CurrentServer_ID].home_dir, &Verb[11]);
-    int i = strlen(allServer[CurrentServer_ID].home_dir);
-    char last_one = allServer[CurrentServer_ID].home_dir[i - 1];
+    strcpy(AllServers[CurrentServer_ID].home_dir, &Verb[11]);
+    size_t i = strlen(AllServers[CurrentServer_ID].home_dir);
+    char last_one = AllServers[CurrentServer_ID].home_dir[i - 1];
 
-    sprintf(sftp_cmd, "cd %s", allServer[CurrentServer_ID].home_dir);
+    sprintf(sftp_cmd, "cd %s", AllServers[CurrentServer_ID].home_dir);
     winSlash2unix(sftp_cmd);
     if (wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID) !=
         SFTP_SUCCESS) {
@@ -1031,7 +979,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
       LogProc_(MSGTYPE_DETAILS, log_sftp_cmd);
     }
 
-    sprintf(RemoteName, "\\%s\\", allServer[CurrentServer_ID].title);
+    sprintf(RemoteName, "\\%s\\", AllServers[CurrentServer_ID].title);
     return FS_EXEC_SYMLINK;
   }
 
@@ -1070,8 +1018,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
               MAX_CMD_BUFFER);
       strncat(remote_users_current_dir, "?", MAX_CMD_BUFFER);
       strncat(remote_users_current_dir,
-              RemoteName + 2 + strlen(allServer[CurrentServer_ID].title),
-              MAX_CMD_BUFFER);
+        RemoteName + 2 + strlen(AllServers[CurrentServer_ID].title), MAX_CMD_BUFFER);
 
       winSlash2unix(remote_users_current_dir);
 
@@ -1146,7 +1093,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
 
       strcat(remote_users_current_dir, "?");
       strcat(remote_users_current_dir,
-             RemoteName + 2 + strlen(allServer[CurrentServer_ID].title));
+        RemoteName + 2 + strlen(AllServers[CurrentServer_ID].title));
       winSlash2unix(remote_users_current_dir);
 
       _snprintf(sftp_cmd, MAX_CMD_BUFFER, "reget \"%s\"", remote_users_current_dir);
@@ -1175,12 +1122,12 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
     buf[8] = 'c';
     buf[9] = 'd';
 
-    if (wcplg_sftp_do_commando_byID(buf + 8, NULL, CurrentServer_ID) ==
-        SFTP_SUCCESS) {
-      sprintf(RemoteName, "\\%s\\", allServer[CurrentServer_ID].title);
+    if (wcplg_sftp_do_commando_byID(buf + 8, NULL, CurrentServer_ID) == SFTP_SUCCESS) {
+      sprintf(RemoteName, "\\%s\\", AllServers[CurrentServer_ID].title);
       return FS_EXEC_SYMLINK;
-    } else
+    } else {
       return FS_EXEC_ERROR;
+    }
   }
 
   if (_strnicmp(Verb, "quote cd ", 9) == 0) {
@@ -1191,8 +1138,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
     // two cases: absolute path with / at start, relative with backslash
 
     if (buf[9] == '/' || buf[9] == '\\') {
-      _snprintf(RemoteName, MAX_PATH - 1, "\\%s%s",
-                allServer[CurrentServer_ID].title, buf + 9);
+      _snprintf(RemoteName, MAX_PATH - 1, "\\%s%s", AllServers[CurrentServer_ID].title, buf + 9);
     } else {
 
       if (RemoteName[strlen(RemoteName) - 1] != '\\')
@@ -1214,7 +1160,8 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
 
   //we could implement a property dialog here; changing some connections setting could be usefull
   if (_strnicmp(Verb, "properties", 10)==0) {
-    if (_strnicmp(RemoteName+1, allServer[CurrentServer_ID].title, strlen(allServer[CurrentServer_ID].title))==0) {
+    if (_strnicmp(RemoteName+1, AllServers[CurrentServer_ID].title, 
+      strlen(AllServers[CurrentServer_ID].title))==0) {
       return FS_EXEC_OK;
     }
   }
@@ -1225,7 +1172,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
       lVerb += 6;
     lVerb += 6;
     check_Concurrent_Connection(lRemoteName);
-    lRemoteName += (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+    lRemoteName += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
 
     strcpy(sftp_cmd, "chmod ");
     strcat(sftp_cmd, lVerb);
@@ -1258,6 +1205,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
 
   return FS_EXEC_ERROR;
 }
+//---------------------------------------------------------------------
 
 int __stdcall FsRenMovFile(char *OldName, char *NewName, BOOL Move,
                            BOOL OverWrite, RemoteInfoStruct * ri)
@@ -1319,8 +1267,8 @@ int __stdcall FsRenMovFile(char *OldName, char *NewName, BOOL Move,
       }
     }
     // Rename!
-    OldName += (1 + strlen(allServer[CurrentServer_ID].title) + 1);
-    NewName += (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+    OldName += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+    NewName += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
 
     strcpy(cmd_buf, "rename \"./");
     strcat(cmd_buf, OldName);
@@ -1328,8 +1276,8 @@ int __stdcall FsRenMovFile(char *OldName, char *NewName, BOOL Move,
     strcat(cmd_buf, NewName);
     strcat(cmd_buf, "\"");
 
-    OldName -= (1 + strlen(allServer[CurrentServer_ID].title) + 1);
-    NewName -= (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+    OldName -= (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+    NewName -= (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
 
     winSlash2unix(cmd_buf);
 
@@ -1347,6 +1295,7 @@ int __stdcall FsRenMovFile(char *OldName, char *NewName, BOOL Move,
   }
   return FS_FILE_WRITEERROR;
 }
+//---------------------------------------------------------------------
 
 int __stdcall FsGetFile(char *RemoteName, char *LocalName, int CopyFlags,
                         RemoteInfoStruct * ri)
@@ -1404,9 +1353,9 @@ int __stdcall FsGetFile(char *RemoteName, char *LocalName, int CopyFlags,
 
   strcpy(cmd_buf, "get \"./");
 
-  RemoteName += (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  RemoteName += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
   strcat(cmd_buf, RemoteName);
-  RemoteName -= (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  RemoteName -= (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
   winSlash2unix(cmd_buf);
   strcat(cmd_buf, "\"");
 
@@ -1446,6 +1395,8 @@ int __stdcall FsGetFile(char *RemoteName, char *LocalName, int CopyFlags,
   }
   return FS_FILE_READERROR;
 }
+
+//---------------------------------------------------------------------
 
 int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
 {
@@ -1510,7 +1461,7 @@ int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
   strcat(cmd_buf, LocalName);
   strcat(cmd_buf, "\" \"./");
 
-  char *lRemoteName = RemoteName + (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  char *lRemoteName = RemoteName + (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
   strcpy(buf2, lRemoteName);
   winSlash2unix(buf2);
   strcat(cmd_buf, buf2);
@@ -1533,11 +1484,11 @@ int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
       return FS_FILE_USERABORT;
     if (ok)
     {
-      if (allServer[CurrentServer_ID].set_chmod_after_put)
+      if (AllServers[CurrentServer_ID].set_chmod_after_put)
       {
-        remote_chmod(RemoteName, allServer[CurrentServer_ID].chmod_value_put);
+        remote_chmod(RemoteName, AllServers[CurrentServer_ID].chmod_value_put);
       }
-      if (allServer[CurrentServer_ID].set_mtime_after_put)
+      if (AllServers[CurrentServer_ID].set_mtime_after_put)
       {
         bool f;
         HANDLE myFile;
@@ -1584,6 +1535,8 @@ int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
   return FS_FILE_WRITEERROR;
 }
 
+//---------------------------------------------------------------------
+
 BOOL __stdcall FsDeleteFile(char *RemoteName)
 {
   char cmd_buf[MAX_CMD_BUFFER];
@@ -1596,9 +1549,9 @@ BOOL __stdcall FsDeleteFile(char *RemoteName)
   ProgressProc(PluginNumber, RemoteName, RemoteName, 0);
   check_Concurrent_Connection(RemoteName);
 
-  RemoteName += (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  RemoteName += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
   strcat(cmd_buf, RemoteName);
-  RemoteName -= (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  RemoteName -= (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
   strcat(cmd_buf, "\"");
 
   winSlash2unix(cmd_buf);
@@ -1611,6 +1564,8 @@ BOOL __stdcall FsDeleteFile(char *RemoteName)
   }
   return false;
 }
+
+//---------------------------------------------------------------------
 
 BOOL __stdcall FsRemoveDir(char *RemoteName)
 {
@@ -1634,9 +1589,9 @@ BOOL __stdcall FsRemoveDir(char *RemoteName)
 
   strcpy(cmd_buf, "rmdir \"./");
 
-  RemoteName += (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  RemoteName += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
   strcat(cmd_buf, RemoteName);
-  RemoteName -= (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  RemoteName -= (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
 
   strcat(cmd_buf, "\"");
 
@@ -1648,19 +1603,7 @@ BOOL __stdcall FsRemoveDir(char *RemoteName)
   return false;
 }
 
-void dbg_v(char *msg, char *param)
-{
-  char buf[MAX_MSG_BUFFER];
-  _snprintf(buf, MAX_MSG_BUFFER, msg, param);
-  dbg(buf);
-}
-
-void __stdcall dbg(char *msg)
-{
-  if (msg == NULL)
-    return;
-  RequestProc(PluginNumber, RT_MsgOK, "DBG", msg, NULL, 2000);
-}
+//---------------------------------------------------------------------
 
 int wcplg_sftp_do_commando_byID(char *sftp_cmd, char *serverOutput, int ID)
 {
@@ -1669,6 +1612,8 @@ int wcplg_sftp_do_commando_byID(char *sftp_cmd, char *serverOutput, int ID)
   }
   return SFTP_FAILED;
 }
+
+//---------------------------------------------------------------------
 
 int wcplg_sftp_connect_byID(unsigned int ID)
 {
@@ -1684,81 +1629,82 @@ int wcplg_sftp_connect_byID(unsigned int ID)
   if (ID == -1)
     return SFTP_FAILED;         //who knows, what happend before :-)
 
-  if (strlen(allServer[ID].host_cached) < 1) {
-    strcpy(allServer[ID].host_cached, allServer[ID].host);
-    if (!RequestProc
-        (PluginNumber, RT_Other, "Secure FTP", "Host[:port]",
-         allServer[ID].host_cached, MAX_CMD_BUFFER)) {
-      allServer[ID].host_cached[0] = '\0';
+  if (strlen(AllServers[ID].host_cached) < 1) {
+    strcpy(AllServers[ID].host_cached, AllServers[ID].host);
+    if (!RequestProc(PluginNumber, RT_Other, "Secure FTP", "Host[:port]",
+      AllServers[ID].host_cached, MAX_CMD_BUFFER)) {
+        AllServers[ID].host_cached[0] = '\0';
       return SFTP_FAILED;
     }
 
     server_entered = true;
-    strcpy(allServer[ID].host, allServer[ID].host_cached);
+    strcpy(AllServers[ID].host, AllServers[ID].host_cached);
   }
 
-  if (strlen(allServer[ID].username_cached) < 1) {
+  if (strlen(AllServers[ID].username_cached) < 1) {
     strcpy(buf, "Username for ");
-    strcat(buf, allServer[ID].host_cached);
+    strcat(buf, AllServers[ID].host_cached);
 
-    strcpy(allServer[ID].username_cached, allServer[ID].username);
+    strcpy(AllServers[ID].username_cached, AllServers[ID].username);
 
     // Do not ask 4 username if dont_ask4_username==1
-    if (allServer[ID].dont_ask4_username != 1) {
+    if (AllServers[ID].dont_ask4_username != 1) {
       if (!RequestProc
           (PluginNumber, RT_UserName, "Secure FTP", buf,
-           allServer[ID].username_cached, MAX_CMD_BUFFER)) {
+           AllServers[ID].username_cached, MAX_CMD_BUFFER)) {
         // For quick connection, clear host if failed
-        allServer[ID].username_cached[0] = 0;
+        AllServers[ID].username_cached[0] = 0;
         if (server_entered)
-          allServer[ID].host_cached[0] = 0;
+          AllServers[ID].host_cached[0] = 0;
         return SFTP_FAILED;
       }
     }
     user_entered = true;
-    strcpy(allServer[ID].username, allServer[ID].username_cached);
+    strcpy(AllServers[ID].username, AllServers[ID].username_cached);
   }
 
-  if (strlen(allServer[ID].password_cached) < 1) {
+  if (strlen(AllServers[ID].password_cached) < 1) {
     strcpy(buf, "Password for ");
-    strcat(buf, allServer[ID].username_cached);
+    strcat(buf, AllServers[ID].username_cached);
     strcat(buf, "@");
-    strcat(buf, allServer[ID].host_cached);
+    strcat(buf, AllServers[ID].host_cached);
 
-    strcpy(allServer[ID].password_cached, allServer[ID].password);
+    strcpy(AllServers[ID].password_cached, AllServers[ID].password);
 
-    if (allServer[ID].use_key_auth != 1) {
-      if (!allServer[ID].dont_ask4_password) {
+    if (AllServers[ID].use_key_auth != 1) {
+      if (!AllServers[ID].dont_ask4_password) {
         if (!RequestProc
             (PluginNumber, RT_Password, "Secure FTP", buf,
-             allServer[ID].password_cached, MAX_CMD_BUFFER)) {
+             AllServers[ID].password_cached, MAX_CMD_BUFFER)) {
           // For quick connection, clear host+user if failed
           if (server_entered)
-            allServer[ID].host_cached[0] = 0;
+            AllServers[ID].host_cached[0] = 0;
           if (user_entered)
-            allServer[ID].username_cached[0] = 0;
+            AllServers[ID].username_cached[0] = 0;
           return SFTP_FAILED;
         }
       }
     }
 
-    if (allServer[ID].dont_ask4_password)
-      strcpy(allServer[ID].password_cached, allServer[ID].password);
+    if (AllServers[ID].dont_ask4_password)
+      strcpy(AllServers[ID].password_cached, AllServers[ID].password);
     else
-      strcpy(allServer[ID].password, allServer[ID].password_cached);
+      strcpy(AllServers[ID].password, AllServers[ID].password_cached);
   }
 
   if (wcplg_sftp_connect
-      (allServer[ID].username, allServer[ID].password, allServer[ID].host,
-       allServer[ID].port, allServer, ID) != SFTP_SUCCESS) {
-    allServer[ID].password_cached[0] = '\0';
-    allServer[ID].host_cached[0] = 0;
-    allServer[ID].username_cached[0] = 0;
+      (AllServers[ID].username, AllServers[ID].password, AllServers[ID].host,
+       AllServers[ID].port, AllServers, ID) != SFTP_SUCCESS) {
+    AllServers[ID].password_cached[0] = '\0';
+    AllServers[ID].host_cached[0] = 0;
+    AllServers[ID].username_cached[0] = 0;
     return SFTP_FAILED;
   }
   //OK connect done
   return SFTP_SUCCESS;
 }
+
+//---------------------------------------------------------------------
 
 int get_sftpServer_ID_by_Path(char *Path)
 {
@@ -1773,7 +1719,7 @@ int get_sftpServer_ID_by_Path(char *Path)
     // server n\foo\bla\etc
     // have 2 cut the rest after server n
     int count_;
-    count_ = (int) ((int) strchr(Path, '\\') - (int) Path);
+    count_ = (int) (strchr(Path, '\\') - Path);
     strncpy(ServerTitle, Path, count_);
     ServerTitle[count_] = '\0';
   } else {
@@ -1788,27 +1734,33 @@ int get_sftpServer_ID_by_Path(char *Path)
   return get_sftpServer_ID_by_Title(ServerTitle);
 }
 
+//---------------------------------------------------------------------
+
 int get_sftpServer_ID_by_Title(char *Title)
 {
   int i;
-  for (i = 0; i < Num_allServer; i++) {
-    if (strcmp(allServer[i].title, Title) == 0) {
+  for (i = 0; i < ServerCount; i++) {
+    if (strcmp(AllServers[i].title, Title) == 0) {
       return i;
     }
   }
   return -1;
 }
 
+//---------------------------------------------------------------------
+
 bool any_connection_active()
 {
-  for (int i = 0; i < Num_allServer; i++) {
-    if (allServer[i].username_cached[0])
+  for (int i = 0; i < ServerCount; i++) {
+    if (AllServers[i].username_cached[0])
       return true;
   }
   return false;
 }
 
-int init_servers_from_iniFile()
+//---------------------------------------------------------------------
+
+int LoadServers()
 {
   int max_sections = MAX_Server;
   int i;
@@ -1839,8 +1791,6 @@ int init_servers_from_iniFile()
   char buf_set_chmod_after_put[MAX_Server_INFO];
   char buf_set_chmod_after_mkdir[MAX_Server_INFO];
   char buf_set_mtime_after_put[MAX_Server_INFO];
-
-  WritePrivateProfileString(NULL, NULL, NULL, iniFname);
 
   for (i = 0; i < max_sections; i++) {
     buf_title[0] = '\0';
@@ -1933,188 +1883,188 @@ int init_servers_from_iniFile()
 
       // TODO check if title already exists, in such case we change it a little, e.g. append '[1]'
 
-      strcpy(allServer[ID].title, buf_title);
-      strcpy(allServer[ID].host, buf_host);
-      strcpy(allServer[ID].host_cached, buf_host);
-      strcpy(allServer[ID].username, buf_username);
-      strcpy(allServer[ID].password, buf_password);
-      strcpy(allServer[ID].keyfilename, buf_keyfilename);
+      strcpy(AllServers[ID].title, buf_title);
+      strcpy(AllServers[ID].host, buf_host);
+      strcpy(AllServers[ID].host_cached, buf_host);
+      strcpy(AllServers[ID].username, buf_username);
+      strcpy(AllServers[ID].password, buf_password);
+      strcpy(AllServers[ID].keyfilename, buf_keyfilename);
 
       //use_key_auth optional, default=0
       if (strlen(buf_use_key_auth)) {
-        allServer[ID].use_key_auth = (unsigned char)strtoul(buf_use_key_auth, NULL, NULL);
-        if (allServer[ID].use_key_auth > 1)
-          allServer[ID].use_key_auth = 1;
+        AllServers[ID].use_key_auth = (unsigned char)strtoul(buf_use_key_auth, NULL, NULL);
+        if (AllServers[ID].use_key_auth > 1)
+          AllServers[ID].use_key_auth = 1;
       } else {
-        allServer[ID].use_key_auth = 0;
+        AllServers[ID].use_key_auth = 0;
       }
 
       //dont_ask4_username optional, default=0
       if (strlen(buf_dont_ask4_username)) {
-        allServer[ID].dont_ask4_username = 
+        AllServers[ID].dont_ask4_username = 
           (unsigned char)strtoul(buf_dont_ask4_username, NULL, NULL);
-        if (allServer[ID].dont_ask4_username > 1)
-          allServer[ID].dont_ask4_username = 1;
+        if (AllServers[ID].dont_ask4_username > 1)
+          AllServers[ID].dont_ask4_username = 1;
       } else {
-        allServer[ID].dont_ask4_username = 0;
+        AllServers[ID].dont_ask4_username = 0;
       }
 
       //dont_ask4_passphrase optional, default=0
       if (strlen(buf_dont_ask4_passphrase)) {
-        allServer[ID].dont_ask4_passphrase =
+        AllServers[ID].dont_ask4_passphrase =
           (unsigned char)strtoul(buf_dont_ask4_passphrase, NULL, NULL);
-        if (allServer[ID].dont_ask4_passphrase > 1)
-          allServer[ID].dont_ask4_passphrase = 1;
+        if (AllServers[ID].dont_ask4_passphrase > 1)
+          AllServers[ID].dont_ask4_passphrase = 1;
       } else {
-        allServer[ID].dont_ask4_passphrase = 0;
+        AllServers[ID].dont_ask4_passphrase = 0;
       }
 
       //dont_ask4_password optional, default=0
       if (strlen(buf_dont_ask4_password)) {
-        allServer[ID].dont_ask4_password =
+        AllServers[ID].dont_ask4_password =
           (unsigned char)strtoul(buf_dont_ask4_password, NULL, NULL);
-        if (allServer[ID].dont_ask4_password > 1)
-          allServer[ID].dont_ask4_password = 1;
+        if (AllServers[ID].dont_ask4_password > 1)
+          AllServers[ID].dont_ask4_password = 1;
       } else {
-        allServer[ID].dont_ask4_password = 0;
+        AllServers[ID].dont_ask4_password = 0;
       }
 
       //set_chmod_after_put optional, default=0
       if (strlen(buf_set_chmod_after_put)) {
-        allServer[ID].set_chmod_after_put =
+        AllServers[ID].set_chmod_after_put =
           (unsigned char)strtoul(buf_set_chmod_after_put, NULL, NULL);
-        if (allServer[ID].set_chmod_after_put > 1)
-          allServer[ID].set_chmod_after_put = 1;
+        if (AllServers[ID].set_chmod_after_put > 1)
+          AllServers[ID].set_chmod_after_put = 1;
       } else {
-        allServer[ID].set_chmod_after_put = 0;
+        AllServers[ID].set_chmod_after_put = 0;
       }
 
       //set_chmod_after_mkdir optional, default=0
       if (strlen(buf_set_chmod_after_mkdir)) {
-        allServer[ID].set_chmod_after_mkdir =
+        AllServers[ID].set_chmod_after_mkdir =
           (unsigned char)strtoul(buf_set_chmod_after_mkdir, NULL, NULL);
-        if (allServer[ID].set_chmod_after_mkdir > 1)
-          allServer[ID].set_chmod_after_mkdir = 1;
+        if (AllServers[ID].set_chmod_after_mkdir > 1)
+          AllServers[ID].set_chmod_after_mkdir = 1;
       } else {
-        allServer[ID].set_chmod_after_mkdir = 0;
+        AllServers[ID].set_chmod_after_mkdir = 0;
       }
 
       //set_mtime_after_put optional, default=1
       if (strlen(buf_set_mtime_after_put)) {
-        allServer[ID].set_mtime_after_put =
+        AllServers[ID].set_mtime_after_put =
           (unsigned char)strtoul(buf_set_mtime_after_put, NULL, NULL);
-        if (allServer[ID].set_mtime_after_put > 1)
-          allServer[ID].set_mtime_after_put = 1;
+        if (AllServers[ID].set_mtime_after_put > 1)
+          AllServers[ID].set_mtime_after_put = 1;
       } else {
-        allServer[ID].set_mtime_after_put = 1;
+        AllServers[ID].set_mtime_after_put = 1;
       }
 
       //chmod_value_put optional, default=700, valid only with set_chmod_after_put
       if (strlen(buf_chmod_value_put)) {
-        allServer[ID].chmod_value_put =
+        AllServers[ID].chmod_value_put =
           strtoul(buf_chmod_value_put, NULL, NULL);
       } else {
-        allServer[ID].chmod_value_put = 700;
+        AllServers[ID].chmod_value_put = 700;
       }
 
       //chmod_value_mkdir optional, default=700, valid only with set_chmod_after_mkdir
       if (strlen(buf_chmod_value_mkdir)) {
-        allServer[ID].chmod_value_mkdir =
+        AllServers[ID].chmod_value_mkdir =
           strtoul(buf_chmod_value_mkdir, NULL, NULL);
       } else {
-        allServer[ID].chmod_value_mkdir = 700;
+        AllServers[ID].chmod_value_mkdir = 700;
       }
 
       // port & home_dir are optional
       if (strlen(buf_port)) {
-        allServer[ID].port = strtol(buf_port, NULL, NULL);
+        AllServers[ID].port = strtol(buf_port, NULL, NULL);
       } else {
-        allServer[ID].port = 22;
+        AllServers[ID].port = 22;
       }
 
-      if (allServer[ID].port < 1 || allServer[ID].port > 65535) {
-        allServer[ID].port = 22;
+      if (AllServers[ID].port < 1 || AllServers[ID].port > 65535) {
+        AllServers[ID].port = 22;
       }
 
       if (strlen(buf_compression) == 0
           || strcmp(buf_compression, "1") == 0) {
-        allServer[ID].compression = 1;
+        AllServers[ID].compression = 1;
       } else {
-        allServer[ID].compression = 0;
+        AllServers[ID].compression = 0;
       }
 
       if (strlen(buf_home_dir)) {
-        strcpy(allServer[ID].home_dir, buf_home_dir);
+        strcpy(AllServers[ID].home_dir, buf_home_dir);
       } else {
-        strcpy(allServer[ID].home_dir, "");
+        strcpy(AllServers[ID].home_dir, "");
       }
 
-      allServer[ID].passphrase[0] = 0;
-      allServer[ID].password_cached[0] = 0;
-      allServer[ID].username_cached[0] = 0;
-      allServer[ID].is_imported_from_any_datasrc = 0;
-      allServer[ID].is_imported_from_putty_registry = 0;
-      allServer[ID].is_imported_from_sshcom_registry = 0;
+      AllServers[ID].passphrase[0] = 0;
+      AllServers[ID].password_cached[0] = 0;
+      AllServers[ID].username_cached[0] = 0;
+      AllServers[ID].is_imported_from_any_datasrc = 0;
+      AllServers[ID].is_imported_from_putty_registry = 0;
+      AllServers[ID].is_imported_from_sshcom_registry = 0;
 
       //experimental: Proxy
       if (strlen(buf_proxy_type)) {
         unsigned long tmp = strtoul(buf_proxy_type, NULL, NULL);
         switch (tmp) {
         case 1:
-          allServer[ID].proxy_type = PROXY_SOCKS4;
+          AllServers[ID].proxy_type = PROXY_SOCKS4;
           break;
         case 2:
-          allServer[ID].proxy_type = PROXY_SOCKS5;
+          AllServers[ID].proxy_type = PROXY_SOCKS5;
           break;
         default:
-          allServer[ID].proxy_type = PROXY_NONE;
+          AllServers[ID].proxy_type = PROXY_NONE;
           break;
         }
       } else {
-        allServer[ID].proxy_type = PROXY_NONE;
+        AllServers[ID].proxy_type = PROXY_NONE;
       }
 
       if (strlen(buf_proxy_host)) {
-        strcpy(allServer[ID].proxy_host, buf_proxy_host);
+        strcpy(AllServers[ID].proxy_host, buf_proxy_host);
       } else {
-        strcpy(allServer[ID].proxy_host, "");
+        strcpy(AllServers[ID].proxy_host, "");
       }
 
       if (strlen(buf_proxy_port)) {
-        allServer[ID].proxy_port = strtol(buf_proxy_port, NULL, NULL);
+        AllServers[ID].proxy_port = strtol(buf_proxy_port, NULL, NULL);
       } else {
-        allServer[ID].proxy_port = 1080;  //standard port for socks-proxy
+        AllServers[ID].proxy_port = 1080;  //standard port for socks-proxy
       }
 
-      if (allServer[ID].proxy_port < 1 || allServer[ID].proxy_port > 65535) {
-        allServer[ID].proxy_port = 1080;  //standard port for socks-proxy
+      if (AllServers[ID].proxy_port < 1 || AllServers[ID].proxy_port > 65535) {
+        AllServers[ID].proxy_port = 1080;  //standard port for socks-proxy
       }
 
       if (strlen(buf_proxy_username)) {
-        strcpy(allServer[ID].proxy_username, buf_proxy_username);
+        strcpy(AllServers[ID].proxy_username, buf_proxy_username);
       } else {
-        strcpy(allServer[ID].proxy_username, "");
+        strcpy(AllServers[ID].proxy_username, "");
       }
 
       if (strlen(buf_proxy_password)) {
-        strcpy(allServer[ID].proxy_password, buf_proxy_password);
+        strcpy(AllServers[ID].proxy_password, buf_proxy_password);
       } else {
-        strcpy(allServer[ID].proxy_password, "");
+        strcpy(AllServers[ID].proxy_password, "");
       }
 
       if (strlen(buf_proxy_telnet_command)) {
-        strcpy(allServer[ID].proxy_telnet_command,
+        strcpy(AllServers[ID].proxy_telnet_command,
                buf_proxy_telnet_command);
       } else {
-        strcpy(allServer[ID].proxy_telnet_command, "");
+        strcpy(AllServers[ID].proxy_telnet_command, "");
       }
 
       //this line checks if we get a really supported proxy version - the other stuff is not really supported right now...
-      if ((allServer[ID].proxy_type != PROXY_SOCKS4)
-          && (allServer[ID].proxy_type != PROXY_SOCKS5))
-        allServer[ID].proxy_type = PROXY_NONE;
+      if ((AllServers[ID].proxy_type != PROXY_SOCKS4)
+          && (AllServers[ID].proxy_type != PROXY_SOCKS5))
+        AllServers[ID].proxy_type = PROXY_NONE;
 
-      allServer[ID].id = ID;
+      AllServers[ID].id = ID;
       ID++;
     } else if (i)
       break;                    // hey dude - this is a badness, too :-(
@@ -2124,20 +2074,19 @@ int init_servers_from_iniFile()
 
   // DO Putty Import ?
   strcpy(buf_divers, "");
-  GetPrivateProfileString(INI_CONFIG__SECTION_NAME,
+  GetPrivateProfileString(INI_CONFIG_SECTION_NAME,
                           INI_CONFIG_IMPORT_PUTTY_SSH_SESS, "", buf_divers,
                           MAX_Server_INFO, iniFname);
   if (strlen(buf_divers) && (buf_divers[0] == '1' || buf_divers[0] == '2')) {
     //import the putty saved session if...
     imported_num = 0;
-    imported_num +=
-      do_import_putty_saved_session_to_plugin_session(ID, buf_divers);
+    imported_num += ImportPuttySessions(ID, buf_divers);
     Imported_ids_num = imported_num;
     ID += imported_num;
   }
   // DO ssh.com Import ?
   strcpy(buf_divers, "");
-  GetPrivateProfileString(INI_CONFIG__SECTION_NAME,
+  GetPrivateProfileString(INI_CONFIG_SECTION_NAME,
                           INI_CONFIG_IMPORT_SSHCOM_SSH_SESS, "",
                           buf_divers, MAX_Server_INFO, iniFname);
   if (strlen(buf_divers)) {
@@ -2147,52 +2096,53 @@ int init_servers_from_iniFile()
     //import the ssh.com saved session if...
     if (strlen(dir_location) > 0 && strcmp(dir_location, "0") != 0) {
       imported_num = 0;
-      imported_num =
-        do_import_sshcom_saved_session_to_plugin_session(ID, dir_location);
+      imported_num = ImportSSHcomSessions(ID, dir_location);
       Imported_ids_num += imported_num;
       ID += imported_num;
     }
   }
 
-  strcpy(allServer[ID].title, QUICK_CONNECTION);
+  strcpy(AllServers[ID].title, QUICK_CONNECTION);
   //Set defaults 4 quick connection
-  allServer[ID].compression = 0;
-  allServer[ID].dont_ask4_username = 0;
-  allServer[ID].dont_ask4_passphrase = 0;
-  allServer[ID].dont_ask4_password = 0;
-  allServer[ID].home_dir[0] = '\0';
-  allServer[ID].host[0] = '\0';
-  allServer[ID].host_cached[0] = '\0';
-  allServer[ID].id = ID;
-  allServer[ID].is_imported_from_any_datasrc = 0;
-  allServer[ID].is_imported_from_putty_registry = 0;
-  allServer[ID].is_imported_from_sshcom_registry = 0;
-  allServer[ID].keyfilename[0] = '\0';
-  allServer[ID].passphrase[0] = '\0';
-  allServer[ID].proxy_host[0] = '\0';
-  allServer[ID].proxy_password[0] = '\0';
-  allServer[ID].proxy_port = 0;
-  allServer[ID].proxy_telnet_command[0] = '\0';
-  allServer[ID].proxy_type = PROXY_NONE;
-  allServer[ID].proxy_username[0] = '\0';
-  allServer[ID].password[0] = '\0';
-  allServer[ID].password_cached[0] = '\0';
-  allServer[ID].port = 22;
-  allServer[ID].use_key_auth = 0;
-  allServer[ID].username[0] = '\0';
-  allServer[ID].username_cached[0] = '\0';
-  allServer[ID].chmod_value_put = 0;
-  allServer[ID].chmod_value_mkdir = 0;
-  allServer[ID].set_chmod_after_put = 0;
-  allServer[ID].set_chmod_after_mkdir = 0;
-  allServer[ID].set_mtime_after_put = 0;
+  AllServers[ID].compression = 0;
+  AllServers[ID].dont_ask4_username = 0;
+  AllServers[ID].dont_ask4_passphrase = 0;
+  AllServers[ID].dont_ask4_password = 0;
+  AllServers[ID].home_dir[0] = '\0';
+  AllServers[ID].host[0] = '\0';
+  AllServers[ID].host_cached[0] = '\0';
+  AllServers[ID].id = ID;
+  AllServers[ID].is_imported_from_any_datasrc = 0;
+  AllServers[ID].is_imported_from_putty_registry = 0;
+  AllServers[ID].is_imported_from_sshcom_registry = 0;
+  AllServers[ID].keyfilename[0] = '\0';
+  AllServers[ID].passphrase[0] = '\0';
+  AllServers[ID].proxy_host[0] = '\0';
+  AllServers[ID].proxy_password[0] = '\0';
+  AllServers[ID].proxy_port = 0;
+  AllServers[ID].proxy_telnet_command[0] = '\0';
+  AllServers[ID].proxy_type = PROXY_NONE;
+  AllServers[ID].proxy_username[0] = '\0';
+  AllServers[ID].password[0] = '\0';
+  AllServers[ID].password_cached[0] = '\0';
+  AllServers[ID].port = 22;
+  AllServers[ID].use_key_auth = 0;
+  AllServers[ID].username[0] = '\0';
+  AllServers[ID].username_cached[0] = '\0';
+  AllServers[ID].chmod_value_put = 0;
+  AllServers[ID].chmod_value_mkdir = 0;
+  AllServers[ID].set_chmod_after_put = 0;
+  AllServers[ID].set_chmod_after_mkdir = 0;
+  AllServers[ID].set_mtime_after_put = 0;
 
   ID++;                         // !!!
 
-  make_unique_title_in_allServers(ID);
+  MakeServerTitlesUnique(ID);
 
   return ID;
 }
+
+//---------------------------------------------------------------------
 
 void LogProc_(int MsgType, char *LogString)
 {
@@ -2200,14 +2150,18 @@ void LogProc_(int MsgType, char *LogString)
     LogProc(PluginNumber, MsgType, LogString);
 }
 
+//---------------------------------------------------------------------
+
 BOOL __stdcall FsDisconnect(char *DisconnectRoot)
 {
   //DisconnectRoot is unusable as only 1 connection is active, because of psftp's architecture
   //LogProc_(MSGTYPE_DISCONNECT,"DISCONNECTED");
   wcplg_sftp_disconnect(CurrentServer_ID, false);
-  already_connected = false;
+  ResetAlreadyConnected();
   return true;
 }
+
+//---------------------------------------------------------------------
 
 //this checks for a connection. we could use this multi dll concept to 
 //run multiple connections simultanously
@@ -2219,7 +2173,7 @@ void check_Concurrent_Connection(char *Path)
     if (get_sftpServer_ID_by_Path(Path) != CurrentServer_ID) {
       //ooops, conflict!
       //we have to disconnect the connection to avoid the conflict
-      if (already_connected)
+      if (IsAlreadyConnected())
         wcplg_sftp_disconnect(CurrentServer_ID, false);
       CurrentServer_ID = get_sftpServer_ID_by_Path(Path); // OK, conflict fixed :-)
     }
@@ -2227,20 +2181,28 @@ void check_Concurrent_Connection(char *Path)
 
 }
 
+//---------------------------------------------------------------------
+
 int get_current_server_id()
 {
   return CurrentServer_ID;
 }
 
-struct SftpServerAccountInfo *getP_allServer(void)
+//---------------------------------------------------------------------
+
+struct SftpServerAccountInfo *GetAllServers(void)
 {
-  return allServer;
+  return AllServers;
 }
+
+//---------------------------------------------------------------------
 
 BOOL Request_Password(char *buf)
 {
   return RequestProc(PluginNumber, RT_Password, "Secure FTP", "Password", buf, MAX_PATH);
 }
+
+//---------------------------------------------------------------------
 
 int octal_permissions_2_tc_integral(unsigned long octal_val)
 {
@@ -2248,7 +2210,7 @@ int octal_permissions_2_tc_integral(unsigned long octal_val)
 
   char buf[100];                //should be enough [:-( not nice, dude!]
   char cbuf[100];
-  int clen;
+  size_t clen;
   int int_val;
   sprintf(buf, "%3o", octal_val);
 
@@ -2263,15 +2225,19 @@ int octal_permissions_2_tc_integral(unsigned long octal_val)
   return int_val;
 }
 
+//---------------------------------------------------------------------
+
 tProgressProc get_ProgressProc()
 {
   return ProgressProc;
 }
+//---------------------------------------------------------------------
 
 int get_PluginNumber()
 {
   return PluginNumber;
 }
+//---------------------------------------------------------------------
 
 int file_exists_on_remote_server(char *RemoteFile)
 {
@@ -2321,10 +2287,12 @@ int file_exists_on_remote_server(char *RemoteFile)
   return FS_FILE_NOTFOUND;
 }
 
+//---------------------------------------------------------------------
+
 int get_basename_from_Path(char *buf, char *Path)
 {
-  unsigned int i;
-  unsigned int dir_end = 0;
+  size_t i;
+  size_t dir_end = 0;
 
   i = strlen(Path) - 1;
   for (; i > 0; i--) {
@@ -2344,10 +2312,14 @@ int get_basename_from_Path(char *buf, char *Path)
   return 1;
 }
 
+//---------------------------------------------------------------------
+
 void __stdcall FsGetDefRootName(char *DefRootName, int maxlen)
 {
   strlcpy(DefRootName, FSPLUGIN_CAPTION, maxlen - 1);
 }
+
+//---------------------------------------------------------------------
 
 void __stdcall FsStatusInfo(char *RemoteDir, int InfoStartEnd,
                             int InfoOperation)
@@ -2361,6 +2333,8 @@ void __stdcall FsStatusInfo(char *RemoteDir, int InfoStartEnd,
   }
 }
 
+//---------------------------------------------------------------------
+
 int Risdir(char *Path)
 {
   char sftp_cmd[MAX_CMD_BUFFER];
@@ -2372,9 +2346,9 @@ int Risdir(char *Path)
 
   strcpy(sftp_cmd, "ls \"./");
 
-  Path += (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  Path += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
   strcat(sftp_cmd, Path);
-  Path -= (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  Path -= (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
 
   strcat(sftp_cmd, "\"");
 
@@ -2390,6 +2364,8 @@ int Risdir(char *Path)
 
   return 1;
 }
+
+//---------------------------------------------------------------------
 
 bool SetFileTime__(char *fullFilePath, FILETIME * LastWriteTime)
 {
@@ -2417,65 +2393,44 @@ bool SetFileTime__(char *fullFilePath, FILETIME * LastWriteTime)
 }
 
 
-//Title nach /  suchen und ersetzt durch _
+//---------------------------------------------------------------------
+
+//replace / and \ with _ (in title)
 void XconvertServerTitle(char *title)
 {
-  unsigned int i;
-  if (title == NULL)
-    return;                     //dürfte eigentlich gar nicht vorkommen - denkst deeee :-)
-  if (strlen(title) < 1)
-    return;                     //dürfte eigentlich gar nicht vorkommen
+  if ((title == NULL) || (strlen(title) < 1))
+    return;                     
 
-  for (i = 0; i < strlen(title); i++) {
-    if (title[i] == '/' || title[i] == '\\') {
+  for (size_t i = 0; i < strlen(title); i++) {
+    if ((title[i] == '/') || (title[i] == '\\')) {
       title[i] = '_';
     }
   }
 
 }
+//---------------------------------------------------------------------
 
-// Session importing
-int do_import_putty_saved_session_to_plugin_session(int lastInsert_ID,
-                                                    char *import_mode)
+//what the hell does this one?
+static void mungestr(char *in, char *out)
 {
-  static char otherbuf[2048];
-  static char *buffer;
-  int buflen = 0, bufsize = 0, i = 0, count = 0;
-  char *ret;
-  void *handle;
-  struct enumsettings *handleFree;
+  int candot = 0;
 
-  if ((handle = enum_settings_start())) {
-    handleFree = (struct enumsettings *) handle;
-    do {
-      if ((lastInsert_ID + count) >= MAX_Server - 2) {
-        RegCloseKey(handleFree->key);
-        return count;
-      }
-      ret = enum_settings_next(handle, otherbuf, sizeof(otherbuf));
-
-      if (ret) {
-        struct SftpServerAccountInfo ServerAccountInfo;
-        if (loadPuttySectionToSftpPluginServerInfoStruct
-            (&ServerAccountInfo, otherbuf) == 1) {
-          // OK success
-          XconvertServerTitle(otherbuf);
-          strcpy(ServerAccountInfo.title, otherbuf);
-          ServerAccountInfo.id = (lastInsert_ID + count);
-          allServer[lastInsert_ID + count] = ServerAccountInfo;
-          if (import_mode[0] == '2') {
-            //User want no password promt, all the connection are using key auth trought pageant.exe
-            allServer[lastInsert_ID + count].use_key_auth = 1;
-          }
-          count++;
-        }
-      }
-    } while (ret);
-    RegCloseKey(handleFree->key);
-    free(handle);
+  while (*in) {
+    if (*in == ' ' || *in == '\\' || *in == '*' || *in == '?' ||
+        *in == '%' || *in < ' ' || *in > '~' || (*in == '.' && !candot)) {
+      *out++ = '%';
+      *out++ = hex[((unsigned char) *in) >> 4];
+      *out++ = hex[((unsigned char) *in) & 15];
+    } else
+      *out++ = *in;
+    in++;
+    candot = 1;
   }
-  return count;
+  *out = '\0';
+  return;
 }
+
+//---------------------------------------------------------------------
 
 void *open_settings_r(char *sessionname)
 {
@@ -2498,38 +2453,7 @@ void *open_settings_r(char *sessionname)
   return (void *) sesskey;
 }
 
-//what the hell does this one?
-static void mungestr(char *in, char *out)
-{
-  int candot = 0;
-
-  while (*in) {
-    if (*in == ' ' || *in == '\\' || *in == '*' || *in == '?' ||
-        *in == '%' || *in < ' ' || *in > '~' || (*in == '.' && !candot)) {
-      *out++ = '%';
-      *out++ = hex[((unsigned char) *in) >> 4];
-      *out++ = hex[((unsigned char) *in) & 15];
-    } else
-      *out++ = *in;
-    in++;
-    candot = 1;
-  }
-  *out = '\0';
-  return;
-}
-
-static void gpps(void *handle, char *name, char *def, char *val, int len)
-{
-  if (!read_setting_s(handle, name, val, len)) {
-    strncpy(val, def, len);
-    val[len - 1] = '\0';
-  }
-}
-
-static void gppi(void *handle, char *name, int def, int *i)
-{
-  *i = read_setting_i(handle, name, def);
-}
+//---------------------------------------------------------------------
 
 char *read_setting_s(void *handle, char *key, char *buffer, int buflen)
 {
@@ -2543,6 +2467,7 @@ char *read_setting_s(void *handle, char *key, char *buffer, int buflen)
   else
     return buffer;
 }
+//---------------------------------------------------------------------
 
 int read_setting_i(void *handle, char *key, int defvalue)
 {
@@ -2556,24 +2481,7 @@ int read_setting_i(void *handle, char *key, int defvalue)
   else
     return val;
 }
-
-char *enum_settings_next(void *handle, char *buffer, int buflen)
-{
-  struct enumsettings *e = (struct enumsettings *) handle;
-  char *otherbuf;
-
-  otherbuf = (char *) malloc(3 * buflen);
-  if (otherbuf
-      && RegEnumKey(e->key, e->i++, otherbuf,
-                    3 * buflen) == ERROR_SUCCESS) {
-    unmungestr(otherbuf, buffer, buflen);
-    free(otherbuf);
-    return buffer;
-  } else {
-    free(otherbuf);
-    return NULL;
-  }
-}
+//---------------------------------------------------------------------
 
 static void unmungestr(char *in, char *out, int outlen)
 {
@@ -2599,6 +2507,22 @@ static void unmungestr(char *in, char *out, int outlen)
   *out = '\0';
   return;
 }
+//---------------------------------------------------------------------
+
+static void gpps(void *handle, char *name, char *def, char *val, int len)
+{
+  if (!read_setting_s(handle, name, val, len)) {
+    strncpy(val, def, len);
+    val[len - 1] = '\0';
+  }
+}
+//---------------------------------------------------------------------
+
+static void gppi(void *handle, char *name, int def, int *i)
+{
+  *i = read_setting_i(handle, name, def);
+}
+//---------------------------------------------------------------------
 
 void *enum_settings_start(void)
 {
@@ -2617,6 +2541,69 @@ void *enum_settings_start(void)
   }
   return ret;
 }
+//---------------------------------------------------------------------
+
+char *enum_settings_next(void *handle, char *buffer, int buflen)
+{
+  struct enumsettings *e = (struct enumsettings *) handle;
+  char *otherbuf;
+
+  otherbuf = (char *) malloc(3 * buflen);
+  if (otherbuf
+      && RegEnumKey(e->key, e->i++, otherbuf,
+                    3 * buflen) == ERROR_SUCCESS) {
+    unmungestr(otherbuf, buffer, buflen);
+    free(otherbuf);
+    return buffer;
+  } else {
+    free(otherbuf);
+    return NULL;
+  }
+}
+//---------------------------------------------------------------------
+
+// Session importing
+int ImportPuttySessions(int lastInsert_ID, char *import_mode)
+{
+  static char otherbuf[2048];
+  static char *buffer;
+  int buflen = 0, bufsize = 0, i = 0, count = 0;
+  char *ret;
+  void *handle;
+  struct enumsettings *handleFree;
+
+  if ((handle = enum_settings_start())) {
+    handleFree = (struct enumsettings *) handle;
+    do {
+      if ((lastInsert_ID + count) >= MAX_Server - 2) {
+        RegCloseKey(handleFree->key);
+        return count;
+      }
+      ret = enum_settings_next(handle, otherbuf, sizeof(otherbuf));
+
+      if (ret) {
+        struct SftpServerAccountInfo ServerAccountInfo;
+        if (ImportPuttySession(&ServerAccountInfo, otherbuf) == 1) {
+          // OK success
+          XconvertServerTitle(otherbuf);
+          strcpy(ServerAccountInfo.title, otherbuf);
+          ServerAccountInfo.id = (lastInsert_ID + count);
+          AllServers[lastInsert_ID + count] = ServerAccountInfo;
+          if (import_mode[0] == '2') {
+            //User want no password promt, all the connection are using key auth trought pageant.exe
+            AllServers[lastInsert_ID + count].use_key_auth = 1;
+          }
+          count++;
+        }
+      }
+    } while (ret);
+    RegCloseKey(handleFree->key);
+    free(handle);
+  }
+  return count;
+}
+
+//---------------------------------------------------------------------
 
 void ServerAccountInfoDefaults(struct SftpServerAccountInfo
                                *ServerAccountInfo)
@@ -2655,11 +2642,9 @@ void ServerAccountInfoDefaults(struct SftpServerAccountInfo
   ServerAccountInfo->set_chmod_after_mkdir = 0;
   ServerAccountInfo->set_mtime_after_put = 1;
 }
+//---------------------------------------------------------------------
 
-int loadPuttySectionToSftpPluginServerInfoStruct(struct
-                                                 SftpServerAccountInfo
-                                                 *ServerAccountInfo,
-                                                 char *PuttySectionName)
+int ImportPuttySession(struct SftpServerAccountInfo *ServerAccountInfo, char *PuttySectionName)
 {
   char HostName[1000];
   char Protocol[1000];
@@ -2728,48 +2713,9 @@ int loadPuttySectionToSftpPluginServerInfoStruct(struct
   return 0;
 }
 
-void make_unique_title_in_allServers(int numServer)
-{
-  int i;
-  char buf[MAX_Server_INFO];
-  char buf2[MAX_Server_INFO];
+//---------------------------------------------------------------------
 
-  for (i = 0; i < numServer; i++) {
-    int dbl = 0;
-    strcpy(buf, allServer[i].title);
-    while (1)                   // :-)
-    {
-      if (is_title_in_all_server_double(numServer, i, buf) == 1) {
-        dbl++;
-        sprintf(buf2, "%d", (dbl + 1));
-        strcpy(buf, allServer[i].title);
-        strcat(buf, " (");
-        strcat(buf, buf2);
-        strcat(buf, ")");
-        continue;
-      }
-      if (dbl > 0) {
-        strcpy(allServer[i].title, buf);
-      }
-      break;
-    }
-  }
-}
-
-int is_title_in_all_server_double(int numServer, int currentServerId,
-                                  char *title)
-{
-  int i;
-  for (i = 0; i < numServer; i++) {
-    if (i != currentServerId && strcmp(allServer[i].title, title) == 0) {
-      return 1;
-    }
-  }
-  return 0;
-}
-
-int do_import_sshcom_saved_session_to_plugin_session(int lastInsert_ID,
-                                                     char *dir_location)
+int ImportSSHcomSessions(int lastInsert_ID, char *dir_location)
 {
   //int dwIndex=1;
   int count = 0;
@@ -2874,37 +2820,37 @@ int do_import_sshcom_saved_session_to_plugin_session(int lastInsert_ID,
             strcpy(home_dir, 2 + buf_divers);
           }
           //inherited char*
-          strcpy(allServer[lastInsert_ID + count].title, title);
-          strcpy(allServer[lastInsert_ID + count].host, hostname);
-          strcpy(allServer[lastInsert_ID + count].host_cached, hostname);
-          strcpy(allServer[lastInsert_ID + count].username, username);
-          strcpy(allServer[lastInsert_ID + count].username_cached, ""); // MUSS strlen=0 sein  wegen anyconnectionactive()
-          strcpy(allServer[lastInsert_ID + count].home_dir, home_dir);
+          strcpy(AllServers[lastInsert_ID + count].title, title);
+          strcpy(AllServers[lastInsert_ID + count].host, hostname);
+          strcpy(AllServers[lastInsert_ID + count].host_cached, hostname);
+          strcpy(AllServers[lastInsert_ID + count].username, username);
+          strcpy(AllServers[lastInsert_ID + count].username_cached, ""); // MUSS strlen=0 sein  wegen anyconnectionactive()
+          strcpy(AllServers[lastInsert_ID + count].home_dir, home_dir);
 
           // inherited int
-          allServer[lastInsert_ID + count].compression = compression;
-          allServer[lastInsert_ID + count].port = port;
+          AllServers[lastInsert_ID + count].compression = compression;
+          AllServers[lastInsert_ID + count].port = port;
 
           // Static
-          allServer[lastInsert_ID + count].use_key_auth = 0;
+          AllServers[lastInsert_ID + count].use_key_auth = 0;
 
-          if (strlen(allServer[lastInsert_ID + count].username)) {
-            allServer[lastInsert_ID + count].dont_ask4_username = 1;
+          if (strlen(AllServers[lastInsert_ID + count].username)) {
+            AllServers[lastInsert_ID + count].dont_ask4_username = 1;
           } else {
-            allServer[lastInsert_ID + count].dont_ask4_username = 0;
+            AllServers[lastInsert_ID + count].dont_ask4_username = 0;
           }
 
-          strcpy(allServer[lastInsert_ID + count].password, "");
-          strcpy(allServer[lastInsert_ID + count].password_cached, "");
+          strcpy(AllServers[lastInsert_ID + count].password, "");
+          strcpy(AllServers[lastInsert_ID + count].password_cached, "");
 
-          allServer[lastInsert_ID + count].is_imported_from_any_datasrc =
+          AllServers[lastInsert_ID + count].is_imported_from_any_datasrc =
             1;
-          allServer[lastInsert_ID +
+          AllServers[lastInsert_ID +
                     count].is_imported_from_putty_registry = 0;
-          allServer[lastInsert_ID +
+          AllServers[lastInsert_ID +
                     count].is_imported_from_sshcom_registry = 1;
 
-          allServer[lastInsert_ID + count].id = lastInsert_ID + count;
+          AllServers[lastInsert_ID + count].id = lastInsert_ID + count;
 
           count++;              //last comand!!!
         }
@@ -2915,25 +2861,4 @@ int do_import_sshcom_saved_session_to_plugin_session(int lastInsert_ID,
     FindClose(FndHnd);          // Close the find handle
 
   return count;
-}
-
-int get_custom_users_sftp_inifile_from_reg(char *iniFname)
-{
-  int ret = -1;
-  HKEY subkey1;
-  DWORD type, buflen = MAX_PATH;
-
-  if (RegOpenKey(HKEY_CURRENT_USER, PETRICH_TC_REGP, &subkey1) ==
-      ERROR_SUCCESS) {
-    if (RegQueryValueEx
-        (subkey1, PETRICH_TC_REGP_SFTP_K, 0, &type,
-         (unsigned char *) iniFname, &buflen) == ERROR_SUCCESS) {
-      ret = 0;
-    }
-
-  }
-
-  RegCloseKey(subkey1);
-
-  return ret;
 }

@@ -5,26 +5,11 @@
 extern "C" {
 #include "../shared/share.h"
 }
+
 #include <stdio.h>
 #include <stdlib.h>
-extern HMODULE hDllModule;
 
-typedef int (__stdcall CALLBACK * TD_SFTP_DLL_FNCT_CONNECT) (char *,
-                                                             char *,
-                                                             char *, int);
-typedef int (__stdcall CALLBACK * TD_SFTP_DLL_FNCT_DO_SFTP) (char *,
-                                                             char *);
-typedef my_fxp_names *(__stdcall CALLBACK *
-                       TD_SFTP_DLL_FNCT_GET_CURRENT_DIR_STRUCT) (void);
-typedef char *(__stdcall CALLBACK * TD_SFTP_DLL_FNCT_GLASTERRMSG) (void);
-typedef int (__stdcall CALLBACK *
-             TD_SFTP_DLL_FNCT_init_ProgressProc) (tProgressProc
-                                                  AP_ProgressProc,
-                                                  int Awc_PluginNr);
-typedef void (__stdcall CALLBACK *
-              TD_SFTP_DLL_FNCT_SetSftpServerAccountInfo)
-  (SftpServerAccountInfo ServerAccountInfo);
-typedef void (CALLBACK * TD_SFTP_DLL_FNCT_SetTransferMode)(bool binary);
+//---------------------------------------------------------------------
 
 TD_SFTP_DLL_FNCT_CONNECT SFTP_DLL_FNCT_CONNECT[MAX_Server];
 TD_SFTP_DLL_FNCT_DO_SFTP SFTP_DLL_FNCT_DO_SFTP[MAX_Server];
@@ -42,15 +27,36 @@ TD_SFTP_DLL_FNCT_SetTransferMode
   SFTP_DLL_FNCT_SetTransferMode[MAX_Server];
 HMODULE PSFTP_DLL_HANDLER[MAX_Server];
 
+//---------------------------------------------------------------------
+
 char *LI_user = NULL;
 char *LI_password = NULL;
 char *LI_host = NULL;
 int LI_port = 22;
 bool already_connected;
 bool mDefaultTransferMode=true;
+int disable_run_time_logging = 0;
+int disable_run_time_logging_ONCE = 0;
+
+//---------------------------------------------------------------------
 
 extern tRequestProc RequestProc;
 extern int PluginNumber;
+extern HMODULE hDllModule;
+
+//---------------------------------------------------------------------
+
+bool IsAlreadyConnected()
+{
+  return already_connected;
+}
+
+void ResetAlreadyConnected()
+{
+  already_connected = false;
+}
+
+//---------------------------------------------------------------------
 
 void Unload_PSFTP_DLL_HANDLER(int ServerId)
 {
@@ -70,6 +76,8 @@ void Unload_PSFTP_DLL_HANDLER(int ServerId)
   }
 }
 
+//---------------------------------------------------------------------
+
 void wcplg_sftp_transfermode(int id, bool binary)
 {
   if (id>=0)
@@ -77,6 +85,8 @@ void wcplg_sftp_transfermode(int id, bool binary)
   else
     mDefaultTransferMode = binary;
 }
+
+//---------------------------------------------------------------------
 
 int wcplg_sftp_connect(char *user, char *password, char *host, int port,
                        SftpServerAccountInfo * allServers,
@@ -291,6 +301,8 @@ int wcplg_sftp_connect(char *user, char *password, char *host, int port,
   return SFTP_FAILED;
 }
 
+//---------------------------------------------------------------------
+
 int wcplg_sftp_disconnect(int ServerId, bool log_message)
 {
 
@@ -303,7 +315,7 @@ int wcplg_sftp_disconnect(int ServerId, bool log_message)
   }
 
   cS_ID = ServerId;
-  _allServer = getP_allServer();
+  _allServer = GetAllServers();
 
   if (PSFTP_DLL_HANDLER[ServerId] != NULL)  // are we really connected ?
   {
@@ -341,13 +353,15 @@ int wcplg_sftp_disconnect(int ServerId, bool log_message)
   return SFTP_SUCCESS;
 }
 
+//---------------------------------------------------------------------
+
 int wcplg_sftp_do_commando(char *commando, char *server_output,
                            int ServerId)
 {
   char log_buf[MAX_CMD_BUFFER];
   int _CurrentServer_ID = ServerId;
   struct SftpServerAccountInfo *_allServer;
-  _allServer = getP_allServer();
+  _allServer = GetAllServers();
 
   if (_CurrentServer_ID == -1) {
     dbg("wcplg_sftp_do_commando: _CurrentServer_ID == -1, FIX ME");
@@ -369,6 +383,7 @@ int wcplg_sftp_do_commando(char *commando, char *server_output,
   return SFTP_SUCCESS;
 }
 
+//---------------------------------------------------------------------
 
 struct fxp_names *wcplg_sftp_get_current_dir_struct(int ServerId)
 {
@@ -404,6 +419,8 @@ struct fxp_names *wcplg_sftp_get_current_dir_struct(int ServerId)
   return CurrentDirStruct;
 }
 
+//---------------------------------------------------------------------
+
 void winSlash2unix(char *s)
 {
   unsigned int i;
@@ -412,6 +429,8 @@ void winSlash2unix(char *s)
       s[i] = '/';
   }
 }
+
+//---------------------------------------------------------------------
 
 int init_ProgressProc(tProgressProc AP_ProgressProc, int Awc_PluginNr,
                       int ServerId)
@@ -423,6 +442,8 @@ int init_ProgressProc(tProgressProc AP_ProgressProc, int Awc_PluginNr,
   return 0;
 }
 
+//---------------------------------------------------------------------
+
 int psftp_memory_hole__stopfen(int ServerId)
 {
   if (SFTP_DLL_FNCT_psftp_memory_hole__stopfen[ServerId] != NULL) {
@@ -430,6 +451,8 @@ int psftp_memory_hole__stopfen(int ServerId)
   }
   return -1;
 }
+
+//---------------------------------------------------------------------
 
 void init_server_dll_handlers()
 {
@@ -447,6 +470,8 @@ void init_server_dll_handlers()
   }
 }
 
+//---------------------------------------------------------------------
+
 void get_psftpDll_path(char *buf)
 {
   char cDir[MAX_CMD_BUFFER];
@@ -460,6 +485,8 @@ void get_psftpDll_path(char *buf)
 
   strcpy(p, "\\psftp.dll");
 }
+
+//---------------------------------------------------------------------
 
 int fileCopy(char *src, char *dest)
 {
@@ -486,6 +513,8 @@ int fileCopy(char *src, char *dest)
   return 0;
 }
 
+//---------------------------------------------------------------------
+
 void unlink_dll_tmp_file(int id)
 {
   if (id == -1)
@@ -500,6 +529,8 @@ void unlink_dll_tmp_file(int id)
   _unlink(dll_2_load);
 }
 
+//---------------------------------------------------------------------
+
 void unlink_ALL_dll_tmp_files()
 {
   int i;
@@ -507,6 +538,8 @@ void unlink_ALL_dll_tmp_files()
     unlink_dll_tmp_file(i);
   }
 }
+
+//---------------------------------------------------------------------
 
 int file_exists(char *fname)
 {
@@ -522,6 +555,8 @@ int file_exists(char *fname)
   return ret;
 }
 
+//---------------------------------------------------------------------
+
 void wcplg_sftp_getLastError(int id, char *buf)
 {
   char *msg;
@@ -534,3 +569,68 @@ void wcplg_sftp_getLastError(int id, char *buf)
   } else
     strcpy(buf, "");
 }
+
+//---------------------------------------------------------------------
+
+void DISABLE_LOGGING()
+{
+  disable_run_time_logging = 1;
+}
+
+//---------------------------------------------------------------------
+
+void DISABLE_LOGGING_ONCE()
+{
+  disable_run_time_logging_ONCE = 1;
+}
+
+//---------------------------------------------------------------------
+
+void ENABLE_LOGGING()
+{
+  disable_run_time_logging = 0;
+}
+
+//---------------------------------------------------------------------
+
+int do_logging()
+{
+  if (disable_run_time_logging_ONCE == 1) {
+    disable_run_time_logging_ONCE = 0;
+    return 0;
+  }
+  if (disable_run_time_logging == 1)
+    return 0;
+  return 1;
+}
+
+//---------------------------------------------------------------------
+
+void trim_host_from_hoststring(char *hoststring)
+{
+  char *buf;
+  if (hoststring == NULL)
+    return;
+  buf = strstr(hoststring, ":");
+  if (buf == NULL)
+    return;                     //Kein Port angegeben
+  hoststring[strlen(hoststring) - strlen(buf)] = '\0';
+}
+
+//---------------------------------------------------------------------
+
+void trim_port_from_hoststring(char *hoststring)
+{
+  char *buf;
+  if (hoststring == NULL)
+    return;
+  buf = strstr(hoststring, ":");
+  if (buf == NULL) {
+    strcpy(hoststring, "");
+    return;                     //Kein Port angegeben
+  }
+  buf++;                        // : überspringen
+  strcpy(hoststring, buf);
+  //hoststring+=(strlen(hoststring)-strlen(buf)+1);
+}
+

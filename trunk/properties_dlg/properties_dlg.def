@@ -1,3 +1,5 @@
-LIBRARY	properties_dlg
+LIBRARY
 EXPORTS
 	Properties
+	InitializeCfgDLL
+	FreeCfgDLL

@@ -19,19 +19,21 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\shared\"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;PROPERTIES_DLG_EXPORTS"
+				AdditionalIncludeDirectories="..\shared\;&quot;$(WXWIDGETS)\lib\mswd&quot;;&quot;$(WXWIDGETS)\contrib\include&quot;;..\PuttyLib\putty"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;PROPERTIES_DLG_EXPORTS;wxUSE_GUI=1;__WXDEBUG__;WXDEBUG=1;WXUSINGDLL=1"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="4"/>
+				DebugInformationFormat="4"
+				CompileAs="2"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="wxmsw24d.lib comctl32.lib WS2_32.Lib RpcRT4.Lib wxxrc24d.lib"
 				OutputFile="../tc_plugin/Debug/wfx_sftp_cfg.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="properties_dlg.def"
@@ -69,17 +71,21 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\shared\"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PROPERTIES_DLG_EXPORTS"
-				RuntimeLibrary="0"
+				EnableFiberSafeOptimizations="TRUE"
+				AdditionalIncludeDirectories="..\shared\;&quot;$(WXWIDGETS)\lib\mswdll&quot;;&quot;$(WXWIDGETS)\contrib\include&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PROPERTIES_DLG_EXPORTS;WXUSINGDLL=1;wxUSE_GUI=1"
+				MinimalRebuild="TRUE"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="3"/>
+				DebugInformationFormat="0"
+				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="wxmsw24.lib comctl32.lib WS2_32.Lib wxxrc24.lib"
 				OutputFile="../tc_plugin/Release/wfx_sftp_cfg.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="properties_dlg.def"
@@ -129,11 +135,20 @@
 			Name="Headerdateien"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			<File
+				RelativePath=".\resource.h">
+			</File>
+			<File
+				RelativePath=".\wxmyapp.h">
+			</File>
 		</Filter>
 		<Filter
 			Name="Ressourcendateien"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
+			<File
+				RelativePath=".\properties_dlg.rc">
+			</File>
 		</Filter>
 	</Files>
 	<Globals>
