@@ -92,7 +92,7 @@ void SaveServerInfo(int SectionNumber, struct SftpServerAccountInfo *ServerInfo,
   WriteServerInfo("title", title)
   WriteServerInfo("host", host)
   WriteServerInfo("username", username)
-  if (aProperties->PasswordCrypterPath[0]!=0) {
+  if ((aProperties->EncryptPassword) && (strlen(aProperties->PasswordCrypterPassword)>0)) {
     char buf[4000];
     memset(buf, 0, sizeof(buf));
     aProperties->EncryptPassword(ServerInfo->password, buf);

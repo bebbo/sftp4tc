@@ -24,7 +24,8 @@ private:
   void OnNewButtonClicked( wxCommandEvent &event );
   void OnDuplicateButtonClicked( wxCommandEvent &event );
   void OnDeleteButtonClicked( wxCommandEvent &event );
-  void OnCloseButtonClicked( wxCommandEvent &event );
+  void OnCancelButtonClicked( wxCommandEvent &event );
+  void OnOKButtonClicked( wxCommandEvent &event );
   void OnListBox( wxCommandEvent &event );
   void OnTitleTextChange( wxCommandEvent &event );
   void OnHostTextChange( wxCommandEvent &event );
@@ -60,6 +61,7 @@ private:
 
   SftpServerAccountInfo *mCurrentServer;
   int mPos;
+  bool mSave;
 
   wxListBox *lstConnections;
 
