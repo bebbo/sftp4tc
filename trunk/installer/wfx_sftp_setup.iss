@@ -22,6 +22,7 @@ UninstallDisplayName=SFTP for TotalCommander
 OutputDir=..\..\installer
 SetupIconFile=..\SFTP.ICO
 ChangesEnvironment=yes
+LicenseFile=..\..\installer\Licence.putty
 
 [Languages]
 Name: en; MessagesFile: compiler:Default.isl
@@ -43,6 +44,7 @@ en.Error=Total Commander's INI file (common for all users) was not found!%nPleas
 
 [Files]
 Source: plugin_sftp.wfx; DestDir: {app}; Components: SFTP_Plugin; AfterInstall: AfterPluginInstall
+Source: ..\..\installer\Licence.putty; DestDir: {app}; Components: SFTP_Plugin
 Source: psftp.dll; DestDir: {app}; Components: SFTP_Plugin
 Source: wfx_sftp_cfg.dll; DestDir: {app}; Components: SFTP_CFG
 Source: ..\..\properties_dlg\wfx_sftp_cfg.xrc; DestDir: {app}\rc; Components: SFTP_CFG
@@ -74,15 +76,19 @@ const
   PWD_SECTION = 'config';
   PWD_INI_KEY = 'passwd_crypter';
 
+function ExpandEnvironmentStrings(Source: string; Dest: string; size: dword): dword; external 'ExpandEnvironmentStringsA@kernel32.dll stdcall';
+
 procedure AfterPluginInstall;
 var
-  user_ini, ini: string;
+  user_ini, ini, ini_long: string;
   found: boolean;
 begin
   if IsTaskSelected('all_users_setup_tc') then begin
    	if RegQueryStringValue(HKEY_LOCAL_MACHINE, TC_KEY, INI_KEY, ini) then begin
-	  found := true;
-	  ini := ExpandFileName(ini);
+  	  found := true;
+  	  SetLength(ini_long, 1024);
+  	  ExpandEnvironmentStrings(ini, ini_long, 1024);
+  	  ini := ini_long;
     end else begin
       found := false;
     end;
@@ -98,8 +104,10 @@ begin
 
   if IsTaskSelected('curr_user_setup_tc') then begin
    	if RegQueryStringValue(HKEY_CURRENT_USER, TC_KEY, INI_KEY, user_ini) then begin
- 	  found := true;
-	  ini := ExpandFileName(user_ini);
+   	  found := true;
+	    SetLength(ini_long, 1024);
+  	  ExpandEnvironmentStrings(user_ini, ini_long, 1024);
+  	  user_ini := ini_long;
     end else begin
       found := false;
     end;
@@ -116,16 +124,18 @@ end;
 
 procedure AfterPWDCrypterInstall;
 var
-  user_ini, ini: string;
+  user_ini, ini, ini_long: string;
 begin
   if RegQueryStringValue(HKEY_CURRENT_USER, SFTP_KEY, SFTP_INI_KEY, user_ini) then begin
-  	user_ini := ExpandFileName(user_ini);
+    SetLength(ini_long, 1024);
+ 	  ExpandEnvironmentStrings(user_ini, ini_long, 1024);
+ 	  user_ini := ini_long;
     SetIniString(PWD_SECTION, PWD_INI_KEY, ExpandConstant('{app}')+'\password_crypter.dll', user_ini);
   end else begin
     user_ini := '';
   end;
 
-  ini := ExpandFileName(ExpandConstant('{app}')+'\'+SFTP_INI);
+  ini := ExpandConstant('{app}')+'\'+SFTP_INI;
   if ini<>user_ini then
       SetIniString(PWD_SECTION, PWD_INI_KEY, ExpandConstant('{app}')+'\password_crypter.dll', ini);
 end;
