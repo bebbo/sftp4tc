@@ -52,7 +52,8 @@ BEGIN_EVENT_TABLE(PreferencesDialog, wxDialog)
   EVT_BUTTON( XRCID( "btnNew" ), PreferencesDialog::OnNewButtonClicked )    
   EVT_BUTTON( XRCID( "btnDuplicate" ), PreferencesDialog::OnDuplicateButtonClicked )    
   EVT_BUTTON( XRCID( "btnDelete" ), PreferencesDialog::OnDeleteButtonClicked )    
-  EVT_BUTTON( XRCID( "btnClose" ), PreferencesDialog::OnCloseButtonClicked )    
+  EVT_BUTTON( XRCID( "btnCancel" ), PreferencesDialog::OnCancelButtonClicked )    
+  EVT_BUTTON( XRCID( "btnOK" ), PreferencesDialog::OnOKButtonClicked )    
   EVT_LISTBOX( XRCID( lstConnections_ID ), PreferencesDialog::OnListBox )
   EVT_TEXT( XRCID( edtTitle_ID ), PreferencesDialog::OnTitleTextChange )
   EVT_TEXT( XRCID( edtHost_ID ), PreferencesDialog::OnHostTextChange )
@@ -84,7 +85,7 @@ END_EVENT_TABLE()
 //---------------------------------------------------------------------
 
 PreferencesDialog::PreferencesDialog(config_properties *aProperties, wxWindow *aParent): 
-  mProperties(aProperties), mCurrentServer(0), mPos(-1)
+  mProperties(aProperties), mCurrentServer(0), mPos(-1), mSave(true)
 {
   dlgres = wxXmlResource::Get()->LoadDialog(this, aParent, wxT("CONNECTIONS"));
 
@@ -164,7 +165,8 @@ PreferencesDialog::PreferencesDialog(config_properties *aProperties, wxWindow *a
 // Destructor. (Empty, as I don't need anything special done when destructing).
 PreferencesDialog::~PreferencesDialog()
 {
-  SaveProperties(mProperties);
+  if (mSave)
+    SaveProperties(mProperties);
 }
 
 //------------------------ BUTTON EVENTS ---------------------------------------------
@@ -223,11 +225,18 @@ void PreferencesDialog::OnDeleteButtonClicked( wxCommandEvent &event )
 
 //---------------------------------------------------------------------
 
-void PreferencesDialog::OnCloseButtonClicked( wxCommandEvent &event )
+void PreferencesDialog::OnCancelButtonClicked( wxCommandEvent &event )
 {
+  mSave = false;
   this->Close();
 }
 
+//---------------------------------------------------------------------
+
+void PreferencesDialog::OnOKButtonClicked( wxCommandEvent &event )
+{
+  this->Close();
+}
 //-------------------------- LISTBOX EVENTS -------------------------------------------
 
 void PreferencesDialog::OnListBox( wxCommandEvent &event )

@@ -293,7 +293,8 @@ int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc,
 
 bool UnixTimeToLocalTime(long *mtime, LPFILETIME ft)
 {
-  struct tm *fttm = localtime(mtime);
+  time_t lmtime = *mtime;
+  struct tm *fttm = localtime(&lmtime);
   SYSTEMTIME st;
   FILETIME ft2;
 
@@ -657,7 +658,14 @@ bool addnewserver(char *servertitle)
   WritePrivateProfileString(section_name, "title", servertitle_, SftpConfig.ConfigIniFile);
   WritePrivateProfileString(section_name, "host", host, SftpConfig.ConfigIniFile);
   WritePrivateProfileString(section_name, "username", user, SftpConfig.ConfigIniFile);
-  WritePrivateProfileString(section_name, "password", pwd, SftpConfig.ConfigIniFile);
+  if ((SftpConfig.EncryptPassword) && (strlen(SftpConfig.PasswordCrypterPassword)>0)) {
+    char buf[4000];
+    memset(buf, 0, sizeof(buf));
+    SftpConfig.EncryptPassword(pwd, buf);
+    WritePrivateProfileString(section_name, "password", buf, SftpConfig.ConfigIniFile);
+  } else {
+    WritePrivateProfileString(section_name, "password", pwd, SftpConfig.ConfigIniFile);
+  }
   WritePrivateProfileString(section_name, "port", port, SftpConfig.ConfigIniFile);
   WritePrivateProfileString(section_name, "home_dir", home_dir, SftpConfig.ConfigIniFile);
   WritePrivateProfileString(section_name, "compression",
@@ -1729,8 +1737,9 @@ int wcplg_sftp_connect_byID(int ID)
   }
 
   if (wcplg_sftp_connect
-      (SftpConfig.ServerInfos[ID].username, SftpConfig.ServerInfos[ID].password, SftpConfig.ServerInfos[ID].host,
-       SftpConfig.ServerInfos[ID].port, SftpConfig.ServerInfos, ID) != SFTP_SUCCESS) {
+      (SftpConfig.ServerInfos[ID].username, SftpConfig.ServerInfos[ID].password, 
+       SftpConfig.ServerInfos[ID].host, SftpConfig.ServerInfos[ID].port, 
+       SftpConfig.ServerInfos, ID) != SFTP_SUCCESS) {
     SftpConfig.ServerInfos[ID].password_cached[0] = '\0';
     SftpConfig.ServerInfos[ID].host_cached[0] = 0;
     SftpConfig.ServerInfos[ID].username_cached[0] = 0;
@@ -1827,52 +1836,85 @@ int LoadServers()
   char buf_set_chmod_after_put[MAX_Server_INFO];
   char buf_set_chmod_after_mkdir[MAX_Server_INFO];
   char buf_set_mtime_after_put[MAX_Server_INFO];
+  BOOL retry;
 
-  //Check for password crypter library
-  GetPrivateProfileString(INI_CONFIG_SECTION_NAME,
+  do {
+    retry = false;
+    //Check for password crypter library
+    GetPrivateProfileString(INI_CONFIG_SECTION_NAME,
                           INI_CONFIG_USE_PASSWORD_CRYPTER, "", buf_divers,
                           MAX_Server_INFO, SftpConfig.ConfigIniFile);
 
-  if (strlen(buf_divers)>0) {
-    if (stricmp(buf_divers, SftpConfig.PasswordCrypterPath)!=0) {
-      strcpy(SftpConfig.PasswordCrypterPath, buf_divers);
-      hPasswdCrypter = LoadLibrary(buf_divers);
-      if (hPasswdCrypter) {
-        BOOL load;
-        hSetupPasswordCrypter = (tSetupPasswordCrypter)
-          GetProcAddress(hPasswdCrypter, "SetupPasswordCrypter");
-        SftpConfig.EncryptPassword = (tEncryptPassword)
-          GetProcAddress(hPasswdCrypter, "EncryptPassword");
-        SftpConfig.DecryptPassword = (tDecryptPassword)
-          GetProcAddress(hPasswdCrypter, "DecryptPassword");
-        if ((hSetupPasswordCrypter) && (SftpConfig.EncryptPassword) && 
-          (SftpConfig.DecryptPassword)) {
-          buf_divers[0]=0;
-          //what to do, if user cancel this?
-          load = RequestProc(PluginNumber, RT_Password, "PasswordCrypter's master-password", 
-            NULL, buf_divers, sizeof(buf_divers) - 1);
+    if (strlen(buf_divers)>0) {
+      if (stricmp(buf_divers, SftpConfig.PasswordCrypterPath)!=0) {
+        strcpy(SftpConfig.PasswordCrypterPath, buf_divers);
+        hPasswdCrypter = LoadLibrary(buf_divers);
+        if (hPasswdCrypter) {
+          BOOL load;
+          hSetupPasswordCrypter = (tSetupPasswordCrypter)
+            GetProcAddress(hPasswdCrypter, "SetupPasswordCrypter");
+          SftpConfig.EncryptPassword = (tEncryptPassword)
+            GetProcAddress(hPasswdCrypter, "EncryptPassword");
+          SftpConfig.DecryptPassword = (tDecryptPassword)
+            GetProcAddress(hPasswdCrypter, "DecryptPassword");
+          if ((hSetupPasswordCrypter) && (SftpConfig.EncryptPassword) && 
+            (SftpConfig.DecryptPassword)) {
+            buf_divers[0]=0;
+            //what to do, if user cancel this?
+            load = RequestProc(PluginNumber, RT_Password, "PasswordCrypter's master-password", 
+              NULL, buf_divers, sizeof(buf_divers) - 1);
+            if (!load) {
+              SftpConfig.PasswordCrypterPath[0] = 0;
+              SftpConfig.PasswordCrypterPassword[0] = 0;
+            }
           } else {
             SftpConfig.PasswordCrypterPath[0] = 0;
             load = 0;
           }
-        if (load) {
-          strcpy(SftpConfig.PasswordCrypterPassword, buf_divers);
-          hSetupPasswordCrypter(buf_divers);
-        } else {
-          FreeLibrary(hPasswdCrypter);
-          hPasswdCrypter=0;
-        }
-      }
-    } else {
-      if (!hPasswdCrypter)
-        err_v("Passwordcrypter module failed to load!\n(%s)", buf_divers);
-    }
 
-    if (!hPasswdCrypter) {
-      //SftpConfig.PasswordCrypterPath[0] = 0;
-      //give a message
+          if (load) {
+            char buf_test[4000], buf_test2[4000];
+            memset(buf_test, 0, sizeof(buf_test));
+
+            strcpy(SftpConfig.PasswordCrypterPassword, buf_divers);
+            hSetupPasswordCrypter(buf_divers);
+
+            GetPrivateProfileString(INI_CONFIG_SECTION_NAME,
+                            INI_CONFIG_TEST_PASSWORD, "", buf_test,
+                            4000, SftpConfig.ConfigIniFile);
+
+            if (strlen(buf_test)>0) {
+              memset(buf_test2, 0, sizeof(buf_test2));
+
+              SftpConfig.DecryptPassword(buf_test, buf_test2);
+              load = strcmp(buf_test2, INI_CONFIG_TEST_PASSWORD_TEST)==0;
+              if (!load) {
+                retry = RequestProc(PluginNumber, RT_MsgYesNo, 
+                  "Passwordcrypter's master-password verification failed!", "Retry?", NULL, 0);
+                SftpConfig.PasswordCrypterPath[0] = 0;
+                SftpConfig.PasswordCrypterPassword[0] = 0;
+              }
+            }
+          }
+          
+          if (!load) {
+            FreeLibrary(hPasswdCrypter);
+            hPasswdCrypter=0;
+            SftpConfig.EncryptPassword = 0;
+            SftpConfig.DecryptPassword = 0;
+          }
+        }
+      } else {
+        if (!hPasswdCrypter)
+          err_v("Passwordcrypter module failed to load!\n(%s)", SftpConfig.PasswordCrypterPath);
+      }
+
+      if (!hPasswdCrypter) {
+        //SftpConfig.PasswordCrypterPath[0] = 0;
+        //give a message
+      }
     }
-  }
+  } while (retry);
 
   for (i = 0; i < max_sections; i++) {
     buf_title[0] = '\0';
@@ -2148,7 +2190,8 @@ int LoadServers()
         strcpy(SftpConfig.ServerInfos[ID].proxy_telnet_command, "");
       }
 
-      //this line checks if we get a really supported proxy version - the other stuff is not really supported right now...
+      //this line checks if we get a really supported proxy version - the other stuff
+      //is not really supported right now...
       if ((SftpConfig.ServerInfos[ID].proxy_type != PROXY_SOCKS4)
           && (SftpConfig.ServerInfos[ID].proxy_type != PROXY_SOCKS5))
         SftpConfig.ServerInfos[ID].proxy_type = PROXY_NONE;

@@ -591,11 +591,19 @@
             </object>
           </object>
           <object class="spacer">
+            <size>100,5</size>
+          </object>
+          <object class="sizeritem">
+            <object class="wxButton" name="btnOK">
+              <label>OK</label>
+            </object>
+          </object>
+          <object class="spacer">
             <size>10,5</size>
           </object>
           <object class="sizeritem">
-            <object class="wxButton" name="btnClose">
-              <label>Close</label>
+            <object class="wxButton" name="btnCancel">
+              <label>Cancel</label>
             </object>
           </object>
         </object>
