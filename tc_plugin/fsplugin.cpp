@@ -1,7 +1,12 @@
 /*
+VERSION 1.1.56.2
+[3.11.2004]
+*ADDED set "last modified time(mtime)" after put (default on)
+
 VERSION 1.1.56.1
 [27.10.2004]
 *ADDED properties dialog connection
++FIXED Text Transfer Mode (1 character on a line was skipped)
 /UPDATED to PuTTY 0.56 (first beta)
 
 VERSION 1.1.55.3
@@ -741,6 +746,8 @@ bool addnewserver(char *servertitle)
                             iniFname);
   WritePrivateProfileString(section_name, "set_chmod_after_mkdir", "0",
                             iniFname);
+  WritePrivateProfileString(section_name, "set_mtime_after_put", "1",
+                            iniFname);
 
   Num_allServer = init_servers_from_iniFile();
   return true;
@@ -837,6 +844,7 @@ bool deletethisconnection(char *servertitle)
         MOVE_INFO("chmod_value_mkdir")
         MOVE_INFO_PARAM("set_chmod_after_put", "0")
         MOVE_INFO_PARAM("set_chmod_after_mkdir", "0")
+        MOVE_INFO_PARAM("set_mtime_after_put", "1")
       }
       // delete last section
       sprintf(section_name_old, "%i",
@@ -856,6 +864,23 @@ int remote_chmod(char *RemoteName, unsigned int value)
   char sftp_cmd[MAX_CMD_BUFFER];
 
   _snprintf(sftp_cmd, MAX_CMD_BUFFER, "chmod %d \"%s\"", value, lRemoteName);
+
+  winSlash2unix(sftp_cmd);
+
+  if (wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID) == SFTP_SUCCESS) {
+    return FS_EXEC_OK;
+  }
+    
+  return FS_EXEC_ERROR;
+}
+
+int remote_mtime(char *RemoteName, unsigned long value)
+{
+  check_Concurrent_Connection(RemoteName);
+  char *lRemoteName = RemoteName + (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  char sftp_cmd[MAX_CMD_BUFFER];
+
+  _snprintf(sftp_cmd, MAX_CMD_BUFFER, "mtime %d \"%s\"", value, lRemoteName);
 
   winSlash2unix(sftp_cmd);
 
@@ -1330,7 +1355,7 @@ int __stdcall FsGetFile(char *RemoteName, char *LocalName, int CopyFlags,
   int err;
   bool ok = true;
 
-  if ((CopyFlags & FS_COPYFLAGS_OVERWRITE) == 0 && CopyFlags != FS_COPYFLAGS_RESUME)  //möchte file holen 
+  if ((CopyFlags & FS_COPYFLAGS_OVERWRITE) == 0 && CopyFlags != FS_COPYFLAGS_RESUME)  //want to get the file
   {
     //local
     FILE *fp;
@@ -1511,6 +1536,46 @@ int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
       if (allServer[CurrentServer_ID].set_chmod_after_put)
       {
         remote_chmod(RemoteName, allServer[CurrentServer_ID].chmod_value_put);
+      }
+      if (allServer[CurrentServer_ID].set_mtime_after_put)
+      {
+        bool f;
+        HANDLE myFile;
+        FILETIME LastWriteTime;
+
+        myFile = CreateFile(LocalName, // file name
+          GENERIC_READ,     // access mode
+          FILE_SHARE_READ,  // share mode
+          NULL,             // security descriptor
+          OPEN_EXISTING,    // how to create
+          FILE_ATTRIBUTE_NORMAL | // file attributes
+          FILE_FLAG_SEQUENTIAL_SCAN, NULL); // handle to template file
+
+        f = (myFile != INVALID_HANDLE_VALUE);
+
+        if (f)
+        {
+          f = (GetFileTime(myFile,       // gets last-write time for file
+             NULL, NULL, &LastWriteTime)==TRUE);
+          CloseHandle(myFile);
+        }
+
+        if (f) {
+          SYSTEMTIME st;
+          tm atm;
+          FileTimeToSystemTime(&LastWriteTime, &st);
+
+          atm.tm_year = st.wYear - 1900;
+          atm.tm_mon = st.wMonth - 1;
+          atm.tm_mday = st.wDay;
+          atm.tm_hour = st.wHour;
+          atm.tm_min = st.wMinute;
+          atm.tm_sec = st.wSecond;
+          atm.tm_isdst = 0;
+          unsigned long new_mtime = mktime(&atm);
+          
+          remote_mtime(RemoteName, new_mtime);
+        }
       }
       return FS_FILE_OK;
     }
@@ -1773,6 +1838,7 @@ int init_servers_from_iniFile()
   char buf_chmod_value_mkdir[MAX_Server_INFO];
   char buf_set_chmod_after_put[MAX_Server_INFO];
   char buf_set_chmod_after_mkdir[MAX_Server_INFO];
+  char buf_set_mtime_after_put[MAX_Server_INFO];
 
   WritePrivateProfileString(NULL, NULL, NULL, iniFname);
 
@@ -1799,6 +1865,7 @@ int init_servers_from_iniFile()
     buf_chmod_value_mkdir[0] = '\0';
     buf_set_chmod_after_put[0] = '\0';
     buf_set_chmod_after_mkdir[0] = '\0';
+    buf_set_mtime_after_put[0] = '\0';
 
     sprintf(section_name, "%i", i);
 
@@ -1857,6 +1924,9 @@ int init_servers_from_iniFile()
                               iniFname);
       GetPrivateProfileString(section_name, "set_chmod_after_mkdir", "",
                               buf_set_chmod_after_mkdir, MAX_Server_INFO,
+                              iniFname);
+      GetPrivateProfileString(section_name, "set_mtime_after_put", "",
+                              buf_set_mtime_after_put, MAX_Server_INFO,
                               iniFname);
       // Check title for / && 
       XconvertServerTitle(buf_title);
@@ -1929,20 +1999,30 @@ int init_servers_from_iniFile()
         allServer[ID].set_chmod_after_mkdir = 0;
       }
 
+      //set_mtime_after_put optional, default=1
+      if (strlen(buf_set_mtime_after_put)) {
+        allServer[ID].set_mtime_after_put =
+          (unsigned char)strtoul(buf_set_mtime_after_put, NULL, NULL);
+        if (allServer[ID].set_mtime_after_put > 1)
+          allServer[ID].set_mtime_after_put = 1;
+      } else {
+        allServer[ID].set_mtime_after_put = 1;
+      }
+
       //chmod_value_put optional, default=700, valid only with set_chmod_after_put
       if (strlen(buf_chmod_value_put)) {
         allServer[ID].chmod_value_put =
           strtoul(buf_chmod_value_put, NULL, NULL);
       } else {
-        allServer[ID].chmod_value_put = 0;
+        allServer[ID].chmod_value_put = 700;
       }
 
-      //chmod_value optional, default=700, valid only with set_chmod_after_put
+      //chmod_value_mkdir optional, default=700, valid only with set_chmod_after_mkdir
       if (strlen(buf_chmod_value_mkdir)) {
         allServer[ID].chmod_value_mkdir =
           strtoul(buf_chmod_value_mkdir, NULL, NULL);
       } else {
-        allServer[ID].chmod_value_mkdir = 0;
+        allServer[ID].chmod_value_mkdir = 700;
       }
 
       // port & home_dir are optional
@@ -2105,6 +2185,7 @@ int init_servers_from_iniFile()
   allServer[ID].chmod_value_mkdir = 0;
   allServer[ID].set_chmod_after_put = 0;
   allServer[ID].set_chmod_after_mkdir = 0;
+  allServer[ID].set_mtime_after_put = 0;
 
   ID++;                         // !!!
 
@@ -2572,6 +2653,7 @@ void ServerAccountInfoDefaults(struct SftpServerAccountInfo
   ServerAccountInfo->chmod_value_mkdir = 700;
   ServerAccountInfo->set_chmod_after_put = 0;
   ServerAccountInfo->set_chmod_after_mkdir = 0;
+  ServerAccountInfo->set_mtime_after_put = 1;
 }
 
 int loadPuttySectionToSftpPluginServerInfoStruct(struct

@@ -36,6 +36,7 @@ struct SftpServerAccountInfo {
   unsigned char use_key_auth;
   unsigned char set_chmod_after_put;
   unsigned char set_chmod_after_mkdir;
+  unsigned char set_mtime_after_put;
   unsigned char dont_ask4_username;
   unsigned char dont_ask4_password;
   unsigned char dont_ask4_passphrase;

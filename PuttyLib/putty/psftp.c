@@ -315,6 +315,59 @@ int sftp_cmd_ls(struct sftp_command *cmd)
 }
 
 /*
+changes timestamp of a file
+*/
+int sftp_cmd_mod_mtime(struct sftp_command *cmd)
+{
+  char *fname;
+  int result;
+  struct fxp_attrs attrs;
+  unsigned long oldtime, newtime;
+  struct sftp_packet *pktin;
+  struct sftp_request *req, *rreq;
+
+  fname = canonify(cmd->words[2]);
+  if (!fname) {
+    printf("%s: %s\n", fname, fxp_error());
+    return 0;
+  }
+
+  sftp_register(req = fxp_stat_send(fname));
+  rreq = sftp_find_request(pktin = sftp_recv());
+  assert(rreq == req);
+  result = fxp_stat_recv(pktin, rreq, &attrs);
+
+  if (!result || !(attrs.flags & SSH_FILEXFER_ATTR_ACMODTIME)) {
+    printf("get attrs for %s: %s\n", fname,
+           result ? "file modtime not provided" : fxp_error());
+    sfree(fname);
+    return 0;
+  }
+
+  oldtime = attrs.mtime;
+  attrs.mtime = atol(cmd->words[1]);
+  newtime = attrs.mtime;
+
+  attrs.flags = SSH_FILEXFER_ATTR_ACMODTIME;  /* modtime _only_ */
+
+  sftp_register(req = fxp_setstat_send(fname, attrs));
+  rreq = sftp_find_request(pktin = sftp_recv());
+  assert(rreq == req);
+  result = fxp_setstat_recv(pktin, rreq);
+
+  if (!result) {
+    printf("set mtime for %s: %s\n", fname, fxp_error());
+    sfree(fname);
+    return 0;
+  }
+
+  printf("%s: %d -> %d\n", fname, oldtime, newtime);
+
+  sfree(fname);
+  return 1;
+}
+
+/*
  * Change directories. We do this by canonifying the new name, then
  * trying to OPENDIR it. Only if that succeeds do we set the new pwd.
  */
@@ -878,13 +931,13 @@ int sftp_general_put(struct sftp_command *cmd, int restart)
               if (i+1>len)
                 len += fread(&buffer[len], 1, 1, fp);
               if ((i+1<len) && (buffer[i+1]==10)) {
-                if (i-1-start>0)
+                if (i-start>0)
                   xfer_upload_data(xfer, &buffer[start], i-start);
                 xfer_upload_data(xfer, &buffer[i+1], 1);
                 start = i+2;
               } else {
                 if ((i>=1) && (buffer[i-1]==10)) {
-                  if (i-1-start>0)
+                  if (i-start>0)
                     xfer_upload_data(xfer, &buffer[start], i-start);
                   start = i+1;
                 } else {
@@ -893,7 +946,7 @@ int sftp_general_put(struct sftp_command *cmd, int restart)
                       xfer_upload_data(xfer, buffer_10, 1);
                     start = i+1;
                   } else {
-                    if (i-1-start>0)
+                    if (i-start>0)
                       xfer_upload_data(xfer, &buffer[start], i-start);
                     xfer_upload_data(xfer, buffer_10, 1);
                     start = i+1; 
@@ -1501,6 +1554,8 @@ static struct sftp_cmd_lookup {
       " <directory-name>\n"
       "  Creates a directory with the given name on the server.\n",
       sftp_cmd_mkdir}, {
+  "mtime", TRUE, "changes modified timestamp of a file",
+      "", sftp_cmd_mod_mtime}, {
   "mv", TRUE, "move or rename a file on the remote server",
       " <source-filename> <destination-filename>\n"
       "  Moves or renames the file <source-filename> on the server,\n"
