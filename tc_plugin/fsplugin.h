@@ -20,7 +20,7 @@
 #define FS_COPYFLAGS_MOVE 4
 #define FS_COPYFLAGS_EXISTS_SAMECASE 8
 #define FS_COPYFLAGS_EXISTS_DIFFERENTCASE 16
- 
+
 // flags for tRequestProc
 #define RT_Other 0
 #define RT_UserName 1
@@ -63,37 +63,42 @@
 #define FSPLUGIN_CAPTION "Secure FTP Connections"
 
 typedef struct {
-    DWORD SizeLow,SizeHigh;
-    FILETIME LastWriteTime;
-    int Attr;
+  DWORD SizeLow, SizeHigh;
+  FILETIME LastWriteTime;
+  int Attr;
 } RemoteInfoStruct;
 
 // callback functions
-typedef int (__stdcall *tProgressProc)(int PluginNr,char* SourceName,
-             char* TargetName,int PercentDone);
-typedef void (__stdcall *tLogProc)(int PluginNr,int MsgType,char* LogString);
-typedef BOOL (__stdcall *tRequestProc)(int PluginNr,int RequestType,char* CustomTitle,
-              char* CustomText,char* ReturnedText,int maxlen);
+typedef int (__stdcall * tProgressProc) (int PluginNr, char *SourceName,
+                                         char *TargetName,
+                                         int PercentDone);
+typedef void (__stdcall * tLogProc) (int PluginNr, int MsgType,
+                                     char *LogString);
+typedef BOOL(__stdcall * tRequestProc) (int PluginNr, int RequestType,
+                                        char *CustomTitle,
+                                        char *CustomText,
+                                        char *ReturnedText, int maxlen);
 
 // Function prototypes
-int __stdcall FsInit(int PluginNr,tProgressProc pProgressProc,
-                     tLogProc pLogProc,tRequestProc pRequestProc);
-HANDLE __stdcall FsFindFirst(char* Path,WIN32_FIND_DATA *FindData);
-BOOL __stdcall FsFindNext(HANDLE Hdl,WIN32_FIND_DATA *FindData);
+int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc,
+                     tLogProc pLogProc, tRequestProc pRequestProc);
+HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData);
+BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData);
 int __stdcall FsFindClose(HANDLE Hdl);
-BOOL __stdcall FsMkDir(char* Path);
-int __stdcall FsExecuteFile(HWND MainWin,char* RemoteName,char* Verb);
-int __stdcall FsRenMovFile(char* OldName,char* NewName,BOOL Move,
-                           BOOL OverWrite,RemoteInfoStruct* ri);
-int __stdcall FsGetFile(char* RemoteName,char* LocalName,int CopyFlags,
-                        RemoteInfoStruct* ri);
-int __stdcall FsPutFile(char* LocalName,char* RemoteName,int CopyFlags);
-BOOL __stdcall FsDeleteFile(char* RemoteName);
-BOOL __stdcall FsRemoveDir(char* RemoteName);
-BOOL __stdcall FsDisconnect(char* DisconnectRoot);
-BOOL __stdcall FsSetAttr(char* RemoteName,int NewAttr);
-BOOL __stdcall FsSetTime(char* RemoteName,FILETIME *CreationTime,
-      FILETIME *LastAccessTime,FILETIME *LastWriteTime);
-void __stdcall FsStatusInfo(char* RemoteDir,int InfoStartEnd,int InfoOperation);
-void __stdcall FsGetDefRootName(char* DefRootName,int maxlen);
-
+BOOL __stdcall FsMkDir(char *Path);
+int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb);
+int __stdcall FsRenMovFile(char *OldName, char *NewName, BOOL Move,
+                           BOOL OverWrite, RemoteInfoStruct * ri);
+int __stdcall FsGetFile(char *RemoteName, char *LocalName, int CopyFlags,
+                        RemoteInfoStruct * ri);
+int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags);
+BOOL __stdcall FsDeleteFile(char *RemoteName);
+BOOL __stdcall FsRemoveDir(char *RemoteName);
+BOOL __stdcall FsDisconnect(char *DisconnectRoot);
+BOOL __stdcall FsSetAttr(char *RemoteName, int NewAttr);
+BOOL __stdcall FsSetTime(char *RemoteName, FILETIME * CreationTime,
+                         FILETIME * LastAccessTime,
+                         FILETIME * LastWriteTime);
+void __stdcall FsStatusInfo(char *RemoteDir, int InfoStartEnd,
+                            int InfoOperation);
+void __stdcall FsGetDefRootName(char *DefRootName, int maxlen);
