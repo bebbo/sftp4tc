@@ -48,6 +48,7 @@ struct SftpServerAccountInfo {
   unsigned char dont_ask4_username;
   unsigned char dont_ask4_password;
   unsigned char dont_ask4_passphrase;
+  //internal
   unsigned char is_imported_from_any_datasrc;  //private
   unsigned char is_imported_from_putty_registry; //private
   unsigned char is_imported_from_sshcom_registry;  //private

@@ -36,7 +36,7 @@ char *LI_password = NULL;
 char *LI_host = NULL;
 int LI_port = 22;
 bool already_connected;
-bool mDefaultTransferMode=true;
+char mDefaultTransferMode[2048];
 int disable_run_time_logging = 0;
 int disable_run_time_logging_ONCE = 0;
 
@@ -81,12 +81,12 @@ void Unload_PSFTP_DLL_HANDLER(int ServerId)
 
 //---------------------------------------------------------------------
 
-void wcplg_sftp_transfermode(int id, bool binary)
+void wcplg_sftp_transfermode(int id, char *mode)
 {
   if (id>=0)
-    SFTP_DLL_FNCT_SetTransferMode[id](binary);
+    SFTP_DLL_FNCT_SetTransferMode[id](mode);
   else
-    mDefaultTransferMode = binary;
+    strncat(mDefaultTransferMode, mode, 2048);
 }
 
 //---------------------------------------------------------------------

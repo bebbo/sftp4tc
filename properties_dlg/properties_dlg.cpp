@@ -136,6 +136,7 @@ wxWindow *wxMyApp::GetHostWindow()
     mHostWindow->Disable();
     return mHostWindow;
   } else {
+    mHostWindow = 0;
     return 0;
   }
 }

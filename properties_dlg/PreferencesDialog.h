@@ -50,7 +50,7 @@ private:
   void chkUseKeyAuthChecked( wxCommandEvent &event );
   void chkAsk4PassphraseChecked( wxCommandEvent &event );
   void cboProxyTypeChoiceSelected( wxCommandEvent &event );
-  void cboImportPuttyChecked( wxCommandEvent &event );
+  void cboImportPuttySelected( wxCommandEvent &event );
   void edtImportSSHcomTextChange( wxCommandEvent &event );
   DECLARE_EVENT_TABLE()
 

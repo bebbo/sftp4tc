@@ -1260,6 +1260,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
     }
   }
 
+  //CHMOD
   if ((_strnicmp(lVerb, "quote chmod ", 12)==0) || (_strnicmp(lVerb, "chmod ", 6)==0))
   {
     if (lVerb[0]=='q')
@@ -1286,6 +1287,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
       return FS_EXEC_ERROR;
   }
 
+  //CHOWN
   if (_strnicmp(Verb, "quote chown ", 12)==0) {
     strcpy(sftp_cmd, &Verb[6]);
 
@@ -1298,11 +1300,19 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
       return FS_EXEC_ERROR;
   }
 
+  //MODE
   if (_strnicmp(Verb, "MODE ", 5)==0) {
-    if ((strlen(Verb)>=6) && (Verb[5]=='A'))
-      wcplg_sftp_transfermode(CurrentServer_ID, false);
-    else
-      wcplg_sftp_transfermode(CurrentServer_ID, true);
+    if (strlen(Verb)>=6) {
+      switch (Verb[5])
+      {
+        case 'A':
+        case 'X':
+          wcplg_sftp_transfermode(CurrentServer_ID, Verb+5);
+          break;
+        default:
+          wcplg_sftp_transfermode(CurrentServer_ID, "I\0");
+      }
+    }
     return FS_EXEC_OK;
   }
 
