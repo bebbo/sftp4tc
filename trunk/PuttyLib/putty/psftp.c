@@ -616,6 +616,7 @@ int sftp_general_get(struct sftp_command *cmd, int restart)
     if (ProgressProc("", "", (int) pcb) == 1) {
       wcplg_set_last_error_msg("cancel by user");
       not_canceled_by_user = 0;
+      ret = 0;
       xfer_set_error(xfer);     //won't write anymore
     }
 
@@ -638,6 +639,7 @@ int sftp_general_get(struct sftp_command *cmd, int restart)
       if (ProgressProc("", "", (int) pcb) == 1) {
         wcplg_set_last_error_msg("cancel by user");
         not_canceled_by_user = 0;
+	ret = 0;
         xfer_set_error(xfer);   //won't write anymore
       }
 
@@ -976,7 +978,7 @@ int sftp_general_put(struct sftp_command *cmd, int restart)
     pcb += pinc * len;
     if (ProgressProc("", "", (int) pcb) == 1) {
       wcplg_set_last_error_msg("cancel by user");
-      eof = 1;
+      err = 1;
     }
     offset = uint64_add32(offset, len);
   }
@@ -990,6 +992,8 @@ int sftp_general_put(struct sftp_command *cmd, int restart)
 
   fclose(fp);
   sfree(outfname);
+
+  if (err) ret=0;
 
   return ret;
 }
