@@ -72,15 +72,15 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				EnableFiberSafeOptimizations="TRUE"
-				AdditionalIncludeDirectories="..\shared\;&quot;$(WXWIDGETS)\lib\mswdll&quot;;&quot;$(WXWIDGETS)\contrib\include&quot;"
+				AdditionalIncludeDirectories="..\shared\;&quot;$(WXWIDGETS)\lib\mswdll&quot;;&quot;$(WXWIDGETS)\contrib\include&quot;;..\PuttyLib\putty"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PROPERTIES_DLG_EXPORTS;WXUSINGDLL=1;wxUSE_GUI=1"
-				MinimalRebuild="TRUE"
+				MinimalRebuild="FALSE"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="0"
-				CompileAs="0"/>
+				CompileAs="2"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -125,10 +125,22 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
+				RelativePath="..\shared\ConfigProperties.cpp">
+			</File>
+			<File
+				RelativePath=".\PreferencesDialog.cpp">
+			</File>
+			<File
+				RelativePath=".\PreferencesDialog.h">
+			</File>
+			<File
 				RelativePath=".\properties_dlg.cpp">
 			</File>
 			<File
 				RelativePath=".\properties_dlg.def">
+			</File>
+			<File
+				RelativePath="..\shared\ServerInfo.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -136,7 +148,13 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
+				RelativePath="..\shared\ConfigProperties.h">
+			</File>
+			<File
 				RelativePath=".\resource.h">
+			</File>
+			<File
+				RelativePath="..\shared\ServerInfo.h">
 			</File>
 			<File
 				RelativePath=".\wxmyapp.h">

@@ -12,7 +12,7 @@
 ; **********************************
 ; v0.1 WOK - initial release
 ; v0.2 WOK - fixed problem with $WINDIR vs. Registry source for ini-location
-; v0.3 MK  - changes to version 1.1.56.1
+; v0.3 MK  - changes to version 1.1.56.2
 ; ---------------------------------
 
 SetCompressor LZMA
@@ -20,22 +20,28 @@ XPStyle on
 
 VIAddVersionKey FileDescription "SFTP FS-plugin for TotalCommander setup"
 VIAddVersionKey ProductName SFTP4TC
-VIAddVersionKey ProductVersion 1.1.56.1
-VIAddVersionKey FileVersion 1.1.56.1
-VIAddVersionKey OriginalFilename wfx_sftp_1_1_56_1_setup.exe
+VIAddVersionKey ProductVersion 1.1.56.2
+VIAddVersionKey FileVersion 1.1.56.2
+VIAddVersionKey OriginalFilename wfx_sftp_1_1_56_2_setup.exe
 VIAddVersionKey LegalCopyright ""
 
-VIProductVersion 1.1.56.1
+VIProductVersion 1.1.56.2
 
 ; The name of the installer
 Name "SFTP FS-Plugin for TotalCommander(tm)"
 
 ; The setup-file to write
-OutFile "wfx_sftp_1_1_56_1_setup.exe"
+OutFile "wfx_sftp_1_1_56_2_setup.exe"
 
 
 ; The default installation directory
 InstallDir c:\totalcmd\sftp_plugin
+
+PageEx directory getdir
+PageExEnd
+
+Function getdir
+FunctionEnd
 
 ; *************************************************************** DEFAULT-SETUP-SECTION
 ; The stuff to install
@@ -51,6 +57,8 @@ Section "" ;No components page, name is not important
   IfErrors 0 RegGetIni
 	; No luck in registry, so try to find wincmd.ini in Windows-Directory
   	Goto TryWinDir
+
+  Goto TryWinDir
  
 RegGetIni:
   ;Get TC ini location from Registry into $2 variable
@@ -74,10 +82,10 @@ TryWinDir:
     ReadINIStr $1 $2 Configuration InstallDir
     StrCmp $1 "" 0 CheckIniExists
 
-    ; Also no luck to find wincmd.ini in $WINDIR...
-    MessageBox MB_OK|MB_ICONSTOP "ERROR: could not read from registry$\n     HKEY_CURRENT_USER\Software\Ghisler\Total Commander$\r$\nand could not read from $WINDIR\wincmd.ini$\n     [Configuration]InstallDir=$\n$\nNo TotalCommander installed?$\r$\nExiting!"
-	DetailPrint "Fatal Error: Exiting"
-    Goto ErrorExit
+;    ; Also no luck to find wincmd.ini in $WINDIR...
+;    MessageBox MB_OK|MB_ICONSTOP "ERROR: could not read from registry$\n     HKEY_CURRENT_USER\Software\Ghisler\Total Commander$\r$\nand could not read from $WINDIR\wincmd.ini$\n     [Configuration]InstallDir=$\n$\nNo TotalCommander installed?$\r$\nExiting!"
+;	DetailPrint "Fatal Error: Exiting"
+;    Goto ErrorExit
   
 
 

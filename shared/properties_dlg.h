@@ -9,8 +9,7 @@
 #define INITIALIZE_FUNCTION "InitializeCfgDLL"
 #define FREE_FUNCTION "FreeCfgDLL"
 
-typedef bool (__stdcall * tProperties) (int Mode, SftpServerAccountInfo *AllServers, int &count, 
-  int imported_sessions);
+typedef bool (__stdcall * tProperties) (int Mode, struct config_properties *aProperties);
 typedef void (__stdcall * tInitialize) (HMODULE hModule);
 typedef void (__stdcall * tFreeCfgDLL) ();
 

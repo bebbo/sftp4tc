@@ -11,21 +11,21 @@ extern "C" {
 
 //---------------------------------------------------------------------
 
-TD_SFTP_DLL_FNCT_CONNECT SFTP_DLL_FNCT_CONNECT[MAX_Server];
-TD_SFTP_DLL_FNCT_DO_SFTP SFTP_DLL_FNCT_DO_SFTP[MAX_Server];
+TD_SFTP_DLL_FNCT_CONNECT SFTP_DLL_FNCT_CONNECT[MAX_Server_Count];
+TD_SFTP_DLL_FNCT_DO_SFTP SFTP_DLL_FNCT_DO_SFTP[MAX_Server_Count];
 TD_SFTP_DLL_FNCT_GET_CURRENT_DIR_STRUCT
-  SFTP_DLL_FNCT_GET_CURRENT_DIR_STRUCT[MAX_Server];
-FARPROC SFTP_DLL_FNCT_DISCONNECT[MAX_Server];
-FARPROC SFTP_DLL_FNCT_psftp_memory_hole__stopfen[MAX_Server];
+  SFTP_DLL_FNCT_GET_CURRENT_DIR_STRUCT[MAX_Server_Count];
+FARPROC SFTP_DLL_FNCT_DISCONNECT[MAX_Server_Count];
+FARPROC SFTP_DLL_FNCT_psftp_memory_hole__stopfen[MAX_Server_Count];
 TD_SFTP_DLL_FNCT_GLASTERRMSG
-  SFTP_DLL_FNCT_GET_LAST_ERROR_MESSAGE[MAX_Server];
+  SFTP_DLL_FNCT_GET_LAST_ERROR_MESSAGE[MAX_Server_Count];
 TD_SFTP_DLL_FNCT_init_ProgressProc
-  SFTP_DLL_FNCT_init_ProgressProc[MAX_Server];
+  SFTP_DLL_FNCT_init_ProgressProc[MAX_Server_Count];
 TD_SFTP_DLL_FNCT_SetSftpServerAccountInfo
-  SFTP_DLL_FNCT_SetSftpServerAccountInfo[MAX_Server];
+  SFTP_DLL_FNCT_SetSftpServerAccountInfo[MAX_Server_Count];
 TD_SFTP_DLL_FNCT_SetTransferMode
-  SFTP_DLL_FNCT_SetTransferMode[MAX_Server];
-HMODULE PSFTP_DLL_HANDLER[MAX_Server];
+  SFTP_DLL_FNCT_SetTransferMode[MAX_Server_Count];
+HMODULE PSFTP_DLL_HANDLER[MAX_Server_Count];
 
 //---------------------------------------------------------------------
 
@@ -315,7 +315,7 @@ int wcplg_sftp_disconnect(int ServerId, bool log_message)
   }
 
   cS_ID = ServerId;
-  _allServer = GetAllServers();
+  _allServer = GetServerInfos();
 
   if (PSFTP_DLL_HANDLER[ServerId] != NULL)  // are we really connected ?
   {
@@ -361,7 +361,7 @@ int wcplg_sftp_do_commando(char *commando, char *server_output,
   char log_buf[MAX_CMD_BUFFER];
   int _CurrentServer_ID = ServerId;
   struct SftpServerAccountInfo *_allServer;
-  _allServer = GetAllServers();
+  _allServer = GetServerInfos();
 
   if (_CurrentServer_ID == -1) {
     dbg("wcplg_sftp_do_commando: _CurrentServer_ID == -1, FIX ME");
@@ -457,7 +457,7 @@ int psftp_memory_hole__stopfen(int ServerId)
 void init_server_dll_handlers()
 {
   int i = 0;
-  for (; i < MAX_Server; i++) {
+  for (; i < MAX_Server_Count; i++) {
     SFTP_DLL_FNCT_CONNECT[i] = NULL;
     SFTP_DLL_FNCT_DO_SFTP[i] = NULL;
     SFTP_DLL_FNCT_GET_CURRENT_DIR_STRUCT[i] = NULL;
@@ -466,7 +466,7 @@ void init_server_dll_handlers()
     SFTP_DLL_FNCT_GET_LAST_ERROR_MESSAGE[i] = NULL;
     SFTP_DLL_FNCT_init_ProgressProc[i] = NULL;
     SFTP_DLL_FNCT_SetSftpServerAccountInfo[i] = NULL;
-    PSFTP_DLL_HANDLER[MAX_Server];
+    PSFTP_DLL_HANDLER[MAX_Server_Count];
   }
 }
 
@@ -534,7 +534,7 @@ void unlink_dll_tmp_file(int id)
 void unlink_ALL_dll_tmp_files()
 {
   int i;
-  for (i = 0; i < MAX_Server; i++) {
+  for (i = 0; i < MAX_Server_Count; i++) {
     unlink_dll_tmp_file(i);
   }
 }

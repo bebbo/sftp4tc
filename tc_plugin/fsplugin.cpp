@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "putty_proxy.h"
 #include "properties_dlg.h"
+#include "ServerInfo.h"
 
 //Plugin's caption, shown in TC's list
 #define FSPLUGIN_CAPTION "Secure FTP Connections"
@@ -35,10 +36,6 @@ static char hex[17] = "0123456789ABCDEF";  //17 because of terminating 0-charact
 #define DefineAddConnection_define "Add connections.lnk"
 #define DefineAddConnection_selected "\\Add connections.lnk"
 
-#define INI_CONFIG_IMPORT_PUTTY_SSH_SESS "import_putty_ssh_sessions"
-#define INI_CONFIG_IMPORT_SSHCOM_SSH_SESS "import_sshcom_ssh_sessions"
-#define INI_CONFIG_SECTION_NAME "config"
-
 typedef struct {
   char Path[MAX_PATH];
   char LastFoundName[MAX_PATH];
@@ -54,12 +51,11 @@ struct enumsettings {
   int i;
 };
 
-struct SftpServerAccountInfo AllServers[MAX_Server];
+//struct SftpServerAccountInfo SftpConfig.ServerInfos[MAX_Server];
+config_properties SftpConfig;
 
 HMODULE hDllModule;
-char iniFname[MAX_PATH];
 bool delete_only_connection = FALSE;
-int Imported_ids_num = 0;
 
 //Plugin's initialization values
 int PluginNumber;
@@ -67,8 +63,7 @@ tProgressProc ProgressProc;
 tLogProc LogProc;
 tRequestProc RequestProc;
 
-int ServerCount = 0;
-int CurrentServer_ID = -1;
+int CurrentServer_ID= -1;
 HMODULE hDialogDLL = 0;
 tProperties hProperties = 0;
 tFreeCfgDLL hFreeCfgDLL = 0;
@@ -108,7 +103,7 @@ static char *strlcpy(char *p, char *p2, size_t maxlen)
 
 //---------------------------------------------------------------------
 
-int get_custom_users_sftp_inifile_from_reg(char *iniFname)
+int get_custom_users_sftp_inifile_from_reg(char *ConfigIniFile)
 {
   int ret = -1;
   HKEY subkey1;
@@ -118,7 +113,7 @@ int get_custom_users_sftp_inifile_from_reg(char *iniFname)
       ERROR_SUCCESS) {
     if (RegQueryValueEx
         (subkey1, PETRICH_TC_REGP_SFTP_K, 0, &type,
-         (unsigned char *) iniFname, &buflen) == ERROR_SUCCESS) {
+         (unsigned char *) ConfigIniFile, &buflen) == ERROR_SUCCESS) {
       ret = 0;
     }
 
@@ -167,14 +162,14 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserve
     {
       DllInitialised++;
       //Get the ini's filename
-      if (get_custom_users_sftp_inifile_from_reg(iniFname) == -1) {
+      if (get_custom_users_sftp_inifile_from_reg(SftpConfig.ConfigIniFile) == -1) {
         hDllModule = (HMODULE) hModule;
-        GetModuleFileName(hDllModule, iniFname, sizeof(iniFname) - 1);
-        char *p = strrchr(iniFname, '\\');
+        GetModuleFileName(hDllModule, SftpConfig.ConfigIniFile, sizeof(SftpConfig.ConfigIniFile) - 1);
+        char *p = strrchr(SftpConfig.ConfigIniFile, '\\');
         if (p)
           p++;
         else
-          p = iniFname;
+          p = SftpConfig.ConfigIniFile;
         strcpy(p, DefaultIniFileName);
       }
       break;
@@ -202,7 +197,7 @@ int ServerTitleExists(int numServer, int currentServerId, char *title)
 {
   int i;
   for (i = 0; i < numServer; i++) {
-    if (i != currentServerId && strcmp(AllServers[i].title, title) == 0) {
+    if (i != currentServerId && strcmp(SftpConfig.ServerInfos[i].title, title) == 0) {
       return 1;
     }
   }
@@ -219,20 +214,20 @@ void MakeServerTitlesUnique(int numServer)
 
   for (i = 0; i < numServer; i++) {
     int dbl = 0;
-    strcpy(buf, AllServers[i].title);
+    strcpy(buf, SftpConfig.ServerInfos[i].title);
     while (1)                   // :-)
     {
       if (ServerTitleExists(numServer, i, buf) == 1) {
         dbl++;
         sprintf(buf2, "%d", (dbl + 1));
-        strcpy(buf, AllServers[i].title);
+        strcpy(buf, SftpConfig.ServerInfos[i].title);
         strcat(buf, " (");
         strcat(buf, buf2);
         strcat(buf, ")");
         continue;
       }
       if (dbl > 0) {
-        strcpy(AllServers[i].title, buf);
+        strcpy(SftpConfig.ServerInfos[i].title, buf);
       }
       break;
     }
@@ -251,7 +246,7 @@ int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc,
   PluginNumber = PluginNr;
 
   //initialize all servers
-  ServerCount = LoadServers();
+  SftpConfig.ServerCount = LoadServers();
   init_server_dll_handlers();
   unlink_ALL_dll_tmp_files();
   ResetAlreadyConnected();
@@ -328,12 +323,12 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
     // Connection selected
     if (!any_connection_active()) //Load Servers if there is no active connection
     {
-      ServerCount = LoadServers();
+      SftpConfig.ServerCount = LoadServers();
     }
 
     lf->currentIndex = 0;
-    lf->sumIndex = ServerCount + 1;
-    strcpy(FindData->cFileName, AllServers[lf->currentIndex].title);
+    lf->sumIndex = SftpConfig.ServerCount + 1;
+    strcpy(FindData->cFileName, SftpConfig.ServerInfos[lf->currentIndex].title);
 
     FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
     FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
@@ -360,7 +355,7 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
     char *lPath = Path;
 
     strlcpy(lf->Path, Path, MAX_PATH);
-    lPath += (1 + strlen(AllServers[CurrentServer_ID].title)); //skip backslash and title ('\CONNECTION')
+    lPath += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title)); //skip backslash and title ('\CONNECTION')
 
     //prepare command line
     if (strcmp(lPath, "") == 0)
@@ -483,7 +478,7 @@ BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData)
         FindData->dwFileAttributes = 0;
       } else {
         lf->currentIndex++;
-        strcpy(FindData->cFileName, AllServers[lf->currentIndex].title);
+        strcpy(FindData->cFileName, SftpConfig.ServerInfos[lf->currentIndex].title);
         FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
       }
     }
@@ -643,58 +638,60 @@ bool addnewserver(char *servertitle)
                 "Do you want to compress the data connection (only recommended for slow connections)?",
                 NULL, 0) == TRUE;
 
-  sprintf(section_name, "%i", ServerCount - Imported_ids_num);
-  WritePrivateProfileString(section_name, "title", servertitle_, iniFname);
-  WritePrivateProfileString(section_name, "host", host, iniFname);
-  WritePrivateProfileString(section_name, "username", user, iniFname);
-  WritePrivateProfileString(section_name, "password", pwd, iniFname);
-  WritePrivateProfileString(section_name, "port", port, iniFname);
-  WritePrivateProfileString(section_name, "home_dir", home_dir, iniFname);
+  sprintf(section_name, "%i", SftpConfig.ServerCount - SftpConfig.ImportedSessions);
+  WritePrivateProfileString(section_name, "title", servertitle_, SftpConfig.ConfigIniFile);
+  WritePrivateProfileString(section_name, "host", host, SftpConfig.ConfigIniFile);
+  WritePrivateProfileString(section_name, "username", user, SftpConfig.ConfigIniFile);
+  WritePrivateProfileString(section_name, "password", pwd, SftpConfig.ConfigIniFile);
+  WritePrivateProfileString(section_name, "port", port, SftpConfig.ConfigIniFile);
+  WritePrivateProfileString(section_name, "home_dir", home_dir, SftpConfig.ConfigIniFile);
   WritePrivateProfileString(section_name, "compression",
-                            wantcompression ? "1" : "0", iniFname);
-  WritePrivateProfileString(section_name, "use_key_auth", "0", iniFname);
-  WritePrivateProfileString(section_name, "keyfilename", "", iniFname);
+                            wantcompression ? "1" : "0", SftpConfig.ConfigIniFile);
+  WritePrivateProfileString(section_name, "use_key_auth", "0", SftpConfig.ConfigIniFile);
+  WritePrivateProfileString(section_name, "keyfilename", "", SftpConfig.ConfigIniFile);
   WritePrivateProfileString(section_name, "dont_ask4_passphrase", "0",
-                            iniFname);
+                            SftpConfig.ConfigIniFile);
   WritePrivateProfileString(section_name, "dont_ask4_username",
-                            strcmp(user, "") == 0 ? "0" : "1", iniFname);
+                            strcmp(user, "") == 0 ? "0" : "1", SftpConfig.ConfigIniFile);
   WritePrivateProfileString(section_name, "dont_ask4_password",
-                            strcmp(pwd, "") == 0 ? "0" : "1", iniFname);
-  WritePrivateProfileString(section_name, "proxy_type", "0", iniFname);
-  WritePrivateProfileString(section_name, "proxy_host", "", iniFname);
-  WritePrivateProfileString(section_name, "proxy_port", "0", iniFname);
-  WritePrivateProfileString(section_name, "proxy_username", "", iniFname);
-  WritePrivateProfileString(section_name, "proxy_password", "", iniFname);
+                            strcmp(pwd, "") == 0 ? "0" : "1", SftpConfig.ConfigIniFile);
+  WritePrivateProfileString(section_name, "proxy_type", "0", SftpConfig.ConfigIniFile);
+  WritePrivateProfileString(section_name, "proxy_host", "", SftpConfig.ConfigIniFile);
+  WritePrivateProfileString(section_name, "proxy_port", "0", SftpConfig.ConfigIniFile);
+  WritePrivateProfileString(section_name, "proxy_username", "", SftpConfig.ConfigIniFile);
+  WritePrivateProfileString(section_name, "proxy_password", "", SftpConfig.ConfigIniFile);
   WritePrivateProfileString(section_name, "proxy_telnet_command", "",
-                            iniFname);
-  WritePrivateProfileString(section_name, "chmod_value", "",
-                            iniFname);
+                            SftpConfig.ConfigIniFile);
+  WritePrivateProfileString(section_name, "chmod_value_put", "",
+                            SftpConfig.ConfigIniFile);
+  WritePrivateProfileString(section_name, "chmod_value_mkdir", "",
+                            SftpConfig.ConfigIniFile);
   WritePrivateProfileString(section_name, "set_chmod_after_put", "0",
-                            iniFname);
+                            SftpConfig.ConfigIniFile);
   WritePrivateProfileString(section_name, "set_chmod_after_mkdir", "0",
-                            iniFname);
+                            SftpConfig.ConfigIniFile);
   WritePrivateProfileString(section_name, "set_mtime_after_put", "1",
-                            iniFname);
+                            SftpConfig.ConfigIniFile);
 
-  ServerCount = LoadServers();
+  SftpConfig.ServerCount = LoadServers();
   return true;
 }
 //---------------------------------------------------------------------
 
 #define MOVE_INFO(KEY) GetPrivateProfileString(section_name_old, KEY, "", copybuf, \
-                                MAX_Server_INFO, iniFname); \
+                                MAX_Server_INFO, SftpConfig.ConfigIniFile); \
         WritePrivateProfileString(section_name_new, KEY, copybuf, \
-                                  iniFname);
+                                  SftpConfig.ConfigIniFile);
 
 #define MOVE_INFO_PARAM(KEY, PARAM) GetPrivateProfileString(section_name_old, KEY, PARAM, copybuf, \
-                                MAX_Server_INFO, iniFname); \
+                                MAX_Server_INFO, SftpConfig.ConfigIniFile); \
         WritePrivateProfileString(section_name_new, KEY, copybuf, \
-                                  iniFname); 
+                                  SftpConfig.ConfigIniFile); 
 
 #define MOVE_INFO_WRITEPARAM(KEY, PARAM) GetPrivateProfileString(section_name_old, KEY, "", copybuf, \
-                                MAX_Server_INFO, iniFname); \
+                                MAX_Server_INFO, SftpConfig.ConfigIniFile); \
         WritePrivateProfileString(section_name_new, KEY, PARAM, \
-                                  iniFname); 
+                                  SftpConfig.ConfigIniFile); 
 //---------------------------------------------------------------------
 
 bool deletethisconnection(char *servertitle)
@@ -710,14 +707,14 @@ bool deletethisconnection(char *servertitle)
                 NULL, 0);
     return false;
   }
-  if (AllServers[Sid].is_imported_from_any_datasrc == 1) {
-    if (AllServers[Sid].is_imported_from_putty_registry == 1) {
+  if (SftpConfig.ServerInfos[Sid].is_imported_from_any_datasrc == 1) {
+    if (SftpConfig.ServerInfos[Sid].is_imported_from_putty_registry == 1) {
       RequestProc(PluginNumber, RT_MsgOK, "Delete connection",
                   "This connection is imported from the PuTTY Session Database - can not delete",
                   NULL, 0);
       return false;
     }
-    if (AllServers[Sid].is_imported_from_sshcom_registry == 1) {
+    if (SftpConfig.ServerInfos[Sid].is_imported_from_sshcom_registry == 1) {
       RequestProc(PluginNumber, RT_MsgOK, "Delete connection",
                   "This connection is imported from the ssh.com Session Database - can not delete",
                   NULL, 0);
@@ -728,9 +725,9 @@ bool deletethisconnection(char *servertitle)
     return false;
   }
 
-  for (i = 0; i < ServerCount - 1 - Imported_ids_num; i++) {
-    if (strcmp(AllServers[i].title, servertitle) == 0) {
-      if (AllServers[i].is_imported_from_any_datasrc == 1) {
+  for (i = 0; i < SftpConfig.ServerCount - 1 - SftpConfig.ImportedSessions; i++) {
+    if (strcmp(SftpConfig.ServerInfos[i].title, servertitle) == 0) {
+      if (SftpConfig.ServerInfos[i].is_imported_from_any_datasrc == 1) {
         RequestProc(PluginNumber, RT_MsgOK, "Delete connection",
                     "This connection is imported from the PuTTY Session Database - can not delete",
                     NULL, 0);
@@ -739,7 +736,7 @@ bool deletethisconnection(char *servertitle)
       // Delete server i by moving all sections 1 up
       // What about Section rename?
       i++;                      // It's 1-based in the ini file!
-      for (j = i; j < ServerCount - Imported_ids_num; j++) {
+      for (j = i; j < SftpConfig.ServerCount - SftpConfig.ImportedSessions; j++) {
         sprintf(section_name_old, "%i", j + 1);
         sprintf(section_name_new, "%i", j);
         char copybuf[MAX_Server_INFO];
@@ -769,9 +766,9 @@ bool deletethisconnection(char *servertitle)
         MOVE_INFO_PARAM("set_mtime_after_put", "1")
       }
       // delete last section
-      sprintf(section_name_old, "%i", ServerCount - 1 - Imported_ids_num);
-      WritePrivateProfileString(section_name_old, NULL, NULL, iniFname);
-      ServerCount = LoadServers();
+      sprintf(section_name_old, "%i", SftpConfig.ServerCount - 1 - SftpConfig.ImportedSessions);
+      WritePrivateProfileString(section_name_old, NULL, NULL, SftpConfig.ConfigIniFile);
+      SftpConfig.ServerCount = LoadServers();
       return TRUE;
     }
   }
@@ -782,7 +779,7 @@ bool deletethisconnection(char *servertitle)
 int remote_chmod(char *RemoteName, unsigned int value)
 {
   check_Concurrent_Connection(RemoteName);
-  char *lRemoteName = RemoteName + (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+  char *lRemoteName = RemoteName + (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
   char sftp_cmd[MAX_CMD_BUFFER];
 
   _snprintf(sftp_cmd, MAX_CMD_BUFFER, "chmod %d \"%s\"", value, lRemoteName);
@@ -800,7 +797,7 @@ int remote_chmod(char *RemoteName, unsigned int value)
 int remote_mtime(char *RemoteName, unsigned long value)
 {
   check_Concurrent_Connection(RemoteName);
-  char *lRemoteName = RemoteName + (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+  char *lRemoteName = RemoteName + (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
   char sftp_cmd[MAX_CMD_BUFFER];
 
   _snprintf(sftp_cmd, MAX_CMD_BUFFER, "mtime %d \"%s\"", value, lRemoteName);
@@ -826,7 +823,7 @@ BOOL __stdcall FsMkDir(char *Path)
 
   check_Concurrent_Connection(Path);
 
-  lPath += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+  lPath += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
 
   sprintf(cmd_buf, "mkdir \"%s\"", lPath);
 
@@ -834,8 +831,8 @@ BOOL __stdcall FsMkDir(char *Path)
 
   if (wcplg_sftp_do_commando_byID(cmd_buf, NULL, CurrentServer_ID) == SFTP_SUCCESS)
   {
-    if (AllServers[CurrentServer_ID].set_chmod_after_mkdir)
-      remote_chmod(Path, AllServers[CurrentServer_ID].chmod_value_mkdir); 
+    if (SftpConfig.ServerInfos[CurrentServer_ID].set_chmod_after_mkdir)
+      remote_chmod(Path, SftpConfig.ServerInfos[CurrentServer_ID].chmod_value_mkdir); 
     return true;
   }
   return false;
@@ -844,10 +841,10 @@ BOOL __stdcall FsMkDir(char *Path)
 
 void DefineAndAddConnection()
 {
-  iniFname;
+  SftpConfig.ConfigIniFile;
   HANDLE myFile;
 
-  myFile = CreateFile(iniFname, // file name
+  myFile = CreateFile(SftpConfig.ConfigIniFile, // file name
     GENERIC_READ,     // access mode
     FILE_SHARE_READ,  // share mode
     NULL,             // security descriptor
@@ -857,12 +854,12 @@ void DefineAndAddConnection()
 
   if (myFile == INVALID_HANDLE_VALUE)
   {
-    err_v("Error opening '%s'", iniFname);
+    err_v("Error opening '%s'", SftpConfig.ConfigIniFile);
   } else {
     CloseHandle(myFile);
   }
 
-  ShellExecute(0, "open", iniFname, NULL, "c:\\", SW_SHOW);
+  ShellExecute(0, "open", SftpConfig.ConfigIniFile, NULL, "c:\\", SW_SHOW);
 }
 //---------------------------------------------------------------------
 
@@ -930,10 +927,15 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
   char *lVerb = Verb;
   char *lRemoteName = RemoteName;
 
+  SftpConfig.MainWindow = MainWin;
+
   if (stricmp(Verb, "open") == 0) {
     if (strcmp(DefineEditConnection_selected, RemoteName) == 0) {
       if (hDialogDLL) {
-        hProperties(0, AllServers, ServerCount, Imported_ids_num);
+        if (hProperties(0, &SftpConfig)) {
+          RemoteName[1] = '\0';
+          return FS_EXEC_SYMLINK;
+        }
       } else {
         DefineAndAddConnection();
       }
@@ -944,7 +946,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
     if (strcmp(DefineAddConnection_selected, RemoteName) == 0) {
       bool ret = false;
       if (hDialogDLL) {
-        ret = hProperties(1, AllServers, ServerCount, Imported_ids_num);
+        ret = hProperties(1, &SftpConfig);
       } else {
         ret = addnewserver(NULL);
       }
@@ -967,11 +969,11 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
 
     if (CurrentServer_ID == -1)
       return FS_EXEC_ERROR;
-    strcpy(AllServers[CurrentServer_ID].home_dir, &Verb[11]);
-    size_t i = strlen(AllServers[CurrentServer_ID].home_dir);
-    char last_one = AllServers[CurrentServer_ID].home_dir[i - 1];
+    strcpy(SftpConfig.ServerInfos[CurrentServer_ID].home_dir, &Verb[11]);
+    size_t i = strlen(SftpConfig.ServerInfos[CurrentServer_ID].home_dir);
+    char last_one = SftpConfig.ServerInfos[CurrentServer_ID].home_dir[i - 1];
 
-    sprintf(sftp_cmd, "cd %s", AllServers[CurrentServer_ID].home_dir);
+    sprintf(sftp_cmd, "cd %s", SftpConfig.ServerInfos[CurrentServer_ID].home_dir);
     winSlash2unix(sftp_cmd);
     if (wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID) !=
         SFTP_SUCCESS) {
@@ -979,7 +981,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
       LogProc_(MSGTYPE_DETAILS, log_sftp_cmd);
     }
 
-    sprintf(RemoteName, "\\%s\\", AllServers[CurrentServer_ID].title);
+    sprintf(RemoteName, "\\%s\\", SftpConfig.ServerInfos[CurrentServer_ID].title);
     return FS_EXEC_SYMLINK;
   }
 
@@ -1018,7 +1020,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
               MAX_CMD_BUFFER);
       strncat(remote_users_current_dir, "?", MAX_CMD_BUFFER);
       strncat(remote_users_current_dir,
-        RemoteName + 2 + strlen(AllServers[CurrentServer_ID].title), MAX_CMD_BUFFER);
+        RemoteName + 2 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title), MAX_CMD_BUFFER);
 
       winSlash2unix(remote_users_current_dir);
 
@@ -1093,7 +1095,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
 
       strcat(remote_users_current_dir, "?");
       strcat(remote_users_current_dir,
-        RemoteName + 2 + strlen(AllServers[CurrentServer_ID].title));
+        RemoteName + 2 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
       winSlash2unix(remote_users_current_dir);
 
       _snprintf(sftp_cmd, MAX_CMD_BUFFER, "reget \"%s\"", remote_users_current_dir);
@@ -1123,7 +1125,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
     buf[9] = 'd';
 
     if (wcplg_sftp_do_commando_byID(buf + 8, NULL, CurrentServer_ID) == SFTP_SUCCESS) {
-      sprintf(RemoteName, "\\%s\\", AllServers[CurrentServer_ID].title);
+      sprintf(RemoteName, "\\%s\\", SftpConfig.ServerInfos[CurrentServer_ID].title);
       return FS_EXEC_SYMLINK;
     } else {
       return FS_EXEC_ERROR;
@@ -1138,7 +1140,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
     // two cases: absolute path with / at start, relative with backslash
 
     if (buf[9] == '/' || buf[9] == '\\') {
-      _snprintf(RemoteName, MAX_PATH - 1, "\\%s%s", AllServers[CurrentServer_ID].title, buf + 9);
+      _snprintf(RemoteName, MAX_PATH - 1, "\\%s%s", SftpConfig.ServerInfos[CurrentServer_ID].title, buf + 9);
     } else {
 
       if (RemoteName[strlen(RemoteName) - 1] != '\\')
@@ -1160,8 +1162,14 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
 
   //we could implement a property dialog here; changing some connections setting could be usefull
   if (_strnicmp(Verb, "properties", 10)==0) {
-    if (_strnicmp(RemoteName+1, AllServers[CurrentServer_ID].title, 
-      strlen(AllServers[CurrentServer_ID].title))==0) {
+    if (_strnicmp(RemoteName+1, SftpConfig.ServerInfos[CurrentServer_ID].title, 
+      strlen(SftpConfig.ServerInfos[CurrentServer_ID].title))==0) {
+      if (hDialogDLL) {
+        if (hProperties(2, &SftpConfig)) {
+          RemoteName[1] = '\0';
+          return FS_EXEC_SYMLINK;
+        }
+      }
       return FS_EXEC_OK;
     }
   }
@@ -1172,7 +1180,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
       lVerb += 6;
     lVerb += 6;
     check_Concurrent_Connection(lRemoteName);
-    lRemoteName += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+    lRemoteName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
 
     strcpy(sftp_cmd, "chmod ");
     strcat(sftp_cmd, lVerb);
@@ -1267,8 +1275,8 @@ int __stdcall FsRenMovFile(char *OldName, char *NewName, BOOL Move,
       }
     }
     // Rename!
-    OldName += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
-    NewName += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+    OldName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+    NewName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
 
     strcpy(cmd_buf, "rename \"./");
     strcat(cmd_buf, OldName);
@@ -1276,8 +1284,8 @@ int __stdcall FsRenMovFile(char *OldName, char *NewName, BOOL Move,
     strcat(cmd_buf, NewName);
     strcat(cmd_buf, "\"");
 
-    OldName -= (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
-    NewName -= (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+    OldName -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+    NewName -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
 
     winSlash2unix(cmd_buf);
 
@@ -1353,9 +1361,9 @@ int __stdcall FsGetFile(char *RemoteName, char *LocalName, int CopyFlags,
 
   strcpy(cmd_buf, "get \"./");
 
-  RemoteName += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+  RemoteName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
   strcat(cmd_buf, RemoteName);
-  RemoteName -= (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+  RemoteName -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
   winSlash2unix(cmd_buf);
   strcat(cmd_buf, "\"");
 
@@ -1461,7 +1469,7 @@ int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
   strcat(cmd_buf, LocalName);
   strcat(cmd_buf, "\" \"./");
 
-  char *lRemoteName = RemoteName + (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+  char *lRemoteName = RemoteName + (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
   strcpy(buf2, lRemoteName);
   winSlash2unix(buf2);
   strcat(cmd_buf, buf2);
@@ -1484,11 +1492,11 @@ int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
       return FS_FILE_USERABORT;
     if (ok)
     {
-      if (AllServers[CurrentServer_ID].set_chmod_after_put)
+      if (SftpConfig.ServerInfos[CurrentServer_ID].set_chmod_after_put)
       {
-        remote_chmod(RemoteName, AllServers[CurrentServer_ID].chmod_value_put);
+        remote_chmod(RemoteName, SftpConfig.ServerInfos[CurrentServer_ID].chmod_value_put);
       }
-      if (AllServers[CurrentServer_ID].set_mtime_after_put)
+      if (SftpConfig.ServerInfos[CurrentServer_ID].set_mtime_after_put)
       {
         bool f;
         HANDLE myFile;
@@ -1549,9 +1557,9 @@ BOOL __stdcall FsDeleteFile(char *RemoteName)
   ProgressProc(PluginNumber, RemoteName, RemoteName, 0);
   check_Concurrent_Connection(RemoteName);
 
-  RemoteName += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+  RemoteName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
   strcat(cmd_buf, RemoteName);
-  RemoteName -= (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+  RemoteName -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
   strcat(cmd_buf, "\"");
 
   winSlash2unix(cmd_buf);
@@ -1589,9 +1597,9 @@ BOOL __stdcall FsRemoveDir(char *RemoteName)
 
   strcpy(cmd_buf, "rmdir \"./");
 
-  RemoteName += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+  RemoteName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
   strcat(cmd_buf, RemoteName);
-  RemoteName -= (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+  RemoteName -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
 
   strcat(cmd_buf, "\"");
 
@@ -1629,75 +1637,75 @@ int wcplg_sftp_connect_byID(unsigned int ID)
   if (ID == -1)
     return SFTP_FAILED;         //who knows, what happend before :-)
 
-  if (strlen(AllServers[ID].host_cached) < 1) {
-    strcpy(AllServers[ID].host_cached, AllServers[ID].host);
+  if (strlen(SftpConfig.ServerInfos[ID].host_cached) < 1) {
+    strcpy(SftpConfig.ServerInfos[ID].host_cached, SftpConfig.ServerInfos[ID].host);
     if (!RequestProc(PluginNumber, RT_Other, "Secure FTP", "Host[:port]",
-      AllServers[ID].host_cached, MAX_CMD_BUFFER)) {
-        AllServers[ID].host_cached[0] = '\0';
+      SftpConfig.ServerInfos[ID].host_cached, MAX_CMD_BUFFER)) {
+        SftpConfig.ServerInfos[ID].host_cached[0] = '\0';
       return SFTP_FAILED;
     }
 
     server_entered = true;
-    strcpy(AllServers[ID].host, AllServers[ID].host_cached);
+    strcpy(SftpConfig.ServerInfos[ID].host, SftpConfig.ServerInfos[ID].host_cached);
   }
 
-  if (strlen(AllServers[ID].username_cached) < 1) {
+  if (strlen(SftpConfig.ServerInfos[ID].username_cached) < 1) {
     strcpy(buf, "Username for ");
-    strcat(buf, AllServers[ID].host_cached);
+    strcat(buf, SftpConfig.ServerInfos[ID].host_cached);
 
-    strcpy(AllServers[ID].username_cached, AllServers[ID].username);
+    strcpy(SftpConfig.ServerInfos[ID].username_cached, SftpConfig.ServerInfos[ID].username);
 
     // Do not ask 4 username if dont_ask4_username==1
-    if (AllServers[ID].dont_ask4_username != 1) {
+    if (SftpConfig.ServerInfos[ID].dont_ask4_username != 1) {
       if (!RequestProc
           (PluginNumber, RT_UserName, "Secure FTP", buf,
-           AllServers[ID].username_cached, MAX_CMD_BUFFER)) {
+           SftpConfig.ServerInfos[ID].username_cached, MAX_CMD_BUFFER)) {
         // For quick connection, clear host if failed
-        AllServers[ID].username_cached[0] = 0;
+        SftpConfig.ServerInfos[ID].username_cached[0] = 0;
         if (server_entered)
-          AllServers[ID].host_cached[0] = 0;
+          SftpConfig.ServerInfos[ID].host_cached[0] = 0;
         return SFTP_FAILED;
       }
     }
     user_entered = true;
-    strcpy(AllServers[ID].username, AllServers[ID].username_cached);
+    strcpy(SftpConfig.ServerInfos[ID].username, SftpConfig.ServerInfos[ID].username_cached);
   }
 
-  if (strlen(AllServers[ID].password_cached) < 1) {
+  if (strlen(SftpConfig.ServerInfos[ID].password_cached) < 1) {
     strcpy(buf, "Password for ");
-    strcat(buf, AllServers[ID].username_cached);
+    strcat(buf, SftpConfig.ServerInfos[ID].username_cached);
     strcat(buf, "@");
-    strcat(buf, AllServers[ID].host_cached);
+    strcat(buf, SftpConfig.ServerInfos[ID].host_cached);
 
-    strcpy(AllServers[ID].password_cached, AllServers[ID].password);
+    strcpy(SftpConfig.ServerInfos[ID].password_cached, SftpConfig.ServerInfos[ID].password);
 
-    if (AllServers[ID].use_key_auth != 1) {
-      if (!AllServers[ID].dont_ask4_password) {
+    if (SftpConfig.ServerInfos[ID].use_key_auth != 1) {
+      if (!SftpConfig.ServerInfos[ID].dont_ask4_password) {
         if (!RequestProc
             (PluginNumber, RT_Password, "Secure FTP", buf,
-             AllServers[ID].password_cached, MAX_CMD_BUFFER)) {
+             SftpConfig.ServerInfos[ID].password_cached, MAX_CMD_BUFFER)) {
           // For quick connection, clear host+user if failed
           if (server_entered)
-            AllServers[ID].host_cached[0] = 0;
+            SftpConfig.ServerInfos[ID].host_cached[0] = 0;
           if (user_entered)
-            AllServers[ID].username_cached[0] = 0;
+            SftpConfig.ServerInfos[ID].username_cached[0] = 0;
           return SFTP_FAILED;
         }
       }
     }
 
-    if (AllServers[ID].dont_ask4_password)
-      strcpy(AllServers[ID].password_cached, AllServers[ID].password);
+    if (SftpConfig.ServerInfos[ID].dont_ask4_password)
+      strcpy(SftpConfig.ServerInfos[ID].password_cached, SftpConfig.ServerInfos[ID].password);
     else
-      strcpy(AllServers[ID].password, AllServers[ID].password_cached);
+      strcpy(SftpConfig.ServerInfos[ID].password, SftpConfig.ServerInfos[ID].password_cached);
   }
 
   if (wcplg_sftp_connect
-      (AllServers[ID].username, AllServers[ID].password, AllServers[ID].host,
-       AllServers[ID].port, AllServers, ID) != SFTP_SUCCESS) {
-    AllServers[ID].password_cached[0] = '\0';
-    AllServers[ID].host_cached[0] = 0;
-    AllServers[ID].username_cached[0] = 0;
+      (SftpConfig.ServerInfos[ID].username, SftpConfig.ServerInfos[ID].password, SftpConfig.ServerInfos[ID].host,
+       SftpConfig.ServerInfos[ID].port, SftpConfig.ServerInfos, ID) != SFTP_SUCCESS) {
+    SftpConfig.ServerInfos[ID].password_cached[0] = '\0';
+    SftpConfig.ServerInfos[ID].host_cached[0] = 0;
+    SftpConfig.ServerInfos[ID].username_cached[0] = 0;
     return SFTP_FAILED;
   }
   //OK connect done
@@ -1739,8 +1747,8 @@ int get_sftpServer_ID_by_Path(char *Path)
 int get_sftpServer_ID_by_Title(char *Title)
 {
   int i;
-  for (i = 0; i < ServerCount; i++) {
-    if (strcmp(AllServers[i].title, Title) == 0) {
+  for (i = 0; i < SftpConfig.ServerCount; i++) {
+    if (strcmp(SftpConfig.ServerInfos[i].title, Title) == 0) {
       return i;
     }
   }
@@ -1751,8 +1759,8 @@ int get_sftpServer_ID_by_Title(char *Title)
 
 bool any_connection_active()
 {
-  for (int i = 0; i < ServerCount; i++) {
-    if (AllServers[i].username_cached[0])
+  for (int i = 0; i < SftpConfig.ServerCount; i++) {
+    if (SftpConfig.ServerInfos[i].username_cached[0])
       return true;
   }
   return false;
@@ -1762,7 +1770,7 @@ bool any_connection_active()
 
 int LoadServers()
 {
-  int max_sections = MAX_Server;
+  int max_sections = MAX_Server_Count;
   int i;
   int ID = 0;
   int imported_num = 0;
@@ -1820,251 +1828,251 @@ int LoadServers()
     sprintf(section_name, "%i", i);
 
     GetPrivateProfileString(section_name, "title", "", buf_title,
-                            MAX_Server_INFO, iniFname);
+                            MAX_Server_INFO, SftpConfig.ConfigIniFile);
     GetPrivateProfileString(section_name, "host", "", buf_host,
-                            MAX_Server_INFO, iniFname);
+                            MAX_Server_INFO, SftpConfig.ConfigIniFile);
 
     if (strlen(buf_host) && strlen(buf_title)) {
       GetPrivateProfileString(section_name, "username", "", buf_username,
-                              MAX_Server_INFO, iniFname);
+                              MAX_Server_INFO, SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "password", "", buf_password,
-                              MAX_Server_INFO, iniFname);
+                              MAX_Server_INFO, SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "port", "", buf_port,
-                              MAX_Server_INFO, iniFname);
+                              MAX_Server_INFO, SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "home_dir", "", buf_home_dir,
-                              MAX_Server_INFO, iniFname);
+                              MAX_Server_INFO, SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "compression", "",
-                              buf_compression, MAX_Server_INFO, iniFname);
+                              buf_compression, MAX_Server_INFO, SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "use_key_auth", "",
-                              buf_use_key_auth, MAX_Server_INFO, iniFname);
+                              buf_use_key_auth, MAX_Server_INFO, SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "keyfilename", "",
-                              buf_keyfilename, MAX_Server_INFO, iniFname);
+                              buf_keyfilename, MAX_Server_INFO, SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "dont_ask4_passphrase", "",
                               buf_dont_ask4_passphrase, MAX_Server_INFO,
-                              iniFname);
+                              SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "dont_ask4_password", "",
                               buf_dont_ask4_password, MAX_Server_INFO,
-                              iniFname);
+                              SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "dont_ask4_username", "",
                               buf_dont_ask4_username, MAX_Server_INFO,
-                              iniFname);
+                              SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "proxy_type", "",
-                              buf_proxy_type, MAX_Server_INFO, iniFname);
+                              buf_proxy_type, MAX_Server_INFO, SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "proxy_host", "",
-                              buf_proxy_host, MAX_Server_INFO, iniFname);
+                              buf_proxy_host, MAX_Server_INFO, SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "proxy_port", "",
-                              buf_proxy_port, MAX_Server_INFO, iniFname);
+                              buf_proxy_port, MAX_Server_INFO, SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "proxy_username", "",
                               buf_proxy_username, MAX_Server_INFO,
-                              iniFname);
+                              SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "proxy_password", "",
                               buf_proxy_password, MAX_Server_INFO,
-                              iniFname);
+                              SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "proxy_telnet_command", "",
                               buf_proxy_telnet_command, MAX_Server_INFO,
-                              iniFname);
+                              SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "chmod_value_put", "",
                               buf_chmod_value_put, MAX_Server_INFO,
-                              iniFname);
+                              SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "chmod_value_mkdir", "",
                               buf_chmod_value_mkdir, MAX_Server_INFO,
-                              iniFname);
+                              SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "set_chmod_after_put", "",
                               buf_set_chmod_after_put, MAX_Server_INFO,
-                              iniFname);
+                              SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "set_chmod_after_mkdir", "",
                               buf_set_chmod_after_mkdir, MAX_Server_INFO,
-                              iniFname);
+                              SftpConfig.ConfigIniFile);
       GetPrivateProfileString(section_name, "set_mtime_after_put", "",
                               buf_set_mtime_after_put, MAX_Server_INFO,
-                              iniFname);
+                              SftpConfig.ConfigIniFile);
       // Check title for / && 
       XconvertServerTitle(buf_title);
 
       // TODO check if title already exists, in such case we change it a little, e.g. append '[1]'
 
-      strcpy(AllServers[ID].title, buf_title);
-      strcpy(AllServers[ID].host, buf_host);
-      strcpy(AllServers[ID].host_cached, buf_host);
-      strcpy(AllServers[ID].username, buf_username);
-      strcpy(AllServers[ID].password, buf_password);
-      strcpy(AllServers[ID].keyfilename, buf_keyfilename);
+      strcpy(SftpConfig.ServerInfos[ID].title, buf_title);
+      strcpy(SftpConfig.ServerInfos[ID].host, buf_host);
+      strcpy(SftpConfig.ServerInfos[ID].host_cached, buf_host);
+      strcpy(SftpConfig.ServerInfos[ID].username, buf_username);
+      strcpy(SftpConfig.ServerInfos[ID].password, buf_password);
+      strcpy(SftpConfig.ServerInfos[ID].keyfilename, buf_keyfilename);
 
       //use_key_auth optional, default=0
       if (strlen(buf_use_key_auth)) {
-        AllServers[ID].use_key_auth = (unsigned char)strtoul(buf_use_key_auth, NULL, NULL);
-        if (AllServers[ID].use_key_auth > 1)
-          AllServers[ID].use_key_auth = 1;
+        SftpConfig.ServerInfos[ID].use_key_auth = (unsigned char)strtoul(buf_use_key_auth, NULL, NULL);
+        if (SftpConfig.ServerInfos[ID].use_key_auth > 1)
+          SftpConfig.ServerInfos[ID].use_key_auth = 1;
       } else {
-        AllServers[ID].use_key_auth = 0;
+        SftpConfig.ServerInfos[ID].use_key_auth = 0;
       }
 
       //dont_ask4_username optional, default=0
       if (strlen(buf_dont_ask4_username)) {
-        AllServers[ID].dont_ask4_username = 
+        SftpConfig.ServerInfos[ID].dont_ask4_username = 
           (unsigned char)strtoul(buf_dont_ask4_username, NULL, NULL);
-        if (AllServers[ID].dont_ask4_username > 1)
-          AllServers[ID].dont_ask4_username = 1;
+        if (SftpConfig.ServerInfos[ID].dont_ask4_username > 1)
+          SftpConfig.ServerInfos[ID].dont_ask4_username = 1;
       } else {
-        AllServers[ID].dont_ask4_username = 0;
+        SftpConfig.ServerInfos[ID].dont_ask4_username = 0;
       }
 
       //dont_ask4_passphrase optional, default=0
       if (strlen(buf_dont_ask4_passphrase)) {
-        AllServers[ID].dont_ask4_passphrase =
+        SftpConfig.ServerInfos[ID].dont_ask4_passphrase =
           (unsigned char)strtoul(buf_dont_ask4_passphrase, NULL, NULL);
-        if (AllServers[ID].dont_ask4_passphrase > 1)
-          AllServers[ID].dont_ask4_passphrase = 1;
+        if (SftpConfig.ServerInfos[ID].dont_ask4_passphrase > 1)
+          SftpConfig.ServerInfos[ID].dont_ask4_passphrase = 1;
       } else {
-        AllServers[ID].dont_ask4_passphrase = 0;
+        SftpConfig.ServerInfos[ID].dont_ask4_passphrase = 0;
       }
 
       //dont_ask4_password optional, default=0
       if (strlen(buf_dont_ask4_password)) {
-        AllServers[ID].dont_ask4_password =
+        SftpConfig.ServerInfos[ID].dont_ask4_password =
           (unsigned char)strtoul(buf_dont_ask4_password, NULL, NULL);
-        if (AllServers[ID].dont_ask4_password > 1)
-          AllServers[ID].dont_ask4_password = 1;
+        if (SftpConfig.ServerInfos[ID].dont_ask4_password > 1)
+          SftpConfig.ServerInfos[ID].dont_ask4_password = 1;
       } else {
-        AllServers[ID].dont_ask4_password = 0;
+        SftpConfig.ServerInfos[ID].dont_ask4_password = 0;
       }
 
       //set_chmod_after_put optional, default=0
       if (strlen(buf_set_chmod_after_put)) {
-        AllServers[ID].set_chmod_after_put =
+        SftpConfig.ServerInfos[ID].set_chmod_after_put =
           (unsigned char)strtoul(buf_set_chmod_after_put, NULL, NULL);
-        if (AllServers[ID].set_chmod_after_put > 1)
-          AllServers[ID].set_chmod_after_put = 1;
+        if (SftpConfig.ServerInfos[ID].set_chmod_after_put > 1)
+          SftpConfig.ServerInfos[ID].set_chmod_after_put = 1;
       } else {
-        AllServers[ID].set_chmod_after_put = 0;
+        SftpConfig.ServerInfos[ID].set_chmod_after_put = 0;
       }
 
       //set_chmod_after_mkdir optional, default=0
       if (strlen(buf_set_chmod_after_mkdir)) {
-        AllServers[ID].set_chmod_after_mkdir =
+        SftpConfig.ServerInfos[ID].set_chmod_after_mkdir =
           (unsigned char)strtoul(buf_set_chmod_after_mkdir, NULL, NULL);
-        if (AllServers[ID].set_chmod_after_mkdir > 1)
-          AllServers[ID].set_chmod_after_mkdir = 1;
+        if (SftpConfig.ServerInfos[ID].set_chmod_after_mkdir > 1)
+          SftpConfig.ServerInfos[ID].set_chmod_after_mkdir = 1;
       } else {
-        AllServers[ID].set_chmod_after_mkdir = 0;
+        SftpConfig.ServerInfos[ID].set_chmod_after_mkdir = 0;
       }
 
       //set_mtime_after_put optional, default=1
       if (strlen(buf_set_mtime_after_put)) {
-        AllServers[ID].set_mtime_after_put =
+        SftpConfig.ServerInfos[ID].set_mtime_after_put =
           (unsigned char)strtoul(buf_set_mtime_after_put, NULL, NULL);
-        if (AllServers[ID].set_mtime_after_put > 1)
-          AllServers[ID].set_mtime_after_put = 1;
+        if (SftpConfig.ServerInfos[ID].set_mtime_after_put > 1)
+          SftpConfig.ServerInfos[ID].set_mtime_after_put = 1;
       } else {
-        AllServers[ID].set_mtime_after_put = 1;
+        SftpConfig.ServerInfos[ID].set_mtime_after_put = 1;
       }
 
       //chmod_value_put optional, default=700, valid only with set_chmod_after_put
       if (strlen(buf_chmod_value_put)) {
-        AllServers[ID].chmod_value_put =
+        SftpConfig.ServerInfos[ID].chmod_value_put =
           strtoul(buf_chmod_value_put, NULL, NULL);
       } else {
-        AllServers[ID].chmod_value_put = 700;
+        SftpConfig.ServerInfos[ID].chmod_value_put = 700;
       }
 
       //chmod_value_mkdir optional, default=700, valid only with set_chmod_after_mkdir
       if (strlen(buf_chmod_value_mkdir)) {
-        AllServers[ID].chmod_value_mkdir =
+        SftpConfig.ServerInfos[ID].chmod_value_mkdir =
           strtoul(buf_chmod_value_mkdir, NULL, NULL);
       } else {
-        AllServers[ID].chmod_value_mkdir = 700;
+        SftpConfig.ServerInfos[ID].chmod_value_mkdir = 700;
       }
 
       // port & home_dir are optional
       if (strlen(buf_port)) {
-        AllServers[ID].port = strtol(buf_port, NULL, NULL);
+        SftpConfig.ServerInfos[ID].port = strtol(buf_port, NULL, NULL);
       } else {
-        AllServers[ID].port = 22;
+        SftpConfig.ServerInfos[ID].port = 22;
       }
 
-      if (AllServers[ID].port < 1 || AllServers[ID].port > 65535) {
-        AllServers[ID].port = 22;
+      if (SftpConfig.ServerInfos[ID].port < 1 || SftpConfig.ServerInfos[ID].port > 65535) {
+        SftpConfig.ServerInfos[ID].port = 22;
       }
 
       if (strlen(buf_compression) == 0
           || strcmp(buf_compression, "1") == 0) {
-        AllServers[ID].compression = 1;
+        SftpConfig.ServerInfos[ID].compression = 1;
       } else {
-        AllServers[ID].compression = 0;
+        SftpConfig.ServerInfos[ID].compression = 0;
       }
 
       if (strlen(buf_home_dir)) {
-        strcpy(AllServers[ID].home_dir, buf_home_dir);
+        strcpy(SftpConfig.ServerInfos[ID].home_dir, buf_home_dir);
       } else {
-        strcpy(AllServers[ID].home_dir, "");
+        strcpy(SftpConfig.ServerInfos[ID].home_dir, "");
       }
 
-      AllServers[ID].passphrase[0] = 0;
-      AllServers[ID].password_cached[0] = 0;
-      AllServers[ID].username_cached[0] = 0;
-      AllServers[ID].is_imported_from_any_datasrc = 0;
-      AllServers[ID].is_imported_from_putty_registry = 0;
-      AllServers[ID].is_imported_from_sshcom_registry = 0;
+      SftpConfig.ServerInfos[ID].passphrase[0] = 0;
+      SftpConfig.ServerInfos[ID].password_cached[0] = 0;
+      SftpConfig.ServerInfos[ID].username_cached[0] = 0;
+      SftpConfig.ServerInfos[ID].is_imported_from_any_datasrc = 0;
+      SftpConfig.ServerInfos[ID].is_imported_from_putty_registry = 0;
+      SftpConfig.ServerInfos[ID].is_imported_from_sshcom_registry = 0;
 
       //experimental: Proxy
       if (strlen(buf_proxy_type)) {
         unsigned long tmp = strtoul(buf_proxy_type, NULL, NULL);
         switch (tmp) {
         case 1:
-          AllServers[ID].proxy_type = PROXY_SOCKS4;
+          SftpConfig.ServerInfos[ID].proxy_type = PROXY_SOCKS4;
           break;
         case 2:
-          AllServers[ID].proxy_type = PROXY_SOCKS5;
+          SftpConfig.ServerInfos[ID].proxy_type = PROXY_SOCKS5;
           break;
         default:
-          AllServers[ID].proxy_type = PROXY_NONE;
+          SftpConfig.ServerInfos[ID].proxy_type = PROXY_NONE;
           break;
         }
       } else {
-        AllServers[ID].proxy_type = PROXY_NONE;
+        SftpConfig.ServerInfos[ID].proxy_type = PROXY_NONE;
       }
 
       if (strlen(buf_proxy_host)) {
-        strcpy(AllServers[ID].proxy_host, buf_proxy_host);
+        strcpy(SftpConfig.ServerInfos[ID].proxy_host, buf_proxy_host);
       } else {
-        strcpy(AllServers[ID].proxy_host, "");
+        strcpy(SftpConfig.ServerInfos[ID].proxy_host, "");
       }
 
       if (strlen(buf_proxy_port)) {
-        AllServers[ID].proxy_port = strtol(buf_proxy_port, NULL, NULL);
+        SftpConfig.ServerInfos[ID].proxy_port = strtol(buf_proxy_port, NULL, NULL);
       } else {
-        AllServers[ID].proxy_port = 1080;  //standard port for socks-proxy
+        SftpConfig.ServerInfos[ID].proxy_port = 1080;  //standard port for socks-proxy
       }
 
-      if (AllServers[ID].proxy_port < 1 || AllServers[ID].proxy_port > 65535) {
-        AllServers[ID].proxy_port = 1080;  //standard port for socks-proxy
+      if (SftpConfig.ServerInfos[ID].proxy_port < 1 || SftpConfig.ServerInfos[ID].proxy_port > 65535) {
+        SftpConfig.ServerInfos[ID].proxy_port = 1080;  //standard port for socks-proxy
       }
 
       if (strlen(buf_proxy_username)) {
-        strcpy(AllServers[ID].proxy_username, buf_proxy_username);
+        strcpy(SftpConfig.ServerInfos[ID].proxy_username, buf_proxy_username);
       } else {
-        strcpy(AllServers[ID].proxy_username, "");
+        strcpy(SftpConfig.ServerInfos[ID].proxy_username, "");
       }
 
       if (strlen(buf_proxy_password)) {
-        strcpy(AllServers[ID].proxy_password, buf_proxy_password);
+        strcpy(SftpConfig.ServerInfos[ID].proxy_password, buf_proxy_password);
       } else {
-        strcpy(AllServers[ID].proxy_password, "");
+        strcpy(SftpConfig.ServerInfos[ID].proxy_password, "");
       }
 
       if (strlen(buf_proxy_telnet_command)) {
-        strcpy(AllServers[ID].proxy_telnet_command,
+        strcpy(SftpConfig.ServerInfos[ID].proxy_telnet_command,
                buf_proxy_telnet_command);
       } else {
-        strcpy(AllServers[ID].proxy_telnet_command, "");
+        strcpy(SftpConfig.ServerInfos[ID].proxy_telnet_command, "");
       }
 
       //this line checks if we get a really supported proxy version - the other stuff is not really supported right now...
-      if ((AllServers[ID].proxy_type != PROXY_SOCKS4)
-          && (AllServers[ID].proxy_type != PROXY_SOCKS5))
-        AllServers[ID].proxy_type = PROXY_NONE;
+      if ((SftpConfig.ServerInfos[ID].proxy_type != PROXY_SOCKS4)
+          && (SftpConfig.ServerInfos[ID].proxy_type != PROXY_SOCKS5))
+        SftpConfig.ServerInfos[ID].proxy_type = PROXY_NONE;
 
-      AllServers[ID].id = ID;
+      SftpConfig.ServerInfos[ID].id = ID;
       ID++;
     } else if (i)
       break;                    // hey dude - this is a badness, too :-(
@@ -2076,19 +2084,21 @@ int LoadServers()
   strcpy(buf_divers, "");
   GetPrivateProfileString(INI_CONFIG_SECTION_NAME,
                           INI_CONFIG_IMPORT_PUTTY_SSH_SESS, "", buf_divers,
-                          MAX_Server_INFO, iniFname);
+                          MAX_Server_INFO, SftpConfig.ConfigIniFile);
   if (strlen(buf_divers) && (buf_divers[0] == '1' || buf_divers[0] == '2')) {
     //import the putty saved session if...
     imported_num = 0;
     imported_num += ImportPuttySessions(ID, buf_divers);
-    Imported_ids_num = imported_num;
+    SftpConfig.ImportedSessions = imported_num;
     ID += imported_num;
   }
+  SftpConfig.DoImportPuttySessions = buf_divers[0];
+
   // DO ssh.com Import ?
   strcpy(buf_divers, "");
   GetPrivateProfileString(INI_CONFIG_SECTION_NAME,
                           INI_CONFIG_IMPORT_SSHCOM_SSH_SESS, "",
-                          buf_divers, MAX_Server_INFO, iniFname);
+                          buf_divers, MAX_Server_INFO, SftpConfig.ConfigIniFile);
   if (strlen(buf_divers)) {
     char dir_location[MAX_CMD_BUFFER];
 
@@ -2097,43 +2107,45 @@ int LoadServers()
     if (strlen(dir_location) > 0 && strcmp(dir_location, "0") != 0) {
       imported_num = 0;
       imported_num = ImportSSHcomSessions(ID, dir_location);
-      Imported_ids_num += imported_num;
+      SftpConfig.ImportedSessions += imported_num;
       ID += imported_num;
     }
   }
+  strncpy(SftpConfig.DoImportSSHcomSessions, buf_divers, MAX_Server_INFO);
 
-  strcpy(AllServers[ID].title, QUICK_CONNECTION);
+  strcpy(SftpConfig.ServerInfos[ID].title, QUICK_CONNECTION);
   //Set defaults 4 quick connection
-  AllServers[ID].compression = 0;
-  AllServers[ID].dont_ask4_username = 0;
-  AllServers[ID].dont_ask4_passphrase = 0;
-  AllServers[ID].dont_ask4_password = 0;
-  AllServers[ID].home_dir[0] = '\0';
-  AllServers[ID].host[0] = '\0';
-  AllServers[ID].host_cached[0] = '\0';
-  AllServers[ID].id = ID;
-  AllServers[ID].is_imported_from_any_datasrc = 0;
-  AllServers[ID].is_imported_from_putty_registry = 0;
-  AllServers[ID].is_imported_from_sshcom_registry = 0;
-  AllServers[ID].keyfilename[0] = '\0';
-  AllServers[ID].passphrase[0] = '\0';
-  AllServers[ID].proxy_host[0] = '\0';
-  AllServers[ID].proxy_password[0] = '\0';
-  AllServers[ID].proxy_port = 0;
-  AllServers[ID].proxy_telnet_command[0] = '\0';
-  AllServers[ID].proxy_type = PROXY_NONE;
-  AllServers[ID].proxy_username[0] = '\0';
-  AllServers[ID].password[0] = '\0';
-  AllServers[ID].password_cached[0] = '\0';
-  AllServers[ID].port = 22;
-  AllServers[ID].use_key_auth = 0;
-  AllServers[ID].username[0] = '\0';
-  AllServers[ID].username_cached[0] = '\0';
-  AllServers[ID].chmod_value_put = 0;
-  AllServers[ID].chmod_value_mkdir = 0;
-  AllServers[ID].set_chmod_after_put = 0;
-  AllServers[ID].set_chmod_after_mkdir = 0;
-  AllServers[ID].set_mtime_after_put = 0;
+  SftpConfig.ServerInfos[ID].compression = 0;
+  SftpConfig.ServerInfos[ID].dont_ask4_username = 0;
+  SftpConfig.ServerInfos[ID].dont_ask4_passphrase = 0;
+  SftpConfig.ServerInfos[ID].dont_ask4_password = 0;
+  SftpConfig.ServerInfos[ID].home_dir[0] = '\0';
+  SftpConfig.ServerInfos[ID].host[0] = '\0';
+  SftpConfig.ServerInfos[ID].host_cached[0] = '\0';
+  SftpConfig.ServerInfos[ID].id = ID;
+  //is imported, as we don't want to save it again
+  SftpConfig.ServerInfos[ID].is_imported_from_any_datasrc = 1;
+  SftpConfig.ServerInfos[ID].is_imported_from_putty_registry = 0;
+  SftpConfig.ServerInfos[ID].is_imported_from_sshcom_registry = 0;
+  SftpConfig.ServerInfos[ID].keyfilename[0] = '\0';
+  SftpConfig.ServerInfos[ID].passphrase[0] = '\0';
+  SftpConfig.ServerInfos[ID].proxy_host[0] = '\0';
+  SftpConfig.ServerInfos[ID].proxy_password[0] = '\0';
+  SftpConfig.ServerInfos[ID].proxy_port = 0;
+  SftpConfig.ServerInfos[ID].proxy_telnet_command[0] = '\0';
+  SftpConfig.ServerInfos[ID].proxy_type = PROXY_NONE;
+  SftpConfig.ServerInfos[ID].proxy_username[0] = '\0';
+  SftpConfig.ServerInfos[ID].password[0] = '\0';
+  SftpConfig.ServerInfos[ID].password_cached[0] = '\0';
+  SftpConfig.ServerInfos[ID].port = 22;
+  SftpConfig.ServerInfos[ID].use_key_auth = 0;
+  SftpConfig.ServerInfos[ID].username[0] = '\0';
+  SftpConfig.ServerInfos[ID].username_cached[0] = '\0';
+  SftpConfig.ServerInfos[ID].chmod_value_put = 0;
+  SftpConfig.ServerInfos[ID].chmod_value_mkdir = 0;
+  SftpConfig.ServerInfos[ID].set_chmod_after_put = 0;
+  SftpConfig.ServerInfos[ID].set_chmod_after_mkdir = 0;
+  SftpConfig.ServerInfos[ID].set_mtime_after_put = 0;
 
   ID++;                         // !!!
 
@@ -2190,9 +2202,9 @@ int get_current_server_id()
 
 //---------------------------------------------------------------------
 
-struct SftpServerAccountInfo *GetAllServers(void)
+struct SftpServerAccountInfo *GetServerInfos(void)
 {
-  return AllServers;
+  return SftpConfig.ServerInfos;
 }
 
 //---------------------------------------------------------------------
@@ -2346,9 +2358,9 @@ int Risdir(char *Path)
 
   strcpy(sftp_cmd, "ls \"./");
 
-  Path += (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+  Path += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
   strcat(sftp_cmd, Path);
-  Path -= (1 + strlen(AllServers[CurrentServer_ID].title) + 1);
+  Path -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
 
   strcat(sftp_cmd, "\"");
 
@@ -2575,7 +2587,7 @@ int ImportPuttySessions(int lastInsert_ID, char *import_mode)
   if ((handle = enum_settings_start())) {
     handleFree = (struct enumsettings *) handle;
     do {
-      if ((lastInsert_ID + count) >= MAX_Server - 2) {
+      if ((lastInsert_ID + count) >= MAX_Server_Count - 2) {
         RegCloseKey(handleFree->key);
         return count;
       }
@@ -2588,10 +2600,10 @@ int ImportPuttySessions(int lastInsert_ID, char *import_mode)
           XconvertServerTitle(otherbuf);
           strcpy(ServerAccountInfo.title, otherbuf);
           ServerAccountInfo.id = (lastInsert_ID + count);
-          AllServers[lastInsert_ID + count] = ServerAccountInfo;
+          SftpConfig.ServerInfos[lastInsert_ID + count] = ServerAccountInfo;
           if (import_mode[0] == '2') {
             //User want no password promt, all the connection are using key auth trought pageant.exe
-            AllServers[lastInsert_ID + count].use_key_auth = 1;
+            SftpConfig.ServerInfos[lastInsert_ID + count].use_key_auth = 1;
           }
           count++;
         }
@@ -2762,7 +2774,7 @@ int ImportSSHcomSessions(int lastInsert_ID, char *dir_location)
       strcat(buf2, buf);
       buf3[0] = '\0';
 
-      if ((lastInsert_ID + count) >= MAX_Server - 2) {
+      if ((lastInsert_ID + count) >= MAX_Server_Count - 2) {
         if (FndHnd != INVALID_HANDLE_VALUE) // If there was anything found, then
           FindClose(FndHnd);    // Close the find handle
         return count;
@@ -2820,37 +2832,37 @@ int ImportSSHcomSessions(int lastInsert_ID, char *dir_location)
             strcpy(home_dir, 2 + buf_divers);
           }
           //inherited char*
-          strcpy(AllServers[lastInsert_ID + count].title, title);
-          strcpy(AllServers[lastInsert_ID + count].host, hostname);
-          strcpy(AllServers[lastInsert_ID + count].host_cached, hostname);
-          strcpy(AllServers[lastInsert_ID + count].username, username);
-          strcpy(AllServers[lastInsert_ID + count].username_cached, ""); // MUSS strlen=0 sein  wegen anyconnectionactive()
-          strcpy(AllServers[lastInsert_ID + count].home_dir, home_dir);
+          strcpy(SftpConfig.ServerInfos[lastInsert_ID + count].title, title);
+          strcpy(SftpConfig.ServerInfos[lastInsert_ID + count].host, hostname);
+          strcpy(SftpConfig.ServerInfos[lastInsert_ID + count].host_cached, hostname);
+          strcpy(SftpConfig.ServerInfos[lastInsert_ID + count].username, username);
+          strcpy(SftpConfig.ServerInfos[lastInsert_ID + count].username_cached, ""); // MUSS strlen=0 sein  wegen anyconnectionactive()
+          strcpy(SftpConfig.ServerInfos[lastInsert_ID + count].home_dir, home_dir);
 
           // inherited int
-          AllServers[lastInsert_ID + count].compression = compression;
-          AllServers[lastInsert_ID + count].port = port;
+          SftpConfig.ServerInfos[lastInsert_ID + count].compression = compression;
+          SftpConfig.ServerInfos[lastInsert_ID + count].port = port;
 
           // Static
-          AllServers[lastInsert_ID + count].use_key_auth = 0;
+          SftpConfig.ServerInfos[lastInsert_ID + count].use_key_auth = 0;
 
-          if (strlen(AllServers[lastInsert_ID + count].username)) {
-            AllServers[lastInsert_ID + count].dont_ask4_username = 1;
+          if (strlen(SftpConfig.ServerInfos[lastInsert_ID + count].username)) {
+            SftpConfig.ServerInfos[lastInsert_ID + count].dont_ask4_username = 1;
           } else {
-            AllServers[lastInsert_ID + count].dont_ask4_username = 0;
+            SftpConfig.ServerInfos[lastInsert_ID + count].dont_ask4_username = 0;
           }
 
-          strcpy(AllServers[lastInsert_ID + count].password, "");
-          strcpy(AllServers[lastInsert_ID + count].password_cached, "");
+          strcpy(SftpConfig.ServerInfos[lastInsert_ID + count].password, "");
+          strcpy(SftpConfig.ServerInfos[lastInsert_ID + count].password_cached, "");
 
-          AllServers[lastInsert_ID + count].is_imported_from_any_datasrc =
+          SftpConfig.ServerInfos[lastInsert_ID + count].is_imported_from_any_datasrc =
             1;
-          AllServers[lastInsert_ID +
+          SftpConfig.ServerInfos[lastInsert_ID +
                     count].is_imported_from_putty_registry = 0;
-          AllServers[lastInsert_ID +
+          SftpConfig.ServerInfos[lastInsert_ID +
                     count].is_imported_from_sshcom_registry = 1;
 
-          AllServers[lastInsert_ID + count].id = lastInsert_ID + count;
+          SftpConfig.ServerInfos[lastInsert_ID + count].id = lastInsert_ID + count;
 
           count++;              //last comand!!!
         }
