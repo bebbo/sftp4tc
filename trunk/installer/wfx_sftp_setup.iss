@@ -24,7 +24,7 @@ SetupIconFile=..\SFTP.ICO
 ChangesEnvironment=yes
 
 [Languages]
-Name: en; MessagesFile: "compiler:Default.isl"
+Name: en; MessagesFile: compiler:Default.isl
 
 [Messages]
 en.BeveledLabel=English
@@ -46,7 +46,7 @@ Source: plugin_sftp.wfx; DestDir: {app}; Components: SFTP_Plugin; AfterInstall: 
 Source: psftp.dll; DestDir: {app}; Components: SFTP_Plugin
 Source: wfx_sftp_cfg.dll; DestDir: {app}; Components: SFTP_CFG
 Source: ..\..\properties_dlg\wfx_sftp_cfg.xrc; DestDir: {app}\rc; Components: SFTP_CFG
-Source: ..\..\..\password_crypter\src\Static_Release\password_crypter.dll; DestDir: {app}; Components: PASSWORD_CRYPTER
+Source: ..\..\..\password_crypter\src\Static_Release\password_crypter.dll; DestDir: {app}; Components: PASSWORD_CRYPTER; AfterInstall: AfterPWDCrypterInstall
 Source: \wxWidgets\lib\wxmsw24.dll; DestDir: {sys}; Flags: promptifolder; Components: support_files
 Source: ..\..\..\vcredist\msvcr71.dll; DestDir: {sys}; Flags: restartreplace uninsneveruninstall sharedfile; Components: support_files
 Source: ..\..\..\vcredist\msvcrt.dll; DestDir: {sys}; Flags: restartreplace uninsneveruninstall sharedfile; Components: support_files
@@ -68,6 +68,12 @@ const
   TC_KEY = 'SOFTWARE\Ghisler\Total Commander';
   INI_KEY = 'IniFileName';
 
+  SFTP_INI = 'wcx_sftp.ini';
+  SFTP_KEY = 'Software\petrich\tc_sftp_plugin';
+  SFTP_INI_KEY = 'SFtpIniName';
+  PWD_SECTION = 'config';
+  PWD_INI_KEY = 'passwd_crypter';
+
 procedure AfterPluginInstall;
 var
   user_ini, ini: string;
@@ -75,7 +81,8 @@ var
 begin
   if IsTaskSelected('all_users_setup_tc') then begin
    	if RegQueryStringValue(HKEY_LOCAL_MACHINE, TC_KEY, INI_KEY, ini) then begin
- 	  	found := true;
+	  found := true;
+	  ini := ExpandFileName(ini);
     end else begin
       found := false;
     end;
@@ -91,7 +98,8 @@ begin
 
   if IsTaskSelected('curr_user_setup_tc') then begin
    	if RegQueryStringValue(HKEY_CURRENT_USER, TC_KEY, INI_KEY, user_ini) then begin
- 	  	found := true;
+ 	  found := true;
+	  ini := ExpandFileName(user_ini);
     end else begin
       found := false;
     end;
@@ -104,4 +112,20 @@ begin
       end;
     end;
   end;
+end;
+
+procedure AfterPWDCrypterInstall;
+var
+  user_ini, ini: string;
+begin
+  if RegQueryStringValue(HKEY_CURRENT_USER, SFTP_KEY, SFTP_INI_KEY, user_ini) then begin
+  	user_ini := ExpandFileName(user_ini);
+    SetIniString(PWD_SECTION, PWD_INI_KEY, ExpandConstant('{app}')+'\password_crypter.dll', user_ini);
+  end else begin
+    user_ini := '';
+  end;
+
+  ini := ExpandFileName(ExpandConstant('{app}')+'\'+SFTP_INI);
+  if ini<>user_ini then
+      SetIniString(PWD_SECTION, PWD_INI_KEY, ExpandConstant('{app}')+'\password_crypter.dll', ini);
 end;
