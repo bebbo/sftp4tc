@@ -66,6 +66,7 @@ struct config_properties {
   int ImportedSessions;
   char DoImportSSHcomSessions[MAX_Server_INFO];
   char DoImportPuttySessions;
+  char CacheFS;
   char ConfigIniFile[MAX_PATH];
   HWND MainWindow;
   char PasswordCrypterPath[MAX_Server_INFO];

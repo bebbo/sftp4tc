@@ -286,7 +286,7 @@ void PreferencesDialog::OnListBox( wxCommandEvent &event )
     chkAsk4Passphrase->SetValue(!mCurrentServer->dont_ask4_passphrase);
     //Choices
     cboProxyType->SetSelection(mCurrentServer->proxy_type);
-    if (cboProxyType->GetSelection())
+    if (cboProxyType->GetSelection()<0)
       cboProxyType->SetSelection(PROXY_NONE);
   }
 }

@@ -1,3 +1,5 @@
+#pragma warning(disable:4786)
+
 #include "stdafx.h"
 #include "fsplugin.h"
 #include "sftpmap.h"
@@ -9,6 +11,9 @@
 #include "share.h"
 #include "passwd_crypter.h"
 #include "ConfigProperties.h"
+
+#include <map>
+#include <string>
 
 //Plugin's caption, shown in TC's list
 #define FSPLUGIN_CAPTION "Secure FTP Connections"
@@ -54,11 +59,18 @@ struct enumsettings {
   int i;
 };
 
+typedef std::map<std::string, fxp_names*> dir_cache;
+typedef dir_cache::iterator dir_cache_iterator;
+
+dir_cache DirCache;
+char LastPath[MAX_PATH];
+
 //struct SftpServerAccountInfo SftpConfig.ServerInfos[MAX_Server];
 config_properties SftpConfig;
 
 HMODULE hDllModule;
 bool delete_only_connection = FALSE;
+bool accept_refresh = false;
 
 //Plugin's initialization values
 int PluginNumber;
@@ -168,6 +180,28 @@ void err_v(char *msg, char *param)
 
 //---------------------------------------------------------------------
 
+void free_cache()
+{
+  for (dir_cache_iterator dci=DirCache.begin(); dci!=DirCache.end(); dci++) {
+    fxp_names* dir_struct = dci->second;
+    free_CurrentDirStruct(dir_struct, CurrentServer_ID);  //if we had multiple connections, the ID should be computed, otherwise ID shouldn't be needed anymore
+  }
+  DirCache.clear();
+}
+
+//---------------------------------------------------------------------
+
+int sftp_disconnect(int ServerId, bool log_message)
+{
+  if (SftpConfig.CacheFS) {
+    free_cache();
+  }
+
+  return wcplg_sftp_disconnect(ServerId, log_message);
+}
+
+//---------------------------------------------------------------------
+
 extern "C" BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
   UNUSED_ARG(lpReserved);
@@ -259,6 +293,9 @@ void MakeServerTitlesUnique(int numServer)
 int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc,
                      tLogProc pLogProc, tRequestProc pRequestProc)
 {
+  //initialise global variables
+  LastPath[0] = '\0';
+
   //remember all those values
   ProgressProc = pProgressProc;
   LogProc = pLogProc;
@@ -363,8 +400,6 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
     // check, which server is requested
     check_Concurrent_Connection(Path);
 
-    CurrentServer_ID = get_sftpServer_ID_by_Path(Path);
-
     //it's fatal if it doesn't even exists!
     if (CurrentServer_ID == NO_SERVER_ID) {
       dbg("fsfindfirst: CurrentServer_ID == -1, FIX ME!");
@@ -374,30 +409,55 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
 
     char sftp_cmd[MAX_CMD_BUFFER];
     char *lPath = Path;
+    fxp_names* CurrentDirStruct=NULL;
+    std::string lFullPath;
+    if (lFullPath[lFullPath.length()-1]=='\\')
+      lFullPath = lFullPath.substr(0, lFullPath.length()-1);
 
     strlcpy(lf->Path, Path, MAX_PATH);
     lPath += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title)); //skip backslash and title ('\CONNECTION')
 
-    //prepare command line
-    if (strcmp(lPath, "") == 0)
-      sprintf(sftp_cmd, "ls");
-    else
-      _snprintf(sftp_cmd, MAX_CMD_BUFFER, "ls \".%s\"", lPath);
+    if (SftpConfig.CacheFS) 
+    {
+      lFullPath = Path;
+      if (lFullPath[lFullPath.length()-1]=='\\')
+        lFullPath = lFullPath.substr(0, lFullPath.length()-1);
+      if ((!accept_refresh) || (strcmp(lFullPath.c_str(), LastPath)!=0)) {
+        CurrentDirStruct = DirCache[lFullPath];
+      }
+      strncpy(LastPath, lFullPath.c_str(), MAX_PATH);
+    }    
 
-    //change that command line to unix style
-    winSlash2unix(sftp_cmd);
+    if (!CurrentDirStruct) {
+      //prepare command line
+      if (strcmp(lPath, "") == 0)
+        sprintf(sftp_cmd, "ls");
+      else
+        _snprintf(sftp_cmd, MAX_CMD_BUFFER, "ls \".%s\"", lPath);
 
-    //execute commando
-    if (wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID) !=
-        SFTP_SUCCESS) {
-      LogProc_(MSGTYPE_CONNECTCOMPLETE, "Access denied!");
-      SetLastError(ERROR_ACCESS_DENIED);
-      return INVALID_HANDLE_VALUE;
+      //change that command line to unix style
+      winSlash2unix(sftp_cmd);
+
+      //execute commando
+      if (wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID) !=
+          SFTP_SUCCESS) {
+        LogProc_(MSGTYPE_CONNECTCOMPLETE, "Access denied!");
+        SetLastError(ERROR_ACCESS_DENIED);
+        return INVALID_HANDLE_VALUE;
+      }
+
+      //get the directory listing
+      CurrentDirStruct = wcplg_sftp_get_current_dir_struct(CurrentServer_ID);
+
+      if ((SftpConfig.CacheFS) && (CurrentDirStruct)) {
+        fxp_names* old_dir_struct = DirCache[lFullPath];
+        if ((old_dir_struct) && (CurrentDirStruct!=old_dir_struct)) {
+          DirCache.erase(lFullPath);
+          free_CurrentDirStruct(old_dir_struct, CurrentServer_ID);
+        }
+        DirCache[lFullPath] = CurrentDirStruct;
+      }
     }
-
-    //get the directory listing
-    fxp_names *CurrentDirStruct;
-    CurrentDirStruct = wcplg_sftp_get_current_dir_struct(CurrentServer_ID);
 
     if (CurrentDirStruct == NULL) {
       //this should come if you were disconnected. just a badness for 
@@ -411,7 +471,7 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
         SetLastError(ERROR_INVALID_ACCESS);
         return (HANDLE) INVALID_HANDLE_VALUE;
       } else {
-        wcplg_sftp_disconnect(CurrentServer_ID, false);
+        sftp_disconnect(CurrentServer_ID, false);
         return FsFindFirst(Path, FindData);
       }
 
@@ -433,10 +493,16 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
       (lf->currentIndex)++;
 
     //is there anything?
-    if (lf->currentIndex >= lf->CurrentDirStruct[0].nnames) {
-      LogProc_(MSGTYPE_DETAILS, "Access denied(*)!");
-      SetLastError(ERROR_NO_MORE_FILES);
-      free_CurrentDirStruct(CurrentDirStruct, CurrentServer_ID);
+    if (lf->currentIndex >= lf->CurrentDirStruct->nnames) {
+      if (lf->CurrentDirStruct->nnames<0) {
+        LogProc_(MSGTYPE_DETAILS, "Access denied(*)!");
+        SetLastError(ERROR_ACCESS_DENIED);
+      } else
+        SetLastError(ERROR_NO_MORE_FILES);
+
+      if (!SftpConfig.CacheFS) {
+        free_CurrentDirStruct(CurrentDirStruct, CurrentServer_ID);
+      }
       return INVALID_HANDLE_VALUE;
     }
 
@@ -571,7 +637,10 @@ int __stdcall FsFindClose(HANDLE Hdl)
   lf = (pLastFindStuct) Hdl;
 
   if (lf != INVALID_HANDLE_VALUE) {
-    free_CurrentDirStruct(lf->CurrentDirStruct, CurrentServer_ID);
+    if (!SftpConfig.CacheFS)
+      free_CurrentDirStruct(lf->CurrentDirStruct, CurrentServer_ID);
+    else
+      lf->CurrentDirStruct = NULL;
     free(lf);                   //now we can free this
   }
 
@@ -996,6 +1065,10 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
 
     if (CurrentServer_ID == -1)
       return FS_EXEC_ERROR;
+
+    if (SftpConfig.CacheFS)
+      free_cache();
+
     strcpy(SftpConfig.ServerInfos[CurrentServer_ID].home_dir, &Verb[11]);
     /*size_t i = strlen(SftpConfig.ServerInfos[CurrentServer_ID].home_dir);
     char last_one = SftpConfig.ServerInfos[CurrentServer_ID].home_dir[i - 1];*/
@@ -1142,20 +1215,6 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
       }
       return FS_EXEC_ERROR;
 
-    }
-  }
-
-  if (_strnicmp(Verb, "quote root ", 11) == 0) {
-    strcpy(buf, Verb);
-    check_Concurrent_Connection(RemoteName);
-    buf[8] = 'c';
-    buf[9] = 'd';
-
-    if (wcplg_sftp_do_commando_byID(buf + 8, NULL, CurrentServer_ID) == SFTP_SUCCESS) {
-      sprintf(RemoteName, "\\%s\\", SftpConfig.ServerInfos[CurrentServer_ID].title);
-      return FS_EXEC_SYMLINK;
-    } else {
-      return FS_EXEC_ERROR;
     }
   }
 
@@ -1635,6 +1694,24 @@ BOOL __stdcall FsRemoveDir(char *RemoteName)
   char cmd_buf[MAX_CMD_BUFFER];
 
   check_Concurrent_Connection(RemoteName);
+
+  if (SftpConfig.CacheFS) {
+    std::string lFullPath = RemoteName;
+    fxp_names* tmp_dir = DirCache[lFullPath];
+    if (tmp_dir) {
+      DirCache.erase(lFullPath);
+      free_CurrentDirStruct(tmp_dir, CurrentServer_ID);
+    }
+    std::string::size_type pos = lFullPath.find_last_of('\\');
+    if (pos!=std::string::npos) {
+      lFullPath = lFullPath.substr(0, pos);
+      fxp_names* tmp_dir = DirCache[lFullPath];
+      if (tmp_dir) {
+        DirCache.erase(lFullPath);
+        free_CurrentDirStruct(tmp_dir, CurrentServer_ID);
+      }
+    }
+  }
 
   strcpy(cmd_buf, "rmdir \"./");
 
@@ -2233,6 +2310,18 @@ void LoadServers()
 
   // okay, we are outta here  
 
+  // Cache directories?
+  strcpy(buf_divers, "");
+  GetPrivateProfileString(INI_CONFIG_SECTION_NAME,
+                          INI_CONFIG_CACHE_FS, "", buf_divers,
+                          MAX_Server_INFO, SftpConfig.ConfigIniFile);
+  if (strlen(buf_divers) && (buf_divers[0]=='1'))
+  {
+    SftpConfig.CacheFS = 1;
+  } else {
+    SftpConfig.CacheFS = 0;
+  }
+
   // DO Putty Import ?
   strcpy(buf_divers, "");
   GetPrivateProfileString(INI_CONFIG_SECTION_NAME,
@@ -2327,7 +2416,7 @@ BOOL __stdcall FsDisconnect(char *DisconnectRoot)
   UNUSED_ARG(DisconnectRoot)
   //DisconnectRoot is unusable as only 1 connection is active, because of psftp's architecture
   //LogProc_(MSGTYPE_DISCONNECT,"DISCONNECTED");
-  wcplg_sftp_disconnect(CurrentServer_ID, false);
+  sftp_disconnect(CurrentServer_ID, false);
   ResetAlreadyConnected();
   return true;
 }
@@ -2339,17 +2428,19 @@ BOOL __stdcall FsDisconnect(char *DisconnectRoot)
 void check_Concurrent_Connection(char *Path)
 {
   //CurrentServer_ID is global
-  if (CurrentServer_ID != -1)   //Is there already a connection to a Server ?
+  if (CurrentServer_ID == NO_SERVER_ID)   //Is there already a connection to a Server ?
   {
-    if (get_sftpServer_ID_by_Path(Path) != CurrentServer_ID) {
+    CurrentServer_ID = get_sftpServer_ID_by_Path(Path);
+  } else {
+    int server_ID = get_sftpServer_ID_by_Path(Path);
+    if (server_ID != CurrentServer_ID) {
       //ooops, conflict!
       //we have to disconnect the connection to avoid the conflict
       if (IsAlreadyConnected())
-        wcplg_sftp_disconnect(CurrentServer_ID, false);
-      CurrentServer_ID = get_sftpServer_ID_by_Path(Path); // OK, conflict fixed :-)
+        sftp_disconnect(CurrentServer_ID, false);
+      CurrentServer_ID = server_ID; // OK, conflict fixed :-)
     }
   }
-
 }
 
 //---------------------------------------------------------------------
@@ -2495,12 +2586,25 @@ void __stdcall FsGetDefRootName(char *DefRootName, int maxlen)
 void __stdcall FsStatusInfo(char *RemoteDir, int InfoStartEnd,
                             int InfoOperation)
 {
-  if (InfoOperation == FS_STATUS_OP_DELETE) //why is this here? :-)
-  {
-    if (strcmp(RemoteDir, "\\") == 0) // Deleting connection!
-    {
-      delete_only_connection = (InfoStartEnd == FS_STATUS_START);
-    }
+  accept_refresh = false;
+  switch (InfoOperation) {
+    case FS_STATUS_OP_DELETE:
+      {
+        if (strcmp(RemoteDir, "\\") == 0) // Deleting connection!
+        {
+          delete_only_connection = (InfoStartEnd == FS_STATUS_START);
+        }
+      }
+    case FS_STATUS_OP_PUT_SINGLE:
+    case FS_STATUS_OP_PUT_MULTI:
+    case FS_STATUS_OP_RENMOV_SINGLE:
+    case FS_STATUS_OP_RENMOV_MULTI:
+    case FS_STATUS_OP_ATTRIB:
+    case FS_STATUS_OP_MKDIR:
+    case FS_STATUS_OP_LIST:
+      {
+        accept_refresh = true;
+      }
   }
 }
 

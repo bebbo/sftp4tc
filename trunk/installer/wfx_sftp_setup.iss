@@ -1,13 +1,13 @@
 [Setup]
 InternalCompressLevel=ultra
 SourceDir=..\tc_plugin\release
-OutputBaseFilename=wfx_sftp_1_2_56_2_setup
+OutputBaseFilename=wfx_sftp_1_2_57_1_setup
 SolidCompression=true
-VersionInfoVersion=1.2.56.2
+VersionInfoVersion=1.2.57.1
 VersionInfoDescription={cm:VersionInfoDesc}
 Compression=lzma/ultra
 AppName={cm:AppName}
-AppVerName=1.2.56.2
+AppVerName=1.2.57.1
 DefaultDirName={pf}\TC Plugins\SFTP4TC
 UsePreviousGroup=false
 AppendDefaultGroupName=false
@@ -16,7 +16,7 @@ DisableReadyPage=true
 ShowLanguageDialog=no
 LanguageDetectionMethod=none
 AppPublisherURL=http://developer.berlios.de/projects/sftp4tc/
-AppVersion=1.2.56.2
+AppVersion=1.2.57.1
 AppID={{C52CD225-E994-499C-89B8-457E846E0CF5}
 UninstallDisplayName=SFTP for TotalCommander
 OutputDir=..\..\installer
@@ -46,13 +46,11 @@ en.Error=Total Commander's INI file (common for all users) was not found!%nPleas
 [Files]
 Source: plugin_sftp.wfx; DestDir: {app}; Components: SFTP_Plugin; AfterInstall: AfterPluginInstall
 Source: ..\..\installer\Licence.putty; DestDir: {app}; Components: SFTP_Plugin
+Source: ..\..\history.txt; DestDir: {app}; Components: SFTP_Plugin
 Source: psftp.dll; DestDir: {app}; Components: SFTP_Plugin
 Source: wfx_sftp_cfg.dll; DestDir: {app}; Components: SFTP_CFG
 Source: ..\..\properties_dlg\wfx_sftp_cfg.xrc; DestDir: {app}\rc; Components: SFTP_CFG
 Source: ..\..\..\password_crypter\src\Static_Release\password_crypter.dll; DestDir: {app}; Components: PASSWORD_CRYPTER; AfterInstall: AfterPWDCrypterInstall
-;Source: \wxWidgets\lib\wxmsw24.dll; DestDir: {sys}; Flags: promptifolder; Components: support_files
-;Source: ..\..\..\vcredist\msvcr71.dll; DestDir: {sys}; Flags: restartreplace uninsneveruninstall sharedfile; Components: support_files
-;Source: ..\..\..\vcredist\msvcrt.dll; DestDir: {sys}; Flags: restartreplace uninsneveruninstall sharedfile; Components: support_files
 
 [Components]
 Name: SFTP_Plugin; Description: {cm:PluginFilesDesc}; Flags: fixed; Types: custom compact full

@@ -19,6 +19,8 @@
 #include "sys/stat.h"
 #include "share.h"
 
+#define STEP 64000
+
 /*
  * Since SFTP is a request-response oriented protocol, it requires
  * no buffer management: when we send data, we stop and wait for an
@@ -245,6 +247,7 @@ int sftp_cmd_ls(struct sftp_command *cmd)
 
   if (dirh == NULL) {
     printf("Unable to open %s: %s\n", dir, fxp_error());
+    CurrentDirStruct.nnames = -1;
   } else {
     nnames = namesize = 0;
     ournames = NULL;
@@ -449,11 +452,15 @@ int sftp_general_get(struct sftp_command *cmd, int restart)
   double pinc = 0;
   double pcb = 0;
   struct fxp_attrs Fattrs;
+  unsigned long int transfered = 0, threshold;
 
   uint64 offset;
   FILE *fp;
   int ret;
   int not_canceled_by_user = 1;
+      
+  int mode = getTransferMode();
+  char buf_1310[2] = {13,10};
 
   if (back == NULL) {
     printf("psftp: not connected to a host; use \"open host.name\"\n");
@@ -576,9 +583,13 @@ int sftp_general_get(struct sftp_command *cmd, int restart)
     posn = ftell(fp);
     printf("reget: restarting at file position %ld\n", posn);
     offset = uint64_make(0, posn);
+    transfered = posn;
   } else {
     offset = uint64_make(0, 0);
+    transfered = 0;
   }
+
+  threshold = transfered + STEP;
 
   printf("remote:%s => local:%s\n", fname, outfname);
 
@@ -599,13 +610,6 @@ int sftp_general_get(struct sftp_command *cmd, int restart)
     pinc = 50;                  // it's better to give +50%, than +0% ? :-)
   }
 
-  if (restart) {
-    //set the progress bar 
-    if (Fattrs.size.lo > 0 && offset.lo > 0) {
-      pcb = offset.lo * pinc;
-    }
-  }
-
   ret = 1;
   xfer = xfer_download_init(fh, offset);
   while (not_canceled_by_user && (!xfer_done(xfer))) {
@@ -613,11 +617,15 @@ int sftp_general_get(struct sftp_command *cmd, int restart)
     int len;
     int wpos, wlen;
 
+    if (transfered>threshold) {
+    pcb = pinc*transfered;
     if (ProgressProc("", "", (int) pcb) == 1) {
       wcplg_set_last_error_msg("cancel by user");
       not_canceled_by_user = 0;
       ret = 0;
       xfer_set_error(xfer);     //won't write anymore
+    }
+    threshold = transfered + STEP;
     }
 
     xfer_download_queue(xfer);
@@ -633,15 +641,19 @@ int sftp_general_get(struct sftp_command *cmd, int restart)
     while (xfer_download_data(xfer, &vbuf, &len)) {
 
       unsigned char *buf = (unsigned char *) vbuf;
-      int mode = getTransferMode();
-      char buf_1310[2] = {13,10};
 
+      transfered += len;
+
+    if (transfered>threshold) {
+      pcb = pinc*transfered;
       if (ProgressProc("", "", (int) pcb) == 1) {
         wcplg_set_last_error_msg("cancel by user");
         not_canceled_by_user = 0;
 	ret = 0;
         xfer_set_error(xfer);   //won't write anymore
       }
+    threshold = transfered + STEP;
+    }
 
       wpos = 0;
       while (wpos < len) {
@@ -670,7 +682,6 @@ int sftp_general_get(struct sftp_command *cmd, int restart)
         ret = 0;
         xfer_set_error(xfer);
       }
-      pcb += pinc * len;
       offset = uint64_add32(offset, len);
 
       sfree(vbuf);
@@ -2225,6 +2236,8 @@ static void version(void)
   strcpy(cfg.proxy_username, get_Server_config_Struct()->proxy_username);
   strcpy(cfg.proxy_password, get_Server_config_Struct()->proxy_password);
   strcpy(cfg.proxy_telnet_command, get_Server_config_Struct()->proxy_telnet_command);
+
+  cfg.try_ki_auth=0;
   //cfg.proxy_socks_version = get_Server_config_Struct().proxy_socks_version;
   /* </CUSTOM> */
 

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <limits.h>
 #include <ctype.h>
 #include <assert.h>
 #include "putty.h"
@@ -332,14 +333,21 @@ void mlog(char *file, int line)
 }
 #endif
 
-void *safemalloc(size_t size)
+void *safemalloc(size_t n, size_t size)
 {
     void *p;
+
+    if (n > INT_MAX / size) {
+	p = NULL;
+    } else {
+	size *= n;
 #ifdef MINEFIELD
     p = minefield_c_malloc(size);
 #else
     p = malloc(size);
 #endif
+    }
+
     if (!p) {
 	char str[200];
 #ifdef MALLOC_LOG
@@ -359,9 +367,14 @@ void *safemalloc(size_t size)
     return p;
 }
 
-void *saferealloc(void *ptr, size_t size)
+void *saferealloc(void *ptr, size_t n, size_t size)
 {
     void *p;
+
+    if (n > INT_MAX / size) {
+	p = NULL;
+    } else {
+	size *= n;
     if (!ptr) {
 #ifdef MINEFIELD
 	p = minefield_c_malloc(size);
@@ -375,6 +388,8 @@ void *saferealloc(void *ptr, size_t size)
 	p = realloc(ptr, size);
 #endif
     }
+    }
+
     if (!p) {
 	char str[200];
 #ifdef MALLOC_LOG
