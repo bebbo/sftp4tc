@@ -4,6 +4,11 @@
 #include "windows.h"
 #include "fsplugin.h"
 
+
+#pragma warning( disable : 4786 )
+#include <string>
+#include <vector>
+
 extern "C" {
 #include "share.h"
 #include "pl_misc.h"
@@ -76,18 +81,58 @@ void __stdcall __map__set_Server_config_Struct(struct SftpServerAccountInfo
   set_Server_config_Struct(ServerAccountInfo);
 }
 
-bool mBinary=true;
+#define ASCII_MODE 0
+#define BINARY_MODE 1
+#define SMART_MODE 2
 
-void CALLBACK __map__setTransferMode(bool binary)
+int mMode = BINARY_MODE;
+std::vector<std::string> mModeDetails;
+
+void CALLBACK __map__setTransferMode(char *mode)
 {
-  mBinary = binary;
+  switch (mode[0])
+  {
+    case 'X':
+      {
+        mModeDetails.clear();
+        std::string smode(mode+1);
+        std::string::size_type i = smode.find_first_not_of('*');
+        std::string::size_type j;
+        while (i!=std::string::npos) {
+          j = smode.find_first_of(' ', i);
+          if (j==std::string::npos)
+            j = smode.length();
+          mModeDetails.push_back(smode.substr(i, j-i));
+          if (j == smode.length())
+            i = std::string::npos;
+          else {
+            i = smode.find_first_not_of(' ', j);
+            i = smode.find_first_not_of('*', i);
+          }
+        }
+        mMode = SMART_MODE;
+        break;
+      }
+    case 'A':
+      mMode = ASCII_MODE;
+      break;
+    default:
+      mMode = BINARY_MODE;
+  }
+  
 }
 
-int getTransferMode()
+int getTransferMode(char *filename)
 {
-  if (mBinary)
-    return 1;
-  else
-    return 0;
+  if (mMode==SMART_MODE) {
+    int i=0;
+    int len=strlen(filename);
+    while ((i<mModeDetails.size()) && ((len<mModeDetails[i].length()) || (stricmp(filename+(len-mModeDetails[i].length()), mModeDetails[i].c_str())!=0))) i++;
+    if (i<mModeDetails.size())
+      return ASCII_MODE;
+    else
+      return BINARY_MODE;
+  } else
+    return mMode;
 }
 }

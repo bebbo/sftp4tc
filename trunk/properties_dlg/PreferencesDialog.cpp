@@ -81,7 +81,7 @@ BEGIN_EVENT_TABLE(PreferencesDialog, wxDialog)
   EVT_CHECKBOX( XRCID( chkUseKeyAuth_ID ), PreferencesDialog::chkUseKeyAuthChecked )
   EVT_CHECKBOX( XRCID( chkAsk4Passphrase_ID ), PreferencesDialog::chkAsk4PassphraseChecked )
   EVT_CHOICE( XRCID( cboProxyType_ID ), PreferencesDialog::cboProxyTypeChoiceSelected )
-  EVT_CHECKBOX( XRCID( cboImportPutty_ID ), PreferencesDialog::cboImportPuttyChecked )
+  EVT_CHOICE( XRCID( cboImportPutty_ID ), PreferencesDialog::cboImportPuttySelected )
   EVT_TEXT( XRCID( edtImportSSHcom_ID ), PreferencesDialog::edtImportSSHcomTextChange )
 END_EVENT_TABLE()
 
@@ -148,7 +148,7 @@ PreferencesDialog::PreferencesDialog(config_properties *aProperties, wxWindow *a
       cboImportPutty->Append(CHOICE_PUTTY_IMPORT_AUTH_KEY);
       //
       cboImportPutty->SetSelection(mProperties->DoImportPuttySessions-'0');
-      if (cboImportPutty->GetSelection()==-1)
+      if (cboImportPutty->GetSelection()<0)
         cboImportPutty->SetSelection(0);
       edtImportSSHcom->SetValue(mProperties->DoImportSSHcomSessions);
       //
@@ -461,12 +461,9 @@ void PreferencesDialog::cboProxyTypeChoiceSelected( wxCommandEvent &event )
   }
 }
 
-//-------------------------- CHOICE EVENTS -------------------------------------------
-
-void PreferencesDialog::cboImportPuttyChecked( wxCommandEvent &event )
+void PreferencesDialog::cboImportPuttySelected( wxCommandEvent &event )
 {
-  if (mCurrentServer)
-    mProperties->DoImportPuttySessions = cboImportPutty->GetSelection();
+  mProperties->DoImportPuttySessions = cboImportPutty->GetSelection() + '0';
 }
 
 //-------------------------- CHOICE EVENTS -------------------------------------------

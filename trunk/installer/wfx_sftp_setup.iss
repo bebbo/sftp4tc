@@ -1,13 +1,13 @@
 [Setup]
 InternalCompressLevel=ultra
 SourceDir=..\tc_plugin\release
-OutputBaseFilename=wfx_sftp_1_2_57_1_setup
+OutputBaseFilename=wfx_sftp_1_2_57_2_setup
 SolidCompression=true
-VersionInfoVersion=1.2.57.1
+VersionInfoVersion=1.2.57.2
 VersionInfoDescription={cm:VersionInfoDesc}
 Compression=lzma/ultra
 AppName={cm:AppName}
-AppVerName=1.2.57.1
+AppVerName=1.2.57.2
 DefaultDirName={pf}\TC Plugins\SFTP4TC
 UsePreviousGroup=false
 AppendDefaultGroupName=false
@@ -16,7 +16,7 @@ DisableReadyPage=true
 ShowLanguageDialog=no
 LanguageDetectionMethod=none
 AppPublisherURL=http://developer.berlios.de/projects/sftp4tc/
-AppVersion=1.2.57.1
+AppVersion=1.2.57.2
 AppID={{C52CD225-E994-499C-89B8-457E846E0CF5}
 UninstallDisplayName=SFTP for TotalCommander
 OutputDir=..\..\installer

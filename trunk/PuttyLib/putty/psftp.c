@@ -446,6 +446,7 @@ int sftp_general_get(struct sftp_command *cmd, int restart)
   struct sftp_request *req, *rreq;
   struct fxp_xfer *xfer;
   char *fname, *outfname;
+  int mode;
 
   char *do_dirty_parse = NULL, *fname_tmp = NULL, *fname_tmp2 =
     NULL, *fname_tmp3;
@@ -459,7 +460,6 @@ int sftp_general_get(struct sftp_command *cmd, int restart)
   int ret;
   int not_canceled_by_user = 1;
       
-  int mode = getTransferMode();
   char buf_1310[2] = {13,10};
 
   if (back == NULL) {
@@ -473,6 +473,7 @@ int sftp_general_get(struct sftp_command *cmd, int restart)
   }
 
   fname = canonify(cmd->words[1]);
+  mode = getTransferMode(fname);
 
   if (restart && fname) {
     do_dirty_parse = strchr(fname, '?');
@@ -737,6 +738,7 @@ int sftp_general_put(struct sftp_command *cmd, int restart)
   struct stat fstat__s;
   int f_size_ = 0;
   double pinc = 0;
+  int mode;
 
   if (ProgressProc("", "", 0) == 1) {
     wcplg_set_last_error_msg("cancel by user");
@@ -887,6 +889,7 @@ int sftp_general_put(struct sftp_command *cmd, int restart)
     offset = uint64_make(0, 0);
   }
 
+  mode = getTransferMode(fname);
   printf("local:%s => remote:%s\n", fname, outfname);
 
   /*
@@ -920,7 +923,6 @@ int sftp_general_put(struct sftp_command *cmd, int restart)
 #define BUFFER_SIZE_RESERVE 4097
 
   while ((!err && !eof) || !xfer_done(xfer)) {
-    int mode = getTransferMode();
     char buffer_10[1]={10};
     char buffer[BUFFER_SIZE_RESERVE];
     int len=0, ret;
@@ -2237,7 +2239,8 @@ static void version(void)
   strcpy(cfg.proxy_password, get_Server_config_Struct()->proxy_password);
   strcpy(cfg.proxy_telnet_command, get_Server_config_Struct()->proxy_telnet_command);
 
-  cfg.try_ki_auth=0;
+  //TO-BE-CHECKED: why I wanted to stop Keyboard-Interactive? This was causing not to connect to FreeBSD :-(
+  //cfg.try_ki_auth=0;
   //cfg.proxy_socks_version = get_Server_config_Struct().proxy_socks_version;
   /* </CUSTOM> */
 

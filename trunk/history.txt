@@ -1,3 +1,9 @@
+VERSION 1.2.57.2
++FIXED connection to FreeBSD 5.3 works now
++FIXED connection dialog doesn't cause Exception on exit, when parenthandle unknown
++FIXED "import putty sessions" didn't work correctly in connection dialog
+*ADDED simple implementation of automatic transfer mode (don't try anything more complicated than "*.xml *.html", like "this*wouldnot?.work")
+
 VERSION 1.2.57.1
 +FIXED access denied didn't stopped the directory change
 +FIXED empty directories were shown as "Access denied"

@@ -17,7 +17,7 @@ int wcplg_sftp_connect(char *user, char *password, char *host, int port,
                        SftpServerAccountInfo * allServers,
                        int CurrentServerId);
 int wcplg_sftp_connect_byID(int id);
-void wcplg_sftp_transfermode(int id, bool binary);
+void wcplg_sftp_transfermode(int id, char *mode);
 int wcplg_sftp_disconnect(int id, bool nolog);
 int get_current_server_id(void);
 int wcplg_sftp_do_commando(char *commando, char *server_output,
@@ -71,7 +71,7 @@ typedef int (__stdcall CALLBACK *
 typedef void (__stdcall CALLBACK *
               TD_SFTP_DLL_FNCT_SetSftpServerAccountInfo)
   (SftpServerAccountInfo ServerAccountInfo);
-typedef void (CALLBACK * TD_SFTP_DLL_FNCT_SetTransferMode)(bool binary);
+typedef void (CALLBACK * TD_SFTP_DLL_FNCT_SetTransferMode)(char *mode);
 typedef int (CALLBACK * TD_SFTP_DLL_FNCT_Disconnected)(void);
 
 void Unload_PSFTP_DLL_HANDLER(int ServerId);
