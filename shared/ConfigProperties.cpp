@@ -16,7 +16,7 @@ void SaveProperties(struct config_properties *aProperties)
     {
       if (aProperties->ServerInfos[i].id!=-1)
         SaveServerInfo(aid++, &aProperties->ServerInfos[i], 
-          aProperties->ConfigIniFile);
+          aProperties);
     }
   }
   for(int i=0; i < aProperties->ServerCount; i++) {

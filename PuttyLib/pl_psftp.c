@@ -12,7 +12,7 @@ extern Config cfg;
 extern struct sftp_command *sftp_getcmd(FILE * fp, int mode,
                                         int modeflags);
 
-extern struct sftp_command {
+/*extern*/ struct sftp_command {
   char **words;
   int nwords, wordssize;
   int (*obey) (struct sftp_command *);  /* returns <0 to quit */
@@ -129,7 +129,7 @@ int wcplg_do_sftp(char *_cmd, char *_server_output)
   // löschen
   fclose(fp);
 
-  _unlink(batchfile);
+  remove(batchfile);
 
 
   //cmd->words=  eventl. noch zusammenbasteln

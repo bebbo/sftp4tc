@@ -746,11 +746,11 @@ struct ssh2_userkey *ssh2_load_userkey(const Filename *filename,
 	    goto error;
 
 	SHA_Init(&s);
-	SHA_Bytes(&s, "\0\0\0\0", 4);
+	SHA_Bytes(&s, (void *)"\0\0\0\0", 4);
 	SHA_Bytes(&s, passphrase, passlen);
 	SHA_Final(&s, key + 0);
 	SHA_Init(&s);
-	SHA_Bytes(&s, "\0\0\0\1", 4);
+	SHA_Bytes(&s, (void *)"\0\0\0\1", 4);
 	SHA_Bytes(&s, passphrase, passlen);
 	SHA_Final(&s, key + 20);
 	aes256_decrypt_pubkey(key, private_blob, private_blob_len);
@@ -1135,11 +1135,11 @@ int ssh2_save_userkey(const Filename *filename, struct ssh2_userkey *key,
 	passlen = strlen(passphrase);
 
 	SHA_Init(&s);
-	SHA_Bytes(&s, "\0\0\0\0", 4);
+	SHA_Bytes(&s, (void *)"\0\0\0\0", 4);
 	SHA_Bytes(&s, passphrase, passlen);
 	SHA_Final(&s, key + 0);
 	SHA_Init(&s);
-	SHA_Bytes(&s, "\0\0\0\1", 4);
+	SHA_Bytes(&s, (void *)"\0\0\0\1", 4);
 	SHA_Bytes(&s, passphrase, passlen);
 	SHA_Final(&s, key + 20);
 	aes256_encrypt_pubkey(key, priv_blob_encrypted,

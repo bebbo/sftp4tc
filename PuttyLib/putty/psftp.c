@@ -34,7 +34,7 @@ void do_sftp_cleanup();
  * sftp client state.
  */
 
-char *pwd, *homedir;
+//char *pwd, *homedir;
 /*static*/ Backend *back;
 /*static*/ void *backhandle;
 /*static*/ Config cfg;
@@ -626,6 +626,7 @@ int sftp_general_get(struct sftp_command *cmd, int restart)
     if (ret < 0) {
       printf("error while reading: %s\n", fxp_error());
       ret = 0;
+      not_canceled_by_user = 0;
     }
 
     while (xfer_download_data(xfer, &vbuf, &len)) {
@@ -1201,6 +1202,66 @@ int sftp_cmd_mv(struct sftp_command *cmd)
   return 1;
 }
 
+int sftp_cmd_chown(struct sftp_command *cmd)
+{
+  char *fname;
+  int result;
+  struct fxp_attrs attrs;
+  unsigned old_uid, old_gid, new_uid, new_gid;
+  struct sftp_packet *pktin;
+  struct sftp_request *req, *rreq;
+
+  if (back == NULL) {
+    printf("psftp: not connected to a host; use \"open host.name\"\n");
+    return 0;
+  }
+
+  fname = canonify(cmd->words[3]);
+  if (!fname) {
+    printf("%s: %s\n", fname, fxp_error());
+    return 0;
+  }
+
+  sftp_register(req = fxp_stat_send(fname));
+  rreq = sftp_find_request(pktin = sftp_recv());
+  assert(rreq == req);
+  result = fxp_stat_recv(pktin, rreq, &attrs);
+
+  if (!result || !(attrs.flags & SSH_FILEXFER_ATTR_UIDGID)) {
+    printf("get attrs for %s: %s\n", fname,
+           result ? "file uid&gid not provided" : fxp_error());
+    sfree(fname);
+    return 0;
+  }
+
+  attrs.flags = SSH_FILEXFER_ATTR_UIDGID;  /* uid&gid _only_ */
+  old_uid = attrs.uid;
+  old_gid = attrs.gid;
+
+  new_uid = atoi(cmd->words[1]);
+  new_gid = atoi(cmd->words[2]);
+
+  attrs.uid = new_uid;
+  attrs.gid = new_gid;
+
+  sftp_register(req = fxp_setstat_send(fname, attrs));
+  rreq = sftp_find_request(pktin = sftp_recv());
+  assert(rreq == req);
+  result = fxp_setstat_recv(pktin, rreq);
+
+  if (!result) {
+    char buf[MAX_PATH];
+    _snprintf(buf, MAX_PATH, "set uid&gid for %s: %s\n", fname, fxp_error());
+    sfree(fname);
+    return 0;
+  }
+
+  printf("%s: %d:%d -> %d:%d\n", fname, old_uid, old_gid, new_uid, new_gid);
+
+  sfree(fname);
+  return 1;
+}
+
 int sftp_cmd_chmod(struct sftp_command *cmd)
 {
   char *fname, *mode;
@@ -1520,6 +1581,8 @@ static struct sftp_cmd_lookup {
       "  more than one user for the same modifier (\"ug+w\"). You can\n"
       "  use commas to separate different modifiers (\"u+rwx,g+s\").\n",
       sftp_cmd_chmod}, {
+  "chown", TRUE, "change owner",
+      "" "  Change owner.\n", sftp_cmd_chown}, {
   "del", TRUE, "delete a file",
       " <filename>\n" "  Delete a file.\n", sftp_cmd_rm}, {
   "delete", FALSE, "del", NULL, sftp_cmd_rm}, {
@@ -2149,18 +2212,15 @@ static void version(void)
   /* <CUSTOM> */
 
   /* load settings from Server_config_Struct */
-  strcpy(cfg.keyfile.path, &(get_Server_config_Struct().keyfilename[0]));
+  strcpy(cfg.keyfile.path, (const char *)(get_Server_config_Struct()->keyfilename));
 
   /* and that experimental PROXY_SETTINGS */
-  cfg.proxy_type = get_Server_config_Struct().proxy_type;
-  strcpy(cfg.proxy_host, &(get_Server_config_Struct().proxy_host[0]));
-  cfg.proxy_port = get_Server_config_Struct().proxy_port;
-  strcpy(cfg.proxy_username,
-         &(get_Server_config_Struct().proxy_username[0]));
-  strcpy(cfg.proxy_password,
-         &(get_Server_config_Struct().proxy_password[0]));
-  strcpy(cfg.proxy_telnet_command,
-         &(get_Server_config_Struct().proxy_telnet_command[0]));
+  cfg.proxy_type = get_Server_config_Struct()->proxy_type;
+  strcpy(cfg.proxy_host, get_Server_config_Struct()->proxy_host);
+  cfg.proxy_port = get_Server_config_Struct()->proxy_port;
+  strcpy(cfg.proxy_username, get_Server_config_Struct()->proxy_username);
+  strcpy(cfg.proxy_password, get_Server_config_Struct()->proxy_password);
+  strcpy(cfg.proxy_telnet_command, get_Server_config_Struct()->proxy_telnet_command);
   //cfg.proxy_socks_version = get_Server_config_Struct().proxy_socks_version;
   /* </CUSTOM> */
 

@@ -16,7 +16,7 @@ struct SftpServerAccountInfo *GetServerInfos(void);
 int wcplg_sftp_connect(char *user, char *password, char *host, int port,
                        SftpServerAccountInfo * allServers,
                        int CurrentServerId);
-int wcplg_sftp_connect_byID(unsigned int id);
+int wcplg_sftp_connect_byID(int id);
 void wcplg_sftp_transfermode(int id, bool binary);
 int wcplg_sftp_disconnect(int id, bool nolog);
 int get_current_server_id(void);

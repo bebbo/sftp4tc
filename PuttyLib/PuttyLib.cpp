@@ -8,7 +8,6 @@ extern "C" {
 #include "share.h"
 #include "pl_misc.h"
 #include "pl_psftp.h"
-} 
 
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
@@ -77,7 +76,6 @@ void CALLBACK __map__setTransferMode(bool binary)
   mBinary = binary;
 }
 
-extern "C" {
 int getTransferMode()
 {
   if (mBinary)
