@@ -411,24 +411,26 @@ struct fxp_names *wcplg_sftp_get_current_dir_struct(int ServerId)
   if (CurrentDirStruct_TMP != NULL) {
     CurrentDirStruct = new fxp_names;
     CurrentDirStruct->nnames = CurrentDirStruct_TMP->nnames;
-    CurrentDirStruct->names =
-      (fxp_name *) malloc(sizeof(fxp_name) * CurrentDirStruct_TMP->nnames);
+    if (CurrentDirStruct->nnames>=0) {
+      CurrentDirStruct->names =
+        (fxp_name *) malloc(sizeof(fxp_name) * CurrentDirStruct_TMP->nnames);
 
-    for (int i = 0; i < CurrentDirStruct_TMP->nnames; ++i) {
-      CurrentDirStruct->names[i].attrs =
-        CurrentDirStruct_TMP->names[i]->attrs;
-      CurrentDirStruct->names[i].filename =
-        (char *) malloc(sizeof(char) *
-                        (strlen(CurrentDirStruct_TMP->names[i]->filename) +
-                         1));
-      CurrentDirStruct->names[i].longname =
-        (char *) malloc(sizeof(char) *
-                        (strlen(CurrentDirStruct_TMP->names[i]->longname) +
-                         1));
-      strcpy(CurrentDirStruct->names[i].filename,
-             CurrentDirStruct_TMP->names[i]->filename);
-      strcpy(CurrentDirStruct->names[i].longname,
-             CurrentDirStruct_TMP->names[i]->longname);
+      for (int i = 0; i < CurrentDirStruct_TMP->nnames; ++i) {
+        CurrentDirStruct->names[i].attrs =
+          CurrentDirStruct_TMP->names[i]->attrs;
+        CurrentDirStruct->names[i].filename =
+          (char *) malloc(sizeof(char) *
+                          (strlen(CurrentDirStruct_TMP->names[i]->filename) +
+                           1));
+        CurrentDirStruct->names[i].longname =
+          (char *) malloc(sizeof(char) *
+                          (strlen(CurrentDirStruct_TMP->names[i]->longname) +
+                           1));
+        strcpy(CurrentDirStruct->names[i].filename,
+               CurrentDirStruct_TMP->names[i]->filename);
+        strcpy(CurrentDirStruct->names[i].longname,
+               CurrentDirStruct_TMP->names[i]->longname);
+      }
     }
   }
   return CurrentDirStruct;

@@ -19,6 +19,7 @@ CFG=PuttyLib - Win32 Debug
 !MESSAGE 
 !MESSAGE "PuttyLib - Win32 Release" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE "PuttyLib - Win32 Debug" (based on "Win32 (x86) Dynamic-Link Library")
+!MESSAGE "PuttyLib - Win32 Release Optimized" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE 
 
 # Begin Project
@@ -81,12 +82,41 @@ LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
 # ADD LINK32 WSOCK32.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /version:1.0 /dll /map /debug /machine:I386 /out:"../tc_plugin/Debug/psftp.dll" /pdbtype:sept
 
+!ELSEIF  "$(CFG)" == "PuttyLib - Win32 Release Optimized"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "PuttyLib___Win32_Release_Optimized"
+# PROP BASE Intermediate_Dir "PuttyLib___Win32_Release_Optimized"
+# PROP BASE Ignore_Export_Lib 0
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "PuttyLib___Win32_Release_Optimized"
+# PROP Intermediate_Dir "PuttyLib___Win32_Release_Optimized"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /MT /W3 /GX /O2 /I "..\PuttyLib" /I "..\PuttyLib\putty" /I "..\tc_plugin" /I "..\shared" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PUTTYLIB_EXPORTS" /FR /YX /FD /c
+# ADD CPP /nologo /G6 /MT /W3 /GX /Ox /Ot /Og /Oi /I "..\PuttyLib" /I "..\PuttyLib\putty" /I "..\tc_plugin" /I "..\shared" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PUTTYLIB_EXPORTS" /FR /YX /FD /c
+# SUBTRACT CPP /Os
+# ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
+# ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
+# ADD BASE RSC /l 0x409 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 WSOCK32.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /version:1.0 /dll /machine:I386 /out:"../tc_plugin/Release/psftp.dll"
+# ADD LINK32 WSOCK32.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /version:1.0 /dll /machine:I386 /out:"../tc_plugin/Release Optimized/psftp.dll"
+
 !ENDIF 
 
 # Begin Target
 
 # Name "PuttyLib - Win32 Release"
 # Name "PuttyLib - Win32 Debug"
+# Name "PuttyLib - Win32 Release Optimized"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"

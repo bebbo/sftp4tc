@@ -1,3 +1,11 @@
+VERSION 1.2.57.1
++FIXED access denied didn't stopped the directory change
++FIXED empty directories were shown as "Access denied"
+*ADDED Caching of directories was added (must be explicitly activated by "cache_fs=1" in "config" section)
++FIXED configuration editor: fixing proxy type restoration
++FIXED some more checks for broken connections
+/CHANGED Patching Putty's source to version 0.57
+
 VERSION 1.2.56.2
 [11.1.2005]
 +FIXED Connection editor's few bugs
