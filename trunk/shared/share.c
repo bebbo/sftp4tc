@@ -7,12 +7,12 @@ int get_tmp_file_name(char *buf)
 {
 
   char buf2[MAX_PATH];
-  struct _timeb timebuffer;
+  struct timeb timebuffer;
   char *timeline;
 
   tmp_count++;
 
-  _ftime(&timebuffer);
+  ftime(&timebuffer);
   timeline = ctime(&(timebuffer.time));
   GetTempPath(MAX_PATH, buf);
   sprintf(buf2, "%i%i%i", timebuffer.time, timebuffer.millitm, tmp_count);
@@ -28,10 +28,10 @@ int get_tmp_file_name(char *buf)
 }
 
 //This is ONLY 4 psftp.dll
-struct SftpServerAccountInfo get_Server_config_Struct(void)
+struct SftpServerAccountInfo *get_Server_config_Struct(void)
 {
   //if (strcmp(MyServerAccountInfo.username,"www105") == 0) exit(0);
-  return MyServerAccountInfo;
+  return &MyServerAccountInfo;
 }
 
 //This is ONLY 4 psftp.dll

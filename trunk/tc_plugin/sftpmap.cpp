@@ -466,7 +466,7 @@ void init_server_dll_handlers()
     SFTP_DLL_FNCT_GET_LAST_ERROR_MESSAGE[i] = NULL;
     SFTP_DLL_FNCT_init_ProgressProc[i] = NULL;
     SFTP_DLL_FNCT_SetSftpServerAccountInfo[i] = NULL;
-    PSFTP_DLL_HANDLER[MAX_Server_Count];
+    PSFTP_DLL_HANDLER[MAX_Server_Count] = NULL;
   }
 }
 
@@ -526,7 +526,7 @@ void unlink_dll_tmp_file(int id)
   GetTempPath(MAX_CMD_BUFFER, dll_2_load);
   strcat(dll_2_load, dll_with_CSid);
 
-  _unlink(dll_2_load);
+  remove(dll_2_load);
 }
 
 //---------------------------------------------------------------------

@@ -640,7 +640,7 @@ void bignum_set_bit(Bignum bn, int bitnum, int value)
  */
 int ssh1_write_bignum(void *data, Bignum bn)
 {
-    unsigned char *p = data;
+    unsigned char *p = (unsigned char *)data;
     int len = ssh1_bignum_length(bn);
     int i;
     int bitc = bignum_bitcount(bn);

@@ -5,6 +5,11 @@
 #include <windows.h>
 #include <sys/timeb.h>
 #include <time.h>
+#include "passwd_crypter.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define MAX_Server_Count 500
 #define MAX_Server_INFO 255     //this ain't so nice!!!
@@ -13,12 +18,15 @@
 
 #define UNEXPECTED_OK_MSG "unexpected OK response"
 
+//from ACE
+#define UNUSED_ARG(a) do {/* null */} while (&a == 0);
+
 typedef int PROXY_TYPE;
 
 int get_tmp_file_name(char *buf);
 
 struct SftpServerAccountInfo {
-  unsigned int id;
+  int id;
   char title[MAX_Server_INFO];
   char username[MAX_Server_INFO];
   char username_cached[MAX_Server_INFO];
@@ -54,14 +62,23 @@ struct SftpServerAccountInfo {
 
 struct config_properties {
   struct SftpServerAccountInfo ServerInfos[MAX_Server_Count];
-  int ServerCount; 
+  int ServerCount;
   int ImportedSessions;
   char DoImportSSHcomSessions[MAX_Server_INFO];
   char DoImportPuttySessions;
   char ConfigIniFile[MAX_PATH];
   HWND MainWindow;
+  char PasswordCrypterPath[MAX_Server_INFO];
+  char PasswordCrypterPassword[MAX_Server_INFO];
+  tEncryptPassword EncryptPassword;
+  tDecryptPassword DecryptPassword;
 };
 
-struct SftpServerAccountInfo get_Server_config_Struct(void);
+struct SftpServerAccountInfo *get_Server_config_Struct(void);
 void set_Server_config_Struct(struct SftpServerAccountInfo ServerAccountInfo);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif //_SHARE_H

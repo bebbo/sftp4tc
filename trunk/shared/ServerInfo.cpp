@@ -74,15 +74,17 @@ void SetDefaultsToServerInfo(SftpServerAccountInfo* ServerInfo)
 }
 
 #define WriteServerInfo(key, field) WritePrivateProfileString(section_name, key, \
-  ServerInfo->field, ConfigIniFile); 
+  ServerInfo->field, aProperties->ConfigIniFile); 
 #define WriteServerInfoBool(key, field) WritePrivateProfileString(section_name, key, \
-  ServerInfo->field ? "1" : "0", ConfigIniFile); 
+  ServerInfo->field ? "1" : "0", aProperties->ConfigIniFile); 
 #define WriteServerInfoInt(key, field) sprintf(buf, "%d", ServerInfo->field); \
   WritePrivateProfileString(section_name, key, \
-  buf, ConfigIniFile); 
+  buf, aProperties->ConfigIniFile); 
+#define WriteServerInfoValue(key, value) WritePrivateProfileString(section_name, key, \
+  value, aProperties->ConfigIniFile); 
 
 void SaveServerInfo(int SectionNumber, struct SftpServerAccountInfo *ServerInfo, 
-                    char *ConfigIniFile)
+                    struct config_properties *aProperties)
 {
   char section_name[MAX_Server_INFO];
   char buf[MAX_Server_INFO];
@@ -90,7 +92,14 @@ void SaveServerInfo(int SectionNumber, struct SftpServerAccountInfo *ServerInfo,
   WriteServerInfo("title", title)
   WriteServerInfo("host", host)
   WriteServerInfo("username", username)
-  WriteServerInfo("password", password)
+  if (aProperties->PasswordCrypterPath[0]!=0) {
+    char buf[4000];
+    memset(buf, 0, sizeof(buf));
+    aProperties->EncryptPassword(ServerInfo->password, buf);
+    WriteServerInfoValue("password", buf)
+  } else {
+    WriteServerInfo("password", password)
+  }
   WriteServerInfoInt("port", port)
   WriteServerInfo("home_dir", home_dir)
   WriteServerInfoBool("compression", compression)

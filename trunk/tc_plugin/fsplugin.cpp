@@ -6,6 +6,8 @@
 #include "putty_proxy.h"
 #include "properties_dlg.h"
 #include "ServerInfo.h"
+#include "share.h"
+#include "passwd_crypter.h"
 
 //Plugin's caption, shown in TC's list
 #define FSPLUGIN_CAPTION "Secure FTP Connections"
@@ -64,17 +66,24 @@ tLogProc LogProc;
 tRequestProc RequestProc;
 
 int CurrentServer_ID= -1;
+static int DllInitialised = 0;
+
+//config DLL
 HMODULE hDialogDLL = 0;
 tProperties hProperties = 0;
 tFreeCfgDLL hFreeCfgDLL = 0;
-static int DllInitialised = 0;
 
-int ImportPuttySession(struct SftpServerAccountInfo *ServerAccountInfo, char *PuttySectionName);
+//password crypter DLL
+HMODULE hPasswdCrypter = 0;
+tSetupPasswordCrypter hSetupPasswordCrypter = 0;
+
+int ImportPuttySession(struct SftpServerAccountInfo *ServerAccountInfo, 
+                       char *PuttySectionName);
 int ImportPuttySessions(int current_ID, char *import_mode);
 int ImportSSHcomSessions(int lastInsert_ID, char *dir_location);
 
 int octal_permissions_2_tc_integral(unsigned long octal_val);
-int wcplg_sftp_connect_byID(unsigned int id);
+int wcplg_sftp_connect_byID(int id);
 unsigned int get_IDbyPath(char *path);
 int get_sftpServer_ID_by_Title(char *Title);
 int wcplg_sftp_do_commando_byID(char *sftp_cmd, char *serverOutput, int ID);
@@ -148,15 +157,15 @@ void err_v(char *msg, char *param)
 {
   char buf[MAX_MSG_BUFFER];
   _snprintf(buf, MAX_MSG_BUFFER, msg, param);
-  dbg(buf);
 
   RequestProc(PluginNumber, RT_MsgOK, "Error", buf, NULL, 0);
 }
 
 //---------------------------------------------------------------------
 
-BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+extern "C" BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
+  UNUSED_ARG(lpReserved);
   switch (ul_reason_for_call) {
   case DLL_PROCESS_ATTACH:
     {
@@ -164,7 +173,8 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserve
       //Get the ini's filename
       if (get_custom_users_sftp_inifile_from_reg(SftpConfig.ConfigIniFile) == -1) {
         hDllModule = (HMODULE) hModule;
-        GetModuleFileName(hDllModule, SftpConfig.ConfigIniFile, sizeof(SftpConfig.ConfigIniFile) - 1);
+        GetModuleFileName(hDllModule, SftpConfig.ConfigIniFile, 
+          sizeof(SftpConfig.ConfigIniFile) - 1);
         char *p = strrchr(SftpConfig.ConfigIniFile, '\\');
         if (p)
           p++;
@@ -184,6 +194,11 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserve
           hDialogDLL = NULL;
           hProperties = NULL;
           hFreeCfgDLL = NULL;
+        }
+        if (hPasswdCrypter) {
+          FreeLibrary(hPasswdCrypter);
+          hPasswdCrypter = 0;
+          SftpConfig.PasswordCrypterPath[0] = 0;
         }
       } catch (...) {
       }
@@ -841,7 +856,6 @@ BOOL __stdcall FsMkDir(char *Path)
 
 void DefineAndAddConnection()
 {
-  SftpConfig.ConfigIniFile;
   HANDLE myFile;
 
   myFile = CreateFile(SftpConfig.ConfigIniFile, // file name
@@ -970,8 +984,8 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
     if (CurrentServer_ID == -1)
       return FS_EXEC_ERROR;
     strcpy(SftpConfig.ServerInfos[CurrentServer_ID].home_dir, &Verb[11]);
-    size_t i = strlen(SftpConfig.ServerInfos[CurrentServer_ID].home_dir);
-    char last_one = SftpConfig.ServerInfos[CurrentServer_ID].home_dir[i - 1];
+    /*size_t i = strlen(SftpConfig.ServerInfos[CurrentServer_ID].home_dir);
+    char last_one = SftpConfig.ServerInfos[CurrentServer_ID].home_dir[i - 1];*/
 
     sprintf(sftp_cmd, "cd %s", SftpConfig.ServerInfos[CurrentServer_ID].home_dir);
     winSlash2unix(sftp_cmd);
@@ -1200,6 +1214,18 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
       return FS_EXEC_ERROR;
   }
 
+  if (_strnicmp(Verb, "quote chown ", 12)==0) {
+    strcpy(sftp_cmd, &Verb[6]);
+
+    winSlash2unix(sftp_cmd);
+
+    if (wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID) ==
+        SFTP_SUCCESS) {
+      return FS_EXEC_OK;
+    } else
+      return FS_EXEC_ERROR;
+  }
+
   if (_strnicmp(Verb, "MODE ", 5)==0) {
     if ((strlen(Verb)>=6) && (Verb[5]=='A'))
       wcplg_sftp_transfermode(CurrentServer_ID, false);
@@ -1224,6 +1250,8 @@ int __stdcall FsRenMovFile(char *OldName, char *NewName, BOOL Move,
   int server_2_server_move = 0;
   int serverid_from_oldname;
   int serverid_from_newname;
+
+  ri=ri;
 
   if (strchr(OldName + 1, '\\') == NULL)
     return 0;
@@ -1623,7 +1651,7 @@ int wcplg_sftp_do_commando_byID(char *sftp_cmd, char *serverOutput, int ID)
 
 //---------------------------------------------------------------------
 
-int wcplg_sftp_connect_byID(unsigned int ID)
+int wcplg_sftp_connect_byID(int ID)
 {
   bool server_entered = false;
   bool user_entered = false;
@@ -1778,7 +1806,7 @@ int LoadServers()
   char buf_title[MAX_Server_INFO];
   char buf_host[MAX_Server_INFO];
   char buf_username[MAX_Server_INFO];
-  char buf_password[MAX_Server_INFO];
+  char buf_password[4000];
   char buf_port[MAX_Server_INFO];
   char buf_home_dir[MAX_Server_INFO];
   char buf_compression[MAX_Server_INFO];
@@ -1799,6 +1827,52 @@ int LoadServers()
   char buf_set_chmod_after_put[MAX_Server_INFO];
   char buf_set_chmod_after_mkdir[MAX_Server_INFO];
   char buf_set_mtime_after_put[MAX_Server_INFO];
+
+  //Check for password crypter library
+  GetPrivateProfileString(INI_CONFIG_SECTION_NAME,
+                          INI_CONFIG_USE_PASSWORD_CRYPTER, "", buf_divers,
+                          MAX_Server_INFO, SftpConfig.ConfigIniFile);
+
+  if (strlen(buf_divers)>0) {
+    if (stricmp(buf_divers, SftpConfig.PasswordCrypterPath)!=0) {
+      strcpy(SftpConfig.PasswordCrypterPath, buf_divers);
+      hPasswdCrypter = LoadLibrary(buf_divers);
+      if (hPasswdCrypter) {
+        BOOL load;
+        hSetupPasswordCrypter = (tSetupPasswordCrypter)
+          GetProcAddress(hPasswdCrypter, "SetupPasswordCrypter");
+        SftpConfig.EncryptPassword = (tEncryptPassword)
+          GetProcAddress(hPasswdCrypter, "EncryptPassword");
+        SftpConfig.DecryptPassword = (tDecryptPassword)
+          GetProcAddress(hPasswdCrypter, "DecryptPassword");
+        if ((hSetupPasswordCrypter) && (SftpConfig.EncryptPassword) && 
+          (SftpConfig.DecryptPassword)) {
+          buf_divers[0]=0;
+          //what to do, if user cancel this?
+          load = RequestProc(PluginNumber, RT_Password, "PasswordCrypter's master-password", 
+            NULL, buf_divers, sizeof(buf_divers) - 1);
+          } else {
+            SftpConfig.PasswordCrypterPath[0] = 0;
+            load = 0;
+          }
+        if (load) {
+          strcpy(SftpConfig.PasswordCrypterPassword, buf_divers);
+          hSetupPasswordCrypter(buf_divers);
+        } else {
+          FreeLibrary(hPasswdCrypter);
+          hPasswdCrypter=0;
+        }
+      }
+    } else {
+      if (!hPasswdCrypter)
+        err_v("Passwordcrypter module failed to load!\n(%s)", buf_divers);
+    }
+
+    if (!hPasswdCrypter) {
+      //SftpConfig.PasswordCrypterPath[0] = 0;
+      //give a message
+    }
+  }
 
   for (i = 0; i < max_sections; i++) {
     buf_title[0] = '\0';
@@ -1895,12 +1969,18 @@ int LoadServers()
       strcpy(SftpConfig.ServerInfos[ID].host, buf_host);
       strcpy(SftpConfig.ServerInfos[ID].host_cached, buf_host);
       strcpy(SftpConfig.ServerInfos[ID].username, buf_username);
-      strcpy(SftpConfig.ServerInfos[ID].password, buf_password);
+      if ((hPasswdCrypter) && (strlen(buf_password)>0)) {
+        SftpConfig.DecryptPassword(buf_password, SftpConfig.ServerInfos[ID].password);
+      } else {
+        strncpy(SftpConfig.ServerInfos[ID].password, buf_password, 
+          sizeof(SftpConfig.ServerInfos[ID].password));
+      }
       strcpy(SftpConfig.ServerInfos[ID].keyfilename, buf_keyfilename);
 
       //use_key_auth optional, default=0
       if (strlen(buf_use_key_auth)) {
-        SftpConfig.ServerInfos[ID].use_key_auth = (unsigned char)strtoul(buf_use_key_auth, NULL, NULL);
+        SftpConfig.ServerInfos[ID].use_key_auth = 
+          (unsigned char)strtoul(buf_use_key_auth, NULL, 10);
         if (SftpConfig.ServerInfos[ID].use_key_auth > 1)
           SftpConfig.ServerInfos[ID].use_key_auth = 1;
       } else {
@@ -1910,7 +1990,7 @@ int LoadServers()
       //dont_ask4_username optional, default=0
       if (strlen(buf_dont_ask4_username)) {
         SftpConfig.ServerInfos[ID].dont_ask4_username = 
-          (unsigned char)strtoul(buf_dont_ask4_username, NULL, NULL);
+          (unsigned char)strtoul(buf_dont_ask4_username, NULL, 10);
         if (SftpConfig.ServerInfos[ID].dont_ask4_username > 1)
           SftpConfig.ServerInfos[ID].dont_ask4_username = 1;
       } else {
@@ -1920,7 +2000,7 @@ int LoadServers()
       //dont_ask4_passphrase optional, default=0
       if (strlen(buf_dont_ask4_passphrase)) {
         SftpConfig.ServerInfos[ID].dont_ask4_passphrase =
-          (unsigned char)strtoul(buf_dont_ask4_passphrase, NULL, NULL);
+          (unsigned char)strtoul(buf_dont_ask4_passphrase, NULL, 10);
         if (SftpConfig.ServerInfos[ID].dont_ask4_passphrase > 1)
           SftpConfig.ServerInfos[ID].dont_ask4_passphrase = 1;
       } else {
@@ -1930,7 +2010,7 @@ int LoadServers()
       //dont_ask4_password optional, default=0
       if (strlen(buf_dont_ask4_password)) {
         SftpConfig.ServerInfos[ID].dont_ask4_password =
-          (unsigned char)strtoul(buf_dont_ask4_password, NULL, NULL);
+          (unsigned char)strtoul(buf_dont_ask4_password, NULL, 10);
         if (SftpConfig.ServerInfos[ID].dont_ask4_password > 1)
           SftpConfig.ServerInfos[ID].dont_ask4_password = 1;
       } else {
@@ -1940,7 +2020,7 @@ int LoadServers()
       //set_chmod_after_put optional, default=0
       if (strlen(buf_set_chmod_after_put)) {
         SftpConfig.ServerInfos[ID].set_chmod_after_put =
-          (unsigned char)strtoul(buf_set_chmod_after_put, NULL, NULL);
+          (unsigned char)strtoul(buf_set_chmod_after_put, NULL, 10);
         if (SftpConfig.ServerInfos[ID].set_chmod_after_put > 1)
           SftpConfig.ServerInfos[ID].set_chmod_after_put = 1;
       } else {
@@ -1950,7 +2030,7 @@ int LoadServers()
       //set_chmod_after_mkdir optional, default=0
       if (strlen(buf_set_chmod_after_mkdir)) {
         SftpConfig.ServerInfos[ID].set_chmod_after_mkdir =
-          (unsigned char)strtoul(buf_set_chmod_after_mkdir, NULL, NULL);
+          (unsigned char)strtoul(buf_set_chmod_after_mkdir, NULL, 10);
         if (SftpConfig.ServerInfos[ID].set_chmod_after_mkdir > 1)
           SftpConfig.ServerInfos[ID].set_chmod_after_mkdir = 1;
       } else {
@@ -1960,7 +2040,7 @@ int LoadServers()
       //set_mtime_after_put optional, default=1
       if (strlen(buf_set_mtime_after_put)) {
         SftpConfig.ServerInfos[ID].set_mtime_after_put =
-          (unsigned char)strtoul(buf_set_mtime_after_put, NULL, NULL);
+          (unsigned char)strtoul(buf_set_mtime_after_put, NULL, 10);
         if (SftpConfig.ServerInfos[ID].set_mtime_after_put > 1)
           SftpConfig.ServerInfos[ID].set_mtime_after_put = 1;
       } else {
@@ -1970,7 +2050,7 @@ int LoadServers()
       //chmod_value_put optional, default=700, valid only with set_chmod_after_put
       if (strlen(buf_chmod_value_put)) {
         SftpConfig.ServerInfos[ID].chmod_value_put =
-          strtoul(buf_chmod_value_put, NULL, NULL);
+          strtoul(buf_chmod_value_put, NULL, 10);
       } else {
         SftpConfig.ServerInfos[ID].chmod_value_put = 700;
       }
@@ -1978,14 +2058,14 @@ int LoadServers()
       //chmod_value_mkdir optional, default=700, valid only with set_chmod_after_mkdir
       if (strlen(buf_chmod_value_mkdir)) {
         SftpConfig.ServerInfos[ID].chmod_value_mkdir =
-          strtoul(buf_chmod_value_mkdir, NULL, NULL);
+          strtoul(buf_chmod_value_mkdir, NULL, 10);
       } else {
         SftpConfig.ServerInfos[ID].chmod_value_mkdir = 700;
       }
 
       // port & home_dir are optional
       if (strlen(buf_port)) {
-        SftpConfig.ServerInfos[ID].port = strtol(buf_port, NULL, NULL);
+        SftpConfig.ServerInfos[ID].port = strtol(buf_port, NULL, 10);
       } else {
         SftpConfig.ServerInfos[ID].port = 22;
       }
@@ -2016,7 +2096,7 @@ int LoadServers()
 
       //experimental: Proxy
       if (strlen(buf_proxy_type)) {
-        unsigned long tmp = strtoul(buf_proxy_type, NULL, NULL);
+        unsigned long tmp = strtoul(buf_proxy_type, NULL, 10);
         switch (tmp) {
         case 1:
           SftpConfig.ServerInfos[ID].proxy_type = PROXY_SOCKS4;
@@ -2039,12 +2119,13 @@ int LoadServers()
       }
 
       if (strlen(buf_proxy_port)) {
-        SftpConfig.ServerInfos[ID].proxy_port = strtol(buf_proxy_port, NULL, NULL);
+        SftpConfig.ServerInfos[ID].proxy_port = strtol(buf_proxy_port, NULL, 10);
       } else {
         SftpConfig.ServerInfos[ID].proxy_port = 1080;  //standard port for socks-proxy
       }
 
-      if (SftpConfig.ServerInfos[ID].proxy_port < 1 || SftpConfig.ServerInfos[ID].proxy_port > 65535) {
+      if ((SftpConfig.ServerInfos[ID].proxy_port < 1) || 
+          (SftpConfig.ServerInfos[ID].proxy_port > 65535)) {
         SftpConfig.ServerInfos[ID].proxy_port = 1080;  //standard port for socks-proxy
       }
 
@@ -2166,6 +2247,7 @@ void LogProc_(int MsgType, char *LogString)
 
 BOOL __stdcall FsDisconnect(char *DisconnectRoot)
 {
+  UNUSED_ARG(DisconnectRoot)
   //DisconnectRoot is unusable as only 1 connection is active, because of psftp's architecture
   //LogProc_(MSGTYPE_DISCONNECT,"DISCONNECTED");
   wcplg_sftp_disconnect(CurrentServer_ID, false);
@@ -2578,8 +2660,7 @@ char *enum_settings_next(void *handle, char *buffer, int buflen)
 int ImportPuttySessions(int lastInsert_ID, char *import_mode)
 {
   static char otherbuf[2048];
-  static char *buffer;
-  int buflen = 0, bufsize = 0, i = 0, count = 0;
+  int count = 0;
   char *ret;
   void *handle;
   struct enumsettings *handleFree;
@@ -2781,7 +2862,7 @@ int ImportSSHcomSessions(int lastInsert_ID, char *dir_location)
         break;
       }
 
-      (buf3, FindDat.cFileName);
+      strcpy(buf3, FindDat.cFileName);
       strcpy(buf4, dir_location_PATH);
       strcat(buf4, "\\");
       strcat(buf4, buf3);

@@ -12,6 +12,8 @@ wxMyApp *app;
 wxLog *logStdErr;
 char xrcFileName[MAX_PATH];
 
+extern "C" {
+
 void __stdcall InitializeCfgDLL(HMODULE hModule)
 {
   GetModuleFileName(hModule, xrcFileName, sizeof(xrcFileName) - 1);
@@ -21,10 +23,19 @@ void __stdcall InitializeCfgDLL(HMODULE hModule)
   else
     p = xrcFileName;
   strcpy(p, DefaultXrcFileName);
+
   for(size_t i=0; xrcFileName[i]!=0; i++) if (xrcFileName[i]=='\\') xrcFileName[i]='/';
 
   app = new wxMyApp();
+#ifdef WXWIN_COMPATIBILITY_2_4
+  {
+    int argc=0;
+    wxChar *argv=NULL;
+    app->Initialize(argc, &argv);
+  }
+#else
   app->Initialize();
+#endif
   logStdErr = new wxLogStderr();
   wxLog::SetActiveTarget(logStdErr);
 }
@@ -68,6 +79,8 @@ bool __stdcall Properties(int Mode, struct config_properties *aProperties)
   app->ReleaseHostWindow();
 
   return res;
+}
+
 }
 
 //---------------------------------------------------------------------

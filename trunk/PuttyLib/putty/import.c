@@ -708,9 +708,9 @@ int openssh_write(const Filename *filename, struct ssh2_userkey *key,
         assert(e.start && iqmp.start); /* can't go wrong */
 
         /* We also need d mod (p-1) and d mod (q-1). */
-        bd = bignum_from_bytes(d.start, d.bytes);
-        bp = bignum_from_bytes(p.start, p.bytes);
-        bq = bignum_from_bytes(q.start, q.bytes);
+        bd = bignum_from_bytes((const unsigned char *)d.start, d.bytes);
+        bp = bignum_from_bytes((const unsigned char *)p.start, p.bytes);
+        bq = bignum_from_bytes((const unsigned char *)q.start, q.bytes);
         decbn(bp);
         decbn(bq);
         bdmp1 = bigmod(bd, bp);
@@ -1355,7 +1355,7 @@ struct ssh2_userkey *sshcom_read(const Filename *filename, char *passphrase)
 
         alg = &ssh_rsa;
         pos = 0;
-        pos += put_string(blob+pos, "ssh-rsa", 7);
+        pos += put_string(blob+pos, (void *)"ssh-rsa", 7);
         pos += put_mp(blob+pos, e.start, e.bytes);
         pos += put_mp(blob+pos, n.start, n.bytes);
         publen = pos;
@@ -1383,7 +1383,7 @@ struct ssh2_userkey *sshcom_read(const Filename *filename, char *passphrase)
 
         alg = &ssh_dss;
         pos = 0;
-        pos += put_string(blob+pos, "ssh-dss", 7);
+        pos += put_string(blob+pos, (void *)"ssh-dss", 7);
         pos += put_mp(blob+pos, p.start, p.bytes);
         pos += put_mp(blob+pos, q.start, q.bytes);
         pos += put_mp(blob+pos, g.start, g.bytes);
@@ -1517,7 +1517,7 @@ int sshcom_write(const Filename *filename, struct ssh2_userkey *key,
     pos += 4;			       /* length field, fill in later */
     pos += put_string(outblob+pos, type, strlen(type));
     {
-	char *ciphertype = passphrase ? "3des-cbc" : "none";
+	char *ciphertype = (char *) (passphrase ? "3des-cbc" : "none");
 	pos += put_string(outblob+pos, ciphertype, strlen(ciphertype));
     }
     lenpos = pos;		       /* remember this position */

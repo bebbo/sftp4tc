@@ -1,3 +1,6 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
 // contents of fsplugin.h
 
 // ids for FsGetFile
@@ -100,3 +103,7 @@ BOOL __stdcall FsSetTime(char *RemoteName, FILETIME * CreationTime,
 void __stdcall FsStatusInfo(char *RemoteDir, int InfoStartEnd,
                             int InfoOperation);
 void __stdcall FsGetDefRootName(char *DefRootName, int maxlen);
+
+#ifdef __cplusplus
+}
+#endif
