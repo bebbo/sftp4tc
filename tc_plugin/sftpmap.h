@@ -1,6 +1,7 @@
 #define SFTP_SUCCESS 1
 #define SFTP_FAILED 0
 #define MAX_CMD_BUFFER 1024
+#define MAX_MSG_BUFFER 2048
 #define MAX_Server 500
 
 #define HANDLE__SHOW_SFTP_SERVER 1
