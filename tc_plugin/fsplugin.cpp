@@ -1,4 +1,9 @@
 /*
+VERSION 1.1.56.1
+[27.10.2004]
+*ADDED properties dialog connection
+/UPDATED to PuTTY 0.56 (first beta)
+
 VERSION 1.1.55.3
 [19.10.2004]
 ?TODO  Translate german comments to english ones
@@ -156,6 +161,7 @@ FIXED - API Bug FsPutFile() gibt als LocalFile noch ''' hinzu ?!?!?
 #include <direct.h>
 #include <stdio.h>
 #include "putty_proxy.h"
+#include "properties_dlg.h"
 
 extern "C" {
 #include "share.h"
@@ -302,6 +308,8 @@ typedef struct {
 int Num_allServer = 0;
 int CurrentServer_ID = -1;
 void make_unique_title_in_allServers(int numServer);
+HMODULE hDialogDLL = 0;
+tProperties hProperties = 0;
 extern bool already_connected;
 
 int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc,
@@ -318,6 +326,24 @@ int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc,
   init_server_dll_handlers();
   unlink_ALL_dll_tmp_files();
   already_connected = false;
+
+  //dialog dll present?
+  char cDir[MAX_CMD_BUFFER], cDLL[MAX_CMD_BUFFER];
+  GetModuleFileName(hDllModule, cDir, MAX_CMD_BUFFER);
+  char *p = strrchr(cDir, '\\');
+  p[1] = 0;
+
+  _snprintf(cDLL, MAX_CMD_BUFFER, "%s%s", cDir, DIALOG_DLL);
+
+  hDialogDLL = LoadLibrary(cDLL);
+  if (hDialogDLL) {
+    hProperties = (tProperties)GetProcAddress(hDialogDLL, PROPERTIES_FUNCTION);
+    if (hProperties==NULL)
+    {
+      FreeLibrary(hDialogDLL);
+      hDialogDLL=0;
+    }
+  }
   return 0;
 }
 

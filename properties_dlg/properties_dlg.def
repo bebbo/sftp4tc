@@ -1,0 +1,3 @@
+LIBRARY	properties_dlg
+EXPORTS
+	Properties
