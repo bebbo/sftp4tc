@@ -60,8 +60,6 @@
 #define FS_STATUS_OP_EXEC 11
 #define FS_STATUS_OP_CALCSIZE 12
 
-#define FSPLUGIN_CAPTION "Secure FTP Connections"
-
 typedef struct {
   DWORD SizeLow, SizeHigh;
   FILETIME LastWriteTime;

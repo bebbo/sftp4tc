@@ -16,6 +16,7 @@ typedef int PROXY_TYPE;
 
 int get_tmp_file_name(char *buf);
 
+#pragma pack(1)
 struct SftpServerAccountInfo {
   unsigned int id;
   char title[MAX_Server_INFO];
@@ -29,21 +30,25 @@ struct SftpServerAccountInfo {
   char home_dir[MAX_Server_INFO];
   char keyfilename[MAX_Server_INFO];
   unsigned int port;
-  unsigned int compression;
-  unsigned int use_key_auth;
-  unsigned int dont_ask4_username;
-  unsigned int dont_ask4_password;
-  unsigned int dont_ask4_passphrase;
-  unsigned int is_imported_from_any_datasrc;  //private
-  unsigned int is_imported_from_putty_registry; //private
-  unsigned int is_imported_from_sshcom_registry;  //private
+  unsigned int chmod_value_put;
+  unsigned int chmod_value_mkdir;
+  unsigned char compression;
+  unsigned char use_key_auth;
+  unsigned char set_chmod_after_put;
+  unsigned char set_chmod_after_mkdir;
+  unsigned char dont_ask4_username;
+  unsigned char dont_ask4_password;
+  unsigned char dont_ask4_passphrase;
+  unsigned char is_imported_from_any_datasrc;  //private
+  unsigned char is_imported_from_putty_registry; //private
+  unsigned char is_imported_from_sshcom_registry;  //private
   //Experimental - just a copy from Putty.h:Config struct
   PROXY_TYPE proxy_type;
-  char proxy_host[512];
+  char proxy_host[MAX_Server_INFO];
   int proxy_port;
-  char proxy_username[32];
-  char proxy_password[32];
-  char proxy_telnet_command[512];
+  char proxy_username[MAX_Server_INFO];
+  char proxy_password[MAX_Server_INFO];
+  char proxy_telnet_command[MAX_Server_INFO];
 };
 
 

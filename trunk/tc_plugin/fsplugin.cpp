@@ -6,6 +6,7 @@ VERSION 1.1.55.3
        for all PuTTY files, but for some of them, too.
 *ADDED Dumb transfer mode. If one set "Text mode" he should be sure, that it's the best choice 
        for him. There's no check for host's default mode. Assuming *nix.
+*ADDED CHMOD after PUT/MKDIR
 
 VERSION 1.1.55.2
 [21.9. 2004]
@@ -159,18 +160,25 @@ FIXED - API Bug FsPutFile() gibt als LocalFile noch ''' hinzu ?!?!?
 extern "C" {
 #include "share.h"
 }
+
+//Plugin's caption, shown in TC's list
+#define FSPLUGIN_CAPTION "Secure FTP Connections"
+
+//Registry keys for TotalCommander
 #define GHISLER_TC_REGP	"Software\\Ghisler\\Total Commander"
 #define GHISLER_TC_REGP_SFTP_K	"SFtpIniName"
+//Registry keys for this plugin
 #define PETRICH_TC_REGP	"Software\\petrich\\tc_sftp_plugin"
 #define PETRICH_TC_REGP_SFTP_K	"SFtpIniName"
-// Session importing
+//Registry keys for PuTTY - Session importing
 #define PUTTY_REG_POS "Software\\SimonTatham\\PuTTY"
 #define PUTTY_REG_PARENT "Software\\SimonTatham"
 #define PUTTY_REG_PARENT_CHILD "PuTTY"
 #define PUTTY_REG_GPARENT "Software"
 #define PUTTY_REG_GPARENT_CHILD "SimonTatham"
 static const char *const puttystr = PUTTY_REG_POS "\\Sessions";
-static char hex[17] = "0123456789ABCDEF"; //Intel Compiler said, it's 17 Bytes long. :-)
+//
+static char hex[17] = "0123456789ABCDEF";  //17 because of terminating 0-character
 
 struct enumsettings {
   HKEY key;
@@ -178,12 +186,12 @@ struct enumsettings {
 };
 
 void *open_settings_r(char *sessionname);
-static void mungestr(char *in, char *out);
 static void gpps(void *handle, char *name, char *def, char *val, int len);
 static void gppi(void *handle, char *name, int def, int *i);
 char *read_setting_s(void *handle, char *key, char *buffer, int buflen);
 int read_setting_i(void *handle, char *key, int defvalue);
 char *enum_settings_next(void *handle, char *buffer, int buflen);
+static void mungestr(char *in, char *out);
 static void unmungestr(char *in, char *out, int outlen);
 void *enum_settings_start(void);
 int loadPuttySectionToSftpPluginServerInfoStruct(struct
@@ -198,20 +206,23 @@ int do_import_sshcom_saved_session_to_plugin_session(int lastInsert_ID,
 struct SftpServerAccountInfo allServer[MAX_Server];
 
 #define S_IFLNK 0x0A000
-#define DefIniName "wcx_sftp.ini"
+#define DefaultIniFileName "wcx_sftp.ini"
+#define NO_SERVER_ID -1
 
 HMODULE hDllModule;
 
-// Custom
-#define DefineNewConnection "Edit connections.lnk"
-#define DefineNewConnection2 "\\Edit connections.lnk"
+//Links in the first level of plugin's fs
+//
+#define DefineNewConnection_define "Edit connections.lnk"
+#define DefineNewConnection_selected "\\Edit connections.lnk"
 
-#define DefineAddConnection "Add connections.lnk"
-#define DefineAddConnection2 "\\Add connections.lnk"
+#define DefineAddConnection_define "Add connections.lnk"
+#define DefineAddConnection_selected "\\Add connections.lnk"
 
-int octal_perm_2_wc_int(unsigned long octal_val);
+int octal_permissions_2_tc_integral(unsigned long octal_val);
 int wcplg_sftp_connect_byID(unsigned int id);
 void __stdcall dbg(char *msg);
+void dbg_v(char *msg, char *param);
 unsigned int get_IDbyPath(char *path);
 
 int get_sftpServer_ID_by_Title(char *Title);
@@ -226,26 +237,28 @@ int file_exists_on_remote_server(char *RemoteFile);
 int get_basename_from_Path(char *buf, char *Path);
 void free_CurrentDirStruct(fxp_names * P_DirStruct, int ID);
 
-BOOL SetFileTime__(char *fullFilePath, FILETIME * LastWriteTime);
+bool SetFileTime__(char *fullFilePath, FILETIME * LastWriteTime);
 void XconvertServerTitle(char *title);
 
 char iniFname[MAX_PATH];
-BOOL delete_only_connection = FALSE;
+bool delete_only_connection = FALSE;
 
 int Imported_ids_num = 0;
 #define INI_CONFIG__SECTION_NAME "config"
 #define INI_CONFIG_IMPORT_PUTTY_SSH_SESS "import_putty_ssh_sessions"
 #define INI_CONFIG_IMPORT_SSHCOM_SSH_SESS "import_sshcom_ssh_sessions"
-int is_title_in_all_server_double(int numServer, int currentServerId,
-                                  char *title);
+int is_title_in_all_server_double(int numServer, int currentServerId, char *title);
 
 int get_custom_users_sftp_inifile_from_reg(char *iniFname);
+
+//Plugin's initialization values
 int PluginNumber;
 tProgressProc ProgressProc;
 tLogProc LogProc;
 tRequestProc RequestProc;
 
-char *strlcpy(char *p, char *p2, int maxlen)
+//copy maximum of maxlen characters
+static char *strlcpy(char *p, char *p2, int maxlen)
 {
   if ((int) strlen(p2) >= maxlen) {
     strncpy(p, p2, maxlen);
@@ -260,6 +273,7 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call,
 {
   switch (ul_reason_for_call) {
   case DLL_PROCESS_ATTACH:
+    //Get the ini's filename
     if (get_custom_users_sftp_inifile_from_reg(iniFname) == -1) {
       hDllModule = (HMODULE) hModule;
       GetModuleFileName(hDllModule, iniFname, sizeof(iniFname) - 1);
@@ -268,7 +282,7 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call,
         p++;
       else
         p = iniFname;
-      strcpy(p, DefIniName);
+      strcpy(p, DefaultIniFileName);
     }
     break;
   }
@@ -293,12 +307,13 @@ extern bool already_connected;
 int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc,
                      tLogProc pLogProc, tRequestProc pRequestProc)
 {
+  //remember all those values
   ProgressProc = pProgressProc;
   LogProc = pLogProc;
   RequestProc = pRequestProc;
   PluginNumber = PluginNr;
 
-  // init alle Server
+  //initialize all servers
   Num_allServer = init_servers_from_iniFile();
   init_server_dll_handlers();
   unlink_ALL_dll_tmp_files();
@@ -306,7 +321,7 @@ int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc,
   return 0;
 }
 
-BOOL UnixTimeToLocalTime(long *mtime, LPFILETIME ft)
+bool UnixTimeToLocalTime(long *mtime, LPFILETIME ft)
 {
   struct tm *fttm = localtime(mtime);
   SYSTEMTIME st;
@@ -329,7 +344,7 @@ BOOL UnixTimeToLocalTime(long *mtime, LPFILETIME ft)
   st.wDayOfWeek = 0;
   st.wMilliseconds = 0;
   if (SystemTimeToFileTime(&st, &ft2)) {
-    return LocalFileTimeToFileTime(&ft2, ft); // Wincmd expects system time!
+    return (LocalFileTimeToFileTime(&ft2, ft)==TRUE); // Wincmd expects system time!
   } else
     return false;
 }
@@ -368,11 +383,13 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
   } else {
     // So we have a connection - list selected directory
     lf->SearchMode = HANDLE__SHOW_SFTP_DIR;
-    // Um welchen Server handelt es sich
+    // check, which server is requested
     check_Concurrent_Connection(Path);
 
     CurrentServer_ID = get_sftpServer_ID_by_Path(Path);
-    if (CurrentServer_ID == -1) {
+
+    //it's fatal if it doesn't even exists!
+    if (CurrentServer_ID == NO_SERVER_ID) {
       dbg("fsfindfirst: CurrentServer_ID == -1, FIX ME!");
       SetLastError(ERROR_INVALID_ACCESS);
       return INVALID_HANDLE_VALUE;
@@ -381,15 +398,19 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
     char sftp_cmd[MAX_CMD_BUFFER];
     char *lPath = Path;
 
-    strcpy(lf->Path, Path);
-    lPath += (1 + strlen(allServer[CurrentServer_ID].title));
+    strlcpy(lf->Path, Path, MAX_PATH);
+    lPath += (1 + strlen(allServer[CurrentServer_ID].title)); //skip backslash and title ('\CONNECTION')
 
+    //prepare command line
     if (strcmp(lPath, "") == 0)
       sprintf(sftp_cmd, "ls");
     else
-      sprintf(sftp_cmd, "ls \".%s\"", lPath);
+      _snprintf(sftp_cmd, MAX_CMD_BUFFER, "ls \".%s\"", lPath);
+
+    //change that command line to unix style
     winSlash2unix(sftp_cmd);
 
+    //execute commando
     if (wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID) !=
         SFTP_SUCCESS) {
       LogProc_(MSGTYPE_CONNECTCOMPLETE, "Access denied!");
@@ -397,6 +418,7 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
       return INVALID_HANDLE_VALUE;
     }
 
+    //get the directory listing
     fxp_names *CurrentDirStruct;
     CurrentDirStruct = wcplg_sftp_get_current_dir_struct(CurrentServer_ID);
 
@@ -422,6 +444,7 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
     lf->sumIndex = CurrentDirStruct->nnames;
     lf->currentIndex = 0;
 
+    //skip some directories
     while ((lf->currentIndex < lf->sumIndex) &&
            ((strcmp
              (lf->CurrentDirStruct->names[lf->currentIndex].filename,
@@ -432,6 +455,7 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
               "..") == 0)))
       (lf->currentIndex)++;
 
+    //is there anything?
     if (lf->currentIndex >= lf->CurrentDirStruct[0].nnames) {
       LogProc_(MSGTYPE_DETAILS, "Access denied(*)!");
       SetLastError(ERROR_NO_MORE_FILES);
@@ -439,10 +463,11 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
       return INVALID_HANDLE_VALUE;
     }
 
+    //Copy that info to TotalCommander's structure
     char FileTyp;
     FileTyp = lf->CurrentDirStruct->names[lf->currentIndex].longname[0];
     FindData->dwReserved0 =
-      octal_perm_2_wc_int(lf->CurrentDirStruct->names[lf->currentIndex].
+      octal_permissions_2_tc_integral(lf->CurrentDirStruct->names[lf->currentIndex].
                           attrs.permissions);
 
     if (FileTyp == 'd') {
@@ -479,35 +504,33 @@ BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData)
   pLastFindStuct lf;
   lf = (pLastFindStuct) Hdl;
 
+  //is it a connection listing?
   if (lf->SearchMode == HANDLE__SHOW_SFTP_SERVER) {
     if (lf->currentIndex >= lf->sumIndex)
-      return false;             // Der letzte Eintrag wurde erreicht
+      return false;             //this is the last entry 
 
+    //copy entry
     if (lf->currentIndex == lf->sumIndex - 1) {
       lf->currentIndex++;
-      strcpy(FindData->cFileName, DefineNewConnection);
+      strcpy(FindData->cFileName, DefineNewConnection_define);
       FindData->dwFileAttributes = 0;
-      FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
-      FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
     } else {
       if (lf->currentIndex == lf->sumIndex - 2) {
         lf->currentIndex++;
-        strcpy(FindData->cFileName, DefineAddConnection);
+        strcpy(FindData->cFileName, DefineAddConnection_define);
         FindData->dwFileAttributes = 0;
-        FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
-        FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
       } else {
         lf->currentIndex++;
         strcpy(FindData->cFileName, allServer[lf->currentIndex].title);
-
         FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
-        FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
-        FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
       }
     }
+    FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
+    FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
     return true;
   }
 
+  //it's not a connection listing, it's real directory list
   if (lf->SearchMode == HANDLE__SHOW_SFTP_DIR) {
     lf->currentIndex++;
     while ((lf->currentIndex < lf->sumIndex) &&
@@ -521,12 +544,12 @@ BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData)
       (lf->currentIndex)++;
 
     if (lf->currentIndex >= lf->sumIndex)
-      return false;             // Der letzte Eintrag wurde erreicht
+      return false;             //it's the last entry
     strcpy(FindData->cFileName,
            lf->CurrentDirStruct->names[lf->currentIndex].filename);
 
     FindData->dwReserved0 =
-      octal_perm_2_wc_int(lf->CurrentDirStruct->names[lf->currentIndex].
+      octal_permissions_2_tc_integral(lf->CurrentDirStruct->names[lf->currentIndex].
                           attrs.permissions);
 
     char FileTyp;
@@ -538,7 +561,7 @@ BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData)
     {
       FindData->dwFileAttributes =
         FILE_ATTRIBUTE_REPARSE_POINT | 0x80000000;
-      FindData->dwReserved0 += S_IFLNK; // Wincmd uses only this one!
+      FindData->dwReserved0 += S_IFLNK; //TotalCommander uses only this one!
     } else                      //anything else :-)
     {
       FindData->dwFileAttributes = FILE_ATTRIBUTE_NORMAL | 0x80000000;
@@ -559,7 +582,7 @@ BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData)
     return true;
   }
 
-  dbg("FIX ME 667");
+  dbg("FIX ME: this is not a regular listing mode!");
   return false;
 }
 
@@ -570,12 +593,13 @@ int __stdcall FsFindClose(HANDLE Hdl)
 
   if (lf != INVALID_HANDLE_VALUE) {
     free_CurrentDirStruct(lf->CurrentDirStruct, CurrentServer_ID);
-    free(lf);                   //jetzt dürft alles clean sein 
+    free(lf);                   //now we can free this
   }
 
   return 0;
 }
 
+//free all buffers
 void free_CurrentDirStruct(fxp_names * P_DirStruct, int ServerID)
 {
   if (P_DirStruct != NULL) {
@@ -587,16 +611,16 @@ void free_CurrentDirStruct(fxp_names * P_DirStruct, int ServerID)
   }
 
   int n;
-  n = psftp_memory_hole__stopfen(ServerID); //zwengs memory bug in psftp.c's sftp_cmd_ls() 
+  n = psftp_memory_hole__stopfen(ServerID); //well, this seems not to be used and what about n? :-(
 }
 
-BOOL addnewserver(char *servertitle)
+bool addnewserver(char *servertitle)
 {
   char host[MAX_PATH], user[MAX_PATH], pwd[MAX_PATH], port[MAX_PATH];
   char home_dir[MAX_PATH];
   char section_name[MAX_Server_INFO];
   char servertitle_[MAX_Server_INFO];
-  BOOL wantcompression;
+  bool wantcompression;
 
   servertitle_[0] = '\0';
 
@@ -625,7 +649,7 @@ BOOL addnewserver(char *servertitle)
   }
 
   XconvertServerTitle(servertitle);
-  XconvertServerTitle(servertitle_);  //Beide um nachträgliche fehler zu vermeiden
+  XconvertServerTitle(servertitle_);  //we have to convert both buffers, but where's the difference?
 
   if (!RequestProc
       (PluginNumber, RT_Other, "New Connection", "Host[:port]", host,
@@ -659,7 +683,7 @@ BOOL addnewserver(char *servertitle)
     RequestProc(PluginNumber, RT_MsgOKCancel,
                 "Add connection - compression",
                 "Do you want to compress the data connection (only recommended for slow connections)?",
-                NULL, 0);
+                NULL, 0) == TRUE;
 
   sprintf(section_name, "%i", Num_allServer - Imported_ids_num);
   WritePrivateProfileString(section_name, "title", servertitle_, iniFname);
@@ -685,10 +709,31 @@ BOOL addnewserver(char *servertitle)
   WritePrivateProfileString(section_name, "proxy_password", "", iniFname);
   WritePrivateProfileString(section_name, "proxy_telnet_command", "",
                             iniFname);
+  WritePrivateProfileString(section_name, "chmod_value", "",
+                            iniFname);
+  WritePrivateProfileString(section_name, "set_chmod_after_put", "0",
+                            iniFname);
+  WritePrivateProfileString(section_name, "set_chmod_after_mkdir", "0",
+                            iniFname);
 
   Num_allServer = init_servers_from_iniFile();
   return true;
 }
+
+#define MOVE_INFO(KEY) GetPrivateProfileString(section_name_old, KEY, "", copybuf, \
+                                MAX_Server_INFO, iniFname); \
+        WritePrivateProfileString(section_name_new, KEY, copybuf, \
+                                  iniFname);
+
+#define MOVE_INFO_PARAM(KEY, PARAM) GetPrivateProfileString(section_name_old, KEY, PARAM, copybuf, \
+                                MAX_Server_INFO, iniFname); \
+        WritePrivateProfileString(section_name_new, KEY, copybuf, \
+                                  iniFname); 
+
+#define MOVE_INFO_WRITEPARAM(KEY, PARAM) GetPrivateProfileString(section_name_old, KEY, "", copybuf, \
+                                MAX_Server_INFO, iniFname); \
+        WritePrivateProfileString(section_name_new, KEY, PARAM, \
+                                  iniFname); 
 
 bool deletethisconnection(char *servertitle)
 {
@@ -744,78 +789,28 @@ bool deletethisconnection(char *servertitle)
         sprintf(section_name_new, "%i", j);
         char copybuf[MAX_Server_INFO];
 
-        GetPrivateProfileString(section_name_old, "title", "", copybuf,
-                                MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "title", copybuf,
-                                  iniFname);
-        GetPrivateProfileString(section_name_old, "host", "", copybuf,
-                                MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "host", copybuf,
-                                  iniFname);
-        GetPrivateProfileString(section_name_old, "username", "", copybuf,
-                                MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "username", copybuf,
-                                  iniFname);
-        GetPrivateProfileString(section_name_old, "port", "", copybuf,
-                                MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "port",
-                                  copybuf[0] ? copybuf : NULL, iniFname);
-        GetPrivateProfileString(section_name_old, "home_dir", "", copybuf,
-                                MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "home_dir",
-                                  copybuf[0] ? copybuf : NULL, iniFname);
-        GetPrivateProfileString(section_name_old, "compression", "0",
-                                copybuf, MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "compression", copybuf,
-                                  iniFname);
-        GetPrivateProfileString(section_name_old, "keyfilename", "",
-                                copybuf, MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "keyfilename", copybuf,
-                                  iniFname);
-        GetPrivateProfileString(section_name_old, "dont_ask4_passphrase",
-                                "", copybuf, MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "dont_ask4_passphrase",
-                                  copybuf, iniFname);
-        GetPrivateProfileString(section_name_old, "dont_ask4_password", "",
-                                copybuf, MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "dont_ask4_password",
-                                  copybuf, iniFname);
-        GetPrivateProfileString(section_name_old, "use_key_auth", "0",
-                                copybuf, MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "use_key_auth",
-                                  copybuf, iniFname);
-        GetPrivateProfileString(section_name_old, "dont_ask4_username",
-                                "0", copybuf, MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "dont_ask4_username",
-                                  copybuf, iniFname);
-        GetPrivateProfileString(section_name_old, "password", "", copybuf,
-                                MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "password", copybuf,
-                                  iniFname);
-        GetPrivateProfileString(section_name_old, "proxy_type", "0",
-                                copybuf, MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "proxy_type", copybuf,
-                                  iniFname);
-        GetPrivateProfileString(section_name_old, "proxy_host", "",
-                                copybuf, MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "proxy_host", copybuf,
-                                  iniFname);
-        GetPrivateProfileString(section_name_old, "proxy_port", "0",
-                                copybuf, MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "proxy_port", copybuf,
-                                  iniFname);
-        GetPrivateProfileString(section_name_old, "proxy_username", "",
-                                copybuf, MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "proxy_username",
-                                  copybuf, iniFname);
-        GetPrivateProfileString(section_name_old, "proxy_password", "",
-                                copybuf, MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "proxy_password",
-                                  copybuf, iniFname);
-        GetPrivateProfileString(section_name_old, "proxy_telnet_command",
-                                "", copybuf, MAX_Server_INFO, iniFname);
-        WritePrivateProfileString(section_name_new, "proxy_telnet_command",
-                                  copybuf, iniFname);
+        MOVE_INFO("title");
+        MOVE_INFO("host")
+        MOVE_INFO("username")
+        MOVE_INFO_WRITEPARAM("port", copybuf[0] ? copybuf : NULL)
+        MOVE_INFO_WRITEPARAM("home_dir", copybuf[0] ? copybuf : NULL)
+        MOVE_INFO_PARAM("compression", "0")
+        MOVE_INFO("keyfilename")
+        MOVE_INFO("dont_ask4_passphrase")
+        MOVE_INFO("dont_ask4_password")
+        MOVE_INFO_PARAM("use_key_auth", "0")
+        MOVE_INFO_PARAM("dont_ask4_username", "0")
+        MOVE_INFO("password")
+        MOVE_INFO_PARAM("proxy_type", "0")
+        MOVE_INFO("proxy_host")
+        MOVE_INFO("proxy_port")
+        MOVE_INFO("proxy_username")
+        MOVE_INFO("proxy_password")
+        MOVE_INFO("proxy_telnet_command")
+        MOVE_INFO("chmod_value_put")
+        MOVE_INFO("chmod_value_mkdir")
+        MOVE_INFO_PARAM("set_chmod_after_put", "0")
+        MOVE_INFO_PARAM("set_chmod_after_mkdir", "0")
       }
       // delete last section
       sprintf(section_name_old, "%i",
@@ -826,6 +821,23 @@ bool deletethisconnection(char *servertitle)
     }
   }
   return FALSE;
+}
+
+int remote_chmod(char *RemoteName, unsigned int value)
+{
+  check_Concurrent_Connection(RemoteName);
+  char *lRemoteName = RemoteName + (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  char sftp_cmd[MAX_CMD_BUFFER];
+
+  _snprintf(sftp_cmd, MAX_CMD_BUFFER, "chmod %d \"%s\"", value, lRemoteName);
+
+  winSlash2unix(sftp_cmd);
+
+  if (wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID) == SFTP_SUCCESS) {
+    return FS_EXEC_OK;
+  }
+    
+  return FS_EXEC_ERROR;
 }
 
 BOOL __stdcall FsMkDir(char *Path)
@@ -845,9 +857,12 @@ BOOL __stdcall FsMkDir(char *Path)
 
   winSlash2unix(cmd_buf);
 
-  if (wcplg_sftp_do_commando_byID(cmd_buf, NULL, CurrentServer_ID) ==
-      SFTP_SUCCESS)
+  if (wcplg_sftp_do_commando_byID(cmd_buf, NULL, CurrentServer_ID) == SFTP_SUCCESS)
+  {
+    if (allServer[CurrentServer_ID].set_chmod_after_mkdir)
+      remote_chmod(Path, allServer[CurrentServer_ID].chmod_value_mkdir); 
     return true;
+  }
   return false;
 }
 
@@ -924,20 +939,17 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
   char buf[MAX_CMD_BUFFER];
   char sftp_cmd[MAX_CMD_BUFFER];
   char log_sftp_cmd[MAX_CMD_BUFFER];
+  char *lVerb = Verb;
+  char *lRemoteName = RemoteName;
 
-  if (strcmp(Verb, "open") == 0) {
-    if (strcmp(DefineNewConnection2, RemoteName) == 0) {
+  if (stricmp(Verb, "open") == 0) {
+    if (strcmp(DefineNewConnection_selected, RemoteName) == 0) {
       DefineAndAddConnection();
       return FS_EXEC_OK;
     }
 
-    if (strcmp(DefineAddConnection2, RemoteName) == 0) {
-      if (addnewserver(NULL) == (BOOL) true) {
-        /*
-           RequestProc(PluginNumber,RT_MsgOK,
-           "Info",
-           "New Server added, please press ctrl-r to reload the Screen",NULL,0);
-         */
+    if (strcmp(DefineAddConnection_selected, RemoteName) == 0) {
+      if (addnewserver(NULL) == true) {
         RemoteName[1] = '\0';
         return FS_EXEC_SYMLINK;
       }
@@ -952,7 +964,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
     }
   }
 
-  if (strncmp(Verb, "quote root ", 11) == 0) {
+  if (_strnicmp(Verb, "quote root ", 11) == 0) {
 
     if (CurrentServer_ID == -1)
       return FS_EXEC_ERROR;
@@ -970,34 +982,31 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
 
     sprintf(RemoteName, "\\%s\\", allServer[CurrentServer_ID].title);
     return FS_EXEC_SYMLINK;
-
   }
-  //REPUT SUPPORT
-  if (strcmp(Verb, "quote reput") == 0 || strcmp(Verb, "quote reput ") == 0
+
+  //explicit REPUT SUPPORT
+  if (stricmp(Verb, "quote reput") == 0 || stricmp(Verb, "quote reput ") == 0
       || (strlen(Verb) >= strlen("quote reput  ")
           && strncmp(Verb, "quote reput  ", 13) == 0)) {
-    RequestProc(PluginNumber, RT_MsgOK, "Usage for reput",
-                "Usage: reput <file>", NULL, 0);
+    RequestProc(PluginNumber, RT_MsgOK, "Usage for reput", "Usage: reput <file>", NULL, 0);
     return FS_EXEC_ERROR;
   }
 
   if (strlen(Verb) > strlen("quote reput") + 1) {
-    //check if connected 
-    if (RemoteName != NULL && strlen(RemoteName) == 1
-        && RemoteName[0] == '\\') {
-      RequestProc(PluginNumber, RT_MsgOK, "Reput",
-                  "Can not use reput here", NULL, 0);
+    //check if connected and inside of a connection
+    if ((RemoteName != NULL) && (strlen(RemoteName) == 1) && (RemoteName[0] == '\\')) {
+      RequestProc(PluginNumber, RT_MsgOK, "Reput", "Can not use reput here", NULL, 0);
       return FS_EXEC_ERROR;
     }
+
     strcpy(buf, Verb);
-    if (strncmp(buf, "quote reput ", 12) == 0) {
+    if (_strnicmp(buf, "quote reput ", 12) == 0) {
       char remote_users_current_dir[MAX_CMD_BUFFER];
       int sftp_ret;
 
-      if (RemoteName == NULL || strlen(RemoteName) <= 0
-          || strchr(RemoteName, '?')) {
-        dbg("Invalid RemoteName FIX ME PLZ");
-        dbg(RemoteName);
+      if ((RemoteName == NULL) || (strlen(RemoteName) <= 0)
+          || (strchr(RemoteName, '?'))) {
+        dbg_v("Invalid RemoteName ('%s') FIX ME PLZ", RemoteName);
         return FS_EXEC_ERROR;
       }
 
@@ -1024,27 +1033,27 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
       strncat(sftp_cmd, remote_users_current_dir, MAX_CMD_BUFFER);
       strncat(sftp_cmd, "\"", MAX_CMD_BUFFER);
 
-      ProgressProc(PluginNumber, buf + strlen("quote reput") + 1,
-                   buf + strlen("quote reput") + 1, 0);
+      char *buf_shifted = buf + strlen("quote reput") + 1;
+
+      ProgressProc(PluginNumber, buf_shifted, buf_shifted, 0);
 
       LogProc_(MSGTYPE_DETAILS, log_sftp_cmd);
       DISABLE_LOGGING_ONCE();
 
-      sftp_ret =
-        wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID);
+      sftp_ret = wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID);
+      //Put done
+      ProgressProc(PluginNumber, buf_shifted, buf_shifted, 100);
+
+      //any error?
       if (sftp_ret == SFTP_SUCCESS) {
-        ProgressProc(PluginNumber, buf + strlen("quote reput") + 1,
-                     buf + strlen("quote reput") + 1, 100);
-        //Set file time ?
         return FS_EXEC_OK;
       }
 
-      ProgressProc(PluginNumber, buf + strlen("quote reput") + 1,
-                   buf + strlen("quote reput") + 1, 100);
       return FS_EXEC_ERROR;
     }
   }
-  //reget SUPPORT
+
+  //explicit REGET SUPPORT
   if (strcmp(Verb, "quote reget") == 0 || strcmp(Verb, "quote reget ") == 0
       || (strlen(Verb) >= strlen("quote reget  ")
           && strncmp(Verb, "quote reget  ", 13) == 0)) {
@@ -1057,147 +1066,133 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
     //check if connected 
     if (RemoteName != NULL && strlen(RemoteName) == 1
         && RemoteName[0] == '\\') {
-      RequestProc(PluginNumber, RT_MsgOK, "reget",
-                  "Can not use reget here", NULL, 0);
+      RequestProc(PluginNumber, RT_MsgOK, "reget", "Can not use reget here", NULL, 0);
       return FS_EXEC_ERROR;
     }
+
     strcpy(buf, Verb);
-    if (strncmp(buf, "quote reget ", 12) == 0) {
+    if (_strnicmp(buf, "quote reget ", 12) == 0) {
       char remote_users_current_dir[MAX_CMD_BUFFER];
       char log_sftp_cmd[MAX_CMD_BUFFER];
       int sftp_ret;
 
       if (RemoteName == NULL || strlen(RemoteName) <= 0
           || strchr(RemoteName, '?')) {
-        dbg("Invalid RemoteName FIX ME PLZ");
-        dbg(RemoteName);
+        dbg_v("Invalid RemoteName('%s') FIX ME PLZ", RemoteName);
         return FS_EXEC_ERROR;
       }
 
       check_Concurrent_Connection(RemoteName);
 
+      char *buf_shifted = buf + strlen("quote reget") + 1;
+
       //we must use tricks
       // segFault check!!!
-      strcpy(remote_users_current_dir, buf + strlen("quote reget") + 1);
+      strcpy(remote_users_current_dir, buf_shifted);
 
       //Log msg
-      strcpy(log_sftp_cmd, "reget ");
-      strcat(log_sftp_cmd, remote_users_current_dir);
-      //
+      _snprintf(log_sftp_cmd, MAX_CMD_BUFFER, "reget %s", remote_users_current_dir);
 
       strcat(remote_users_current_dir, "?");
       strcat(remote_users_current_dir,
              RemoteName + 2 + strlen(allServer[CurrentServer_ID].title));
       winSlash2unix(remote_users_current_dir);
 
-      strcpy(sftp_cmd, "reget ");
-      strcat(sftp_cmd, "\"");
-      strcat(sftp_cmd, remote_users_current_dir);
-      strcat(sftp_cmd, "\"");
+      _snprintf(sftp_cmd, MAX_CMD_BUFFER, "reget \"%s\"", remote_users_current_dir);
 
-      ProgressProc(PluginNumber, buf + strlen("quote reget") + 1,
-                   buf + strlen("quote reget") + 1, 0);
+      ProgressProc(PluginNumber, buf_shifted, buf_shifted, 0);
 
       LogProc_(MSGTYPE_DETAILS, log_sftp_cmd);
       DISABLE_LOGGING_ONCE();
-      sftp_ret =
-        wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID);
+
+      sftp_ret = wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID);
+      //Done
+      ProgressProc(PluginNumber, buf_shifted, buf_shifted, 100);
+
+      //Any errors?
       if (sftp_ret == SFTP_SUCCESS) {
-        ProgressProc(PluginNumber, buf + strlen("quote reget") + 1,
-                     buf + strlen("quote reget") + 1, 100);
-        //Set file time ?
         return FS_EXEC_OK;
       }
-
-      ProgressProc(PluginNumber, buf + strlen("quote reget") + 1,
-                   buf + strlen("quote reget") + 1, 100);
       return FS_EXEC_ERROR;
 
     }
   }
 
-  if (strlen(Verb) > strlen("quote root") + 1) {
-    //doesnt work correctly
-
+  if (_strnicmp(Verb, "quote root ", 11) == 0) {
     strcpy(buf, Verb);
-    if (strncmp(buf, "quote root ", 11) == 0) {
-      check_Concurrent_Connection(RemoteName);
-      buf[8] = 'c';
-      buf[9] = 'd';
+    check_Concurrent_Connection(RemoteName);
+    buf[8] = 'c';
+    buf[9] = 'd';
 
-      if (wcplg_sftp_do_commando_byID(buf + 8, NULL, CurrentServer_ID) ==
-          SFTP_SUCCESS) {
-        strcpy(RemoteName, "\\");
-        strcat(RemoteName, allServer[CurrentServer_ID].title);
-        strcat(RemoteName, "\\");
-        return FS_EXEC_SYMLINK;
-      } else
-        return FS_EXEC_ERROR;
-    }
-  }
-
-  if (strlen(Verb) > strlen("quote cd") + 1) {
-    strcpy(buf, Verb);
-    if (strncmp(buf, "quote cd ", 9) == 0) {
-      check_Concurrent_Connection(RemoteName);
-
-      //cd command: Change dir to what user wanted!
-      // two cases: absolute path with / at start, relative with backslash
-
-      if (buf[9] == '/' || buf[9] == '\\') {
-        _snprintf(RemoteName, MAX_PATH - 1, "\\%s%s",
-                  allServer[CurrentServer_ID].title, buf + 9);
-      } else {
-
-        if (RemoteName[strlen(RemoteName) - 1] != '\\')
-          _snprintf(buf, MAX_PATH - 1, "%s\\%s", RemoteName, Verb + 9);
-        else
-          _snprintf(buf, MAX_PATH - 1, "%s%s", RemoteName, Verb + 9);
-        strlcpy(RemoteName, buf, MAX_PATH - 1);
-
-      }
-
-      for (unsigned int i = 0; i < strlen(RemoteName); i++)
-        if (RemoteName[i] == '/')
-          RemoteName[i] = '\\';
-
-      formcorrectpath(RemoteName);
-
-      //do not work, WC API ?!?
+    if (wcplg_sftp_do_commando_byID(buf + 8, NULL, CurrentServer_ID) ==
+        SFTP_SUCCESS) {
+      sprintf(RemoteName, "\\%s\\", allServer[CurrentServer_ID].title);
       return FS_EXEC_SYMLINK;
-    }
+    } else
+      return FS_EXEC_ERROR;
   }
 
-  if (strlen(Verb) > strlen("chmod") + 1) //Later 
-  {
+  if (_strnicmp(Verb, "quote cd ", 9) == 0) {
     strcpy(buf, Verb);
-    buf[5] = '\0';
+    check_Concurrent_Connection(RemoteName);
 
-    if (strcmp(buf, "chmod") == 0) {
-      check_Concurrent_Connection(RemoteName);
-      Verb += 6;
-      RemoteName += (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+    //cd command: Change dir to what user wanted!
+    // two cases: absolute path with / at start, relative with backslash
 
-      strcpy(sftp_cmd, "chmod ");
-      strcat(sftp_cmd, Verb);
-      strcat(sftp_cmd, " \"./");
-      strcat(sftp_cmd, RemoteName);
-      strcat(sftp_cmd, "\"");
+    if (buf[9] == '/' || buf[9] == '\\') {
+      _snprintf(RemoteName, MAX_PATH - 1, "\\%s%s",
+                allServer[CurrentServer_ID].title, buf + 9);
+    } else {
 
-      RemoteName -= (1 + strlen(allServer[CurrentServer_ID].title) + 1);
-      Verb -= 6;
-      winSlash2unix(sftp_cmd);
+      if (RemoteName[strlen(RemoteName) - 1] != '\\')
+        _snprintf(buf, MAX_PATH - 1, "%s\\%s", RemoteName, Verb + 9);
+      else
+        _snprintf(buf, MAX_PATH - 1, "%s%s", RemoteName, Verb + 9);
+      strlcpy(RemoteName, buf, MAX_PATH - 1);
 
-      if (wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID) ==
-          SFTP_SUCCESS) {
-        return FS_EXEC_OK;
-      } else
-        return FS_EXEC_ERROR;
+    }
+
+    for (unsigned int i = 0; i < strlen(RemoteName); i++)
+      if (RemoteName[i] == '/')
+        RemoteName[i] = '\\';
+
+    formcorrectpath(RemoteName);
+
+    return FS_EXEC_SYMLINK;
+  }
+
+  //we could implement a property dialog here; changing some connections setting could be usefull
+  if (_strnicmp(Verb, "properties", 10)==0) {
+    if (_strnicmp(RemoteName+1, allServer[CurrentServer_ID].title, strlen(allServer[CurrentServer_ID].title))==0) {
+      return FS_EXEC_OK;
     }
   }
 
-  _snprintf(log_sftp_cmd, MAX_CMD_BUFFER, "%s - %s", Verb, RemoteName);
-  LogProc_(MSGTYPE_DETAILS, log_sftp_cmd);
+  if ((_strnicmp(lVerb, "quote chmod ", 12)==0) || (_strnicmp(lVerb, "chmod ", 6)==0))
+  {
+    if (lVerb[0]=='q')
+      lVerb += 6;
+    lVerb += 6;
+    check_Concurrent_Connection(lRemoteName);
+    lRemoteName += (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+
+    strcpy(sftp_cmd, "chmod ");
+    strcat(sftp_cmd, lVerb);
+    if (Verb[0]!='q')
+    {
+      strcat(sftp_cmd, " \"./");
+      strcat(sftp_cmd, lRemoteName);
+      strcat(sftp_cmd, "\"");
+    }
+
+    winSlash2unix(sftp_cmd);
+
+    if (wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID) ==
+        SFTP_SUCCESS) {
+      return FS_EXEC_OK;
+    } else
+      return FS_EXEC_ERROR;
+  }
 
   if (_strnicmp(Verb, "MODE ", 5)==0) {
     if ((strlen(Verb)>=6) && (Verb[5]=='A'))
@@ -1207,23 +1202,9 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
     return FS_EXEC_OK;
   }
 
-  //return FS_EXEC_OK;
-  return FS_EXEC_ERROR;
+  _snprintf(log_sftp_cmd, MAX_CMD_BUFFER, "Command Received: ['%s' - '%s']", Verb, RemoteName);
+  LogProc_(MSGTYPE_DETAILS, log_sftp_cmd);
 
-  check_Concurrent_Connection(RemoteName);
-  strcpy(sftp_cmd, "ls \".");
-  RemoteName += (1 + strlen(allServer[CurrentServer_ID].title));
-  strcat(sftp_cmd, RemoteName);
-  RemoteName -= (1 + strlen(allServer[CurrentServer_ID].title));
-  strcat(sftp_cmd, "\"");
-  winSlash2unix(sftp_cmd);
-
-  if (wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID) !=
-      SFTP_SUCCESS) {
-    return FS_EXEC_ERROR;
-  }
-  return FS_EXEC_SYMLINK;
-  return FS_EXEC_SYMLINK;
   return FS_EXEC_ERROR;
 }
 
@@ -1329,7 +1310,7 @@ int __stdcall FsGetFile(char *RemoteName, char *LocalName, int CopyFlags,
     FILE *fp;
     fp = fopen(LocalName, "r");
     if (fp != NULL) {
-      //file ist vorhanden!
+      //file exists
       fclose(fp);
       //reget ?
       return FS_FILE_EXISTSRESUMEALLOWED; //FS_FILE_EXISTS;
@@ -1393,7 +1374,7 @@ int __stdcall FsGetFile(char *RemoteName, char *LocalName, int CopyFlags,
 
   if (ok) {
     if (ri != NULL) {
-      //Nur wenn ri gesetzt ist
+      //is RemoteInfo  set?
       SetFileTime__(LocalName, &ri->LastWriteTime);
     }
 
@@ -1423,16 +1404,16 @@ int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
   int err = 0;
   int ok = true;
 
-  if ((CopyFlags & FS_COPYFLAGS_OVERWRITE) == 0)  //möchte file holen 
+  if ((CopyFlags & FS_COPYFLAGS_OVERWRITE) == 0)
   {
-    //ok check Server existiert
+    //ok check Server exists
     if (get_sftpServer_ID_by_Path(RemoteName) == -1) {
       //local
-      // Dürfte gar nicht vorkommen
+      //shouldn't happen
       dbg("Unknown Target [error 1]");
       return FS_FILE_WRITEERROR;
     } else {
-      if (CopyFlags & FS_COPYFLAGS_EXISTS_SAMECASE) //optimized: use hint from Wincmd
+      if (CopyFlags & FS_COPYFLAGS_EXISTS_SAMECASE) //optimized: use hint from TotalCommander
         return FS_FILE_EXISTSRESUMEALLOWED;
     }
   }
@@ -1478,9 +1459,8 @@ int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
   strcat(cmd_buf, LocalName);
   strcat(cmd_buf, "\" \"./");
 
-  RemoteName += (1 + strlen(allServer[CurrentServer_ID].title) + 1);
-  strcpy(buf2, RemoteName);
-  RemoteName -= (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  char *lRemoteName = RemoteName + (1 + strlen(allServer[CurrentServer_ID].title) + 1);
+  strcpy(buf2, lRemoteName);
   winSlash2unix(buf2);
   strcat(cmd_buf, buf2);
   strcat(cmd_buf, "\"");
@@ -1501,7 +1481,13 @@ int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
     if (err)
       return FS_FILE_USERABORT;
     if (ok)
+    {
+      if (allServer[CurrentServer_ID].set_chmod_after_put)
+      {
+        remote_chmod(RemoteName, allServer[CurrentServer_ID].chmod_value_put);
+      }
       return FS_FILE_OK;
+    }
   }
 
   return FS_FILE_WRITEERROR;
@@ -1571,6 +1557,12 @@ BOOL __stdcall FsRemoveDir(char *RemoteName)
   return false;
 }
 
+void dbg_v(char *msg, char *param)
+{
+  char buf[MAX_MSG_BUFFER];
+  _snprintf(buf, MAX_MSG_BUFFER, msg, param);
+  dbg(buf);
+}
 
 void __stdcall dbg(char *msg)
 {
@@ -1599,7 +1591,7 @@ int wcplg_sftp_connect_byID(unsigned int ID)
    */
 
   if (ID == -1)
-    return SFTP_FAILED;         //wer weis!
+    return SFTP_FAILED;         //who knows, what happend before :-)
 
   if (strlen(allServer[ID].host_cached) < 1) {
     strcpy(allServer[ID].host_cached, allServer[ID].host);
@@ -1673,7 +1665,7 @@ int wcplg_sftp_connect_byID(unsigned int ID)
     allServer[ID].username_cached[0] = 0;
     return SFTP_FAILED;
   }
-  //OK connect hat geklappt
+  //OK connect done
   return SFTP_SUCCESS;
 }
 
@@ -1686,7 +1678,7 @@ int get_sftpServer_ID_by_Path(char *Path)
   Path += 1;
 
   if (strchr(Path, '\\') != NULL) {
-    // OK, it's a peace like this:
+    // OK, it's a piece like this:
     // server n\foo\bla\etc
     // have 2 cut the rest after server n
     int count_;
@@ -1694,7 +1686,7 @@ int get_sftpServer_ID_by_Path(char *Path)
     strncpy(ServerTitle, Path, count_);
     ServerTitle[count_] = '\0';
   } else {
-    // OK, it's a peace like this:
+    // OK, it's a piece like this:
     // server n
     // we have the Server Title
     strcpy(ServerTitle, Path);
@@ -1751,6 +1743,10 @@ int init_servers_from_iniFile()
   char buf_proxy_username[MAX_Server_INFO];
   char buf_proxy_password[MAX_Server_INFO];
   char buf_proxy_telnet_command[MAX_Server_INFO];
+  char buf_chmod_value_put[MAX_Server_INFO];
+  char buf_chmod_value_mkdir[MAX_Server_INFO];
+  char buf_set_chmod_after_put[MAX_Server_INFO];
+  char buf_set_chmod_after_mkdir[MAX_Server_INFO];
 
   WritePrivateProfileString(NULL, NULL, NULL, iniFname);
 
@@ -1773,6 +1769,10 @@ int init_servers_from_iniFile()
     buf_proxy_username[0] = '\0';
     buf_proxy_password[0] = '\0';
     buf_proxy_telnet_command[0] = '\0';
+    buf_chmod_value_put[0] = '\0';
+    buf_chmod_value_mkdir[0] = '\0';
+    buf_set_chmod_after_put[0] = '\0';
+    buf_set_chmod_after_mkdir[0] = '\0';
 
     sprintf(section_name, "%i", i);
 
@@ -1820,10 +1820,22 @@ int init_servers_from_iniFile()
       GetPrivateProfileString(section_name, "proxy_telnet_command", "",
                               buf_proxy_telnet_command, MAX_Server_INFO,
                               iniFname);
+      GetPrivateProfileString(section_name, "chmod_value_put", "",
+                              buf_chmod_value_put, MAX_Server_INFO,
+                              iniFname);
+      GetPrivateProfileString(section_name, "chmod_value_mkdir", "",
+                              buf_chmod_value_mkdir, MAX_Server_INFO,
+                              iniFname);
+      GetPrivateProfileString(section_name, "set_chmod_after_put", "",
+                              buf_set_chmod_after_put, MAX_Server_INFO,
+                              iniFname);
+      GetPrivateProfileString(section_name, "set_chmod_after_mkdir", "",
+                              buf_set_chmod_after_mkdir, MAX_Server_INFO,
+                              iniFname);
       // Check title for / && 
       XconvertServerTitle(buf_title);
 
-      // TODO check ob title schon gibt wenn ja dann andren namen geben z.B [1]
+      // TODO check if title already exists, in such case we change it a little, e.g. append '[1]'
 
       strcpy(allServer[ID].title, buf_title);
       strcpy(allServer[ID].host, buf_host);
@@ -1834,7 +1846,7 @@ int init_servers_from_iniFile()
 
       //use_key_auth optional, default=0
       if (strlen(buf_use_key_auth)) {
-        allServer[ID].use_key_auth = strtol(buf_use_key_auth, NULL, NULL);
+        allServer[ID].use_key_auth = (unsigned char)strtoul(buf_use_key_auth, NULL, NULL);
         if (allServer[ID].use_key_auth > 1)
           allServer[ID].use_key_auth = 1;
       } else {
@@ -1843,8 +1855,8 @@ int init_servers_from_iniFile()
 
       //dont_ask4_username optional, default=0
       if (strlen(buf_dont_ask4_username)) {
-        allServer[ID].dont_ask4_username =
-          strtol(buf_dont_ask4_username, NULL, NULL);
+        allServer[ID].dont_ask4_username = 
+          (unsigned char)strtoul(buf_dont_ask4_username, NULL, NULL);
         if (allServer[ID].dont_ask4_username > 1)
           allServer[ID].dont_ask4_username = 1;
       } else {
@@ -1854,7 +1866,7 @@ int init_servers_from_iniFile()
       //dont_ask4_passphrase optional, default=0
       if (strlen(buf_dont_ask4_passphrase)) {
         allServer[ID].dont_ask4_passphrase =
-          strtol(buf_dont_ask4_passphrase, NULL, NULL);
+          (unsigned char)strtoul(buf_dont_ask4_passphrase, NULL, NULL);
         if (allServer[ID].dont_ask4_passphrase > 1)
           allServer[ID].dont_ask4_passphrase = 1;
       } else {
@@ -1864,14 +1876,50 @@ int init_servers_from_iniFile()
       //dont_ask4_password optional, default=0
       if (strlen(buf_dont_ask4_password)) {
         allServer[ID].dont_ask4_password =
-          strtol(buf_dont_ask4_password, NULL, NULL);
+          (unsigned char)strtoul(buf_dont_ask4_password, NULL, NULL);
         if (allServer[ID].dont_ask4_password > 1)
           allServer[ID].dont_ask4_password = 1;
       } else {
         allServer[ID].dont_ask4_password = 0;
       }
 
-      // port und home_dir sind optional
+      //set_chmod_after_put optional, default=0
+      if (strlen(buf_set_chmod_after_put)) {
+        allServer[ID].set_chmod_after_put =
+          (unsigned char)strtoul(buf_set_chmod_after_put, NULL, NULL);
+        if (allServer[ID].set_chmod_after_put > 1)
+          allServer[ID].set_chmod_after_put = 1;
+      } else {
+        allServer[ID].set_chmod_after_put = 0;
+      }
+
+      //set_chmod_after_mkdir optional, default=0
+      if (strlen(buf_set_chmod_after_mkdir)) {
+        allServer[ID].set_chmod_after_mkdir =
+          (unsigned char)strtoul(buf_set_chmod_after_mkdir, NULL, NULL);
+        if (allServer[ID].set_chmod_after_mkdir > 1)
+          allServer[ID].set_chmod_after_mkdir = 1;
+      } else {
+        allServer[ID].set_chmod_after_mkdir = 0;
+      }
+
+      //chmod_value_put optional, default=700, valid only with set_chmod_after_put
+      if (strlen(buf_chmod_value_put)) {
+        allServer[ID].chmod_value_put =
+          strtoul(buf_chmod_value_put, NULL, NULL);
+      } else {
+        allServer[ID].chmod_value_put = 0;
+      }
+
+      //chmod_value optional, default=700, valid only with set_chmod_after_put
+      if (strlen(buf_chmod_value_mkdir)) {
+        allServer[ID].chmod_value_mkdir =
+          strtoul(buf_chmod_value_mkdir, NULL, NULL);
+      } else {
+        allServer[ID].chmod_value_mkdir = 0;
+      }
+
+      // port & home_dir are optional
       if (strlen(buf_port)) {
         allServer[ID].port = strtol(buf_port, NULL, NULL);
       } else {
@@ -2027,6 +2075,10 @@ int init_servers_from_iniFile()
   allServer[ID].use_key_auth = 0;
   allServer[ID].username[0] = '\0';
   allServer[ID].username_cached[0] = '\0';
+  allServer[ID].chmod_value_put = 0;
+  allServer[ID].chmod_value_mkdir = 0;
+  allServer[ID].set_chmod_after_put = 0;
+  allServer[ID].set_chmod_after_mkdir = 0;
 
   ID++;                         // !!!
 
@@ -2043,26 +2095,26 @@ void LogProc_(int MsgType, char *LogString)
 
 BOOL __stdcall FsDisconnect(char *DisconnectRoot)
 {
-  // DisconnectRoot nützt nix, kann eh nur 1ne connection gleichzeitig aufrecht erhalten psftp.c Architektur is schuld drann
+  //DisconnectRoot is unusable as only 1 connection is active, because of psftp's architecture
   //LogProc_(MSGTYPE_DISCONNECT,"DISCONNECTED");
-  wcplg_sftp_disconnect(CurrentServer_ID, false); //get_sftpServer_ID_by_Path(DisconnectRoot),false);
+  wcplg_sftp_disconnect(CurrentServer_ID, false);
   already_connected = false;
   return true;
 }
 
+//this checks for a connection. we could use this multi dll concept to 
+//run multiple connections simultanously
 void check_Concurrent_Connection(char *Path)
 {
   //CurrentServer_ID is global
-  if (CurrentServer_ID != -1)   //Do we have überhaupt a connection  to any Server ?
+  if (CurrentServer_ID != -1)   //Is there already a connection to a Server ?
   {
     if (get_sftpServer_ID_by_Path(Path) != CurrentServer_ID) {
-      // upppps, conflict!
-      // Perhaps kann ich ja mehrere Instanzen der DLL speichern, muss mal gucken, but now we disconnect the connection to avoid the conflict
-      //wcplg_sftp_disconnect();// reconnecting automatisch
+      //ooops, conflict!
+      //we have to disconnect the connection to avoid the conflict
       if (already_connected)
         wcplg_sftp_disconnect(CurrentServer_ID, false);
       CurrentServer_ID = get_sftpServer_ID_by_Path(Path); // OK, conflict fixed :-)
-
     }
   }
 
@@ -2080,15 +2132,14 @@ struct SftpServerAccountInfo *getP_allServer(void)
 
 BOOL Request_Password(char *buf)
 {
-  return RequestProc(PluginNumber, RT_Password, "Secure FTP", "Password",
-                     buf, MAX_PATH);
+  return RequestProc(PluginNumber, RT_Password, "Secure FTP", "Password", buf, MAX_PATH);
 }
 
-int octal_perm_2_wc_int(unsigned long octal_val)
+int octal_permissions_2_tc_integral(unsigned long octal_val)
 {
   //quick and dirty
 
-  char buf[100];                //dürft reichen
+  char buf[100];                //should be enough [:-( not nice, dude!]
   char cbuf[100];
   int clen;
   int int_val;
@@ -2143,7 +2194,6 @@ int file_exists_on_remote_server(char *RemoteFile)
     FsFindClose(lf);
     return FS_FILE_NOTFOUND;
   }
-  //while(FsFindNext(lf,&FindData) != false) {;} //zur Sicherheit nochmal durchlaufen lassen das auch alle Daten da sind
 
   pLastFindStuct lf_res;
   lf_res = (pLastFindStuct) lf;
@@ -2234,9 +2284,9 @@ int Risdir(char *Path)
   return 1;
 }
 
-BOOL SetFileTime__(char *fullFilePath, FILETIME * LastWriteTime)
+bool SetFileTime__(char *fullFilePath, FILETIME * LastWriteTime)
 {
-  BOOL f;
+  bool f;
   HANDLE myFile;
   if (LastWriteTime == NULL)
     return false;
@@ -2253,7 +2303,7 @@ BOOL SetFileTime__(char *fullFilePath, FILETIME * LastWriteTime)
   }
 
   f = SetFileTime(myFile,       // sets last-write time for file
-                  LastWriteTime, (LPFILETIME) NULL, LastWriteTime);
+                  LastWriteTime, (LPFILETIME) NULL, LastWriteTime) == TRUE;
 
   CloseHandle(myFile);
   return f;
@@ -2491,6 +2541,11 @@ void ServerAccountInfoDefaults(struct SftpServerAccountInfo
   ServerAccountInfo->proxy_username[0] = 0;
   ServerAccountInfo->proxy_password[0] = 0;
   ServerAccountInfo->proxy_telnet_command[0] = 0;
+  //Experimental - chmod
+  ServerAccountInfo->chmod_value_put = 700;
+  ServerAccountInfo->chmod_value_mkdir = 700;
+  ServerAccountInfo->set_chmod_after_put = 0;
+  ServerAccountInfo->set_chmod_after_mkdir = 0;
 }
 
 int loadPuttySectionToSftpPluginServerInfoStruct(struct
@@ -2618,7 +2673,7 @@ int do_import_sshcom_saved_session_to_plugin_session(int lastInsert_ID,
   char buf_divers[MAX_Server_INFO]; //MAX_Server_INFO soll MAXcmdbuffer sein     
   char dir_location_PATH[MAX_Server_INFO];  //MAX_Server_INFO soll MAXcmdbuffer sein      
 
-  BOOL Next;                    // Done searching for files?
+  bool Next;                    // Done searching for files?
   HANDLE FndHnd = NULL;         // Handle to find data.
   WIN32_FIND_DATA FindDat;      // Info on file found.
 
@@ -2631,7 +2686,7 @@ int do_import_sshcom_saved_session_to_plugin_session(int lastInsert_ID,
   FndHnd = FindFirstFile(dir_location, &FindDat);
 
   while (FndHnd != INVALID_HANDLE_VALUE) {
-    Next = FindNextFile(FndHnd, &FindDat);
+    Next = FindNextFile(FndHnd, &FindDat) == TRUE;
 
     if (!Next) {
       break;
