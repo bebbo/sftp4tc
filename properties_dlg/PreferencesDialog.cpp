@@ -5,6 +5,8 @@
 #include "ConfigProperties.h"
 
 #define lstConnections_ID "lstConnections"
+//Buttons
+#define btnDelete_ID "btnDelete"
 //TextBoxes
 #define edtTitle_ID "edtTitle"
 #define edtHost_ID "edtHost"
@@ -52,7 +54,7 @@
 BEGIN_EVENT_TABLE(PreferencesDialog, wxDialog)
   EVT_BUTTON( XRCID( "btnNew" ), PreferencesDialog::OnNewButtonClicked )    
   EVT_BUTTON( XRCID( "btnDuplicate" ), PreferencesDialog::OnDuplicateButtonClicked )    
-  EVT_BUTTON( XRCID( "btnDelete" ), PreferencesDialog::OnDeleteButtonClicked )    
+  EVT_BUTTON( XRCID( btnDelete_ID ), PreferencesDialog::OnDeleteButtonClicked )    
   EVT_BUTTON( XRCID( "btnCancel" ), PreferencesDialog::OnCancelButtonClicked )    
   EVT_BUTTON( XRCID( "btnOK" ), PreferencesDialog::OnOKButtonClicked )    
   EVT_LISTBOX( XRCID( lstConnections_ID ), PreferencesDialog::OnListBox )
@@ -92,6 +94,8 @@ PreferencesDialog::PreferencesDialog(config_properties *aProperties, wxWindow *a
 
   if (dlgres) {
     lstConnections = XRCCTRL(*this, lstConnections_ID, wxListBox);
+	btnDelete = XRCCTRL(*this, btnDelete_ID, wxButton);
+	//
     edtTitle = XRCCTRL(*this, edtTitle_ID, wxTextCtrl);
     edtHost = XRCCTRL(*this, edtHost_ID, wxTextCtrl);
     edtPort = XRCCTRL(*this, edtPort_ID, wxTextCtrl);
@@ -121,7 +125,7 @@ PreferencesDialog::PreferencesDialog(config_properties *aProperties, wxWindow *a
     cboImportPutty = XRCCTRL(*this, cboImportPutty_ID, wxChoice);
     edtImportSSHcom = XRCCTRL(*this, edtImportSSHcom_ID, wxTextCtrl);
 
-    dlgres = lstConnections && edtTitle && edtHost && edtPort && edtUsername && 
+    dlgres = lstConnections && btnDelete && edtTitle && edtHost && edtPort && edtUsername && 
       edtPassword && edtHomedir && edtChmodPut && edtChmodDir && edtKeyFilename &&
       edtProxyHost && edtProxyPort && edtProxyUsername && edtProxyPassword && 
       edtProxyTelnetCommand && chkAsk4Username && chkAsk4Password && chkCompression && 
@@ -156,7 +160,9 @@ PreferencesDialog::PreferencesDialog(config_properties *aProperties, wxWindow *a
 
         lstConnections->SetSelection(0);
         OnListBox(dummy_event);
-      }
+      } else {
+		ClearAndDisable();
+	  }
     }
   }
 }
@@ -175,11 +181,13 @@ PreferencesDialog::~PreferencesDialog()
 void PreferencesDialog::OnNewButtonClicked( wxCommandEvent &event )
 {
   if (mProperties->ServerCount<MAX_Server_Count) {
+	Enable();
     wxCommandEvent dummy_event;
     int pos = mProperties->ServerCount++;
     mProperties->ServerInfos[pos].id = pos;
     SetDefaultsToServerInfo(&mProperties->ServerInfos[pos]);
     strncpy(mProperties->ServerInfos[pos].title, "<new>", MAX_Server_INFO);
+    strncpy(mProperties->ServerInfos[pos].host, "<new>", MAX_Server_INFO);
     mPos = -1;
     lstConnections->Append(mProperties->ServerInfos[pos].title, &mProperties->ServerInfos[pos]);
     pos = lstConnections->FindString(mProperties->ServerInfos[pos].title);
@@ -193,6 +201,7 @@ void PreferencesDialog::OnNewButtonClicked( wxCommandEvent &event )
 void PreferencesDialog::OnDuplicateButtonClicked( wxCommandEvent &event )
 {
   if (mProperties->ServerCount<MAX_Server_Count) {
+	Enable();
     wxCommandEvent dummy_event;
     int pos = mProperties->ServerCount++;
     CopyServerInfo(mProperties->ServerInfos, mCurrentServer->id, pos);
@@ -299,10 +308,12 @@ void PreferencesDialog::OnTitleTextChange( wxCommandEvent &event )
 {
   if (mPos!=-1) {
     strncpy(mCurrentServer->title, edtTitle->GetValue().c_str(), MAX_Server_INFO);
-    lstConnections->Delete(mPos);
-    lstConnections->Append(mCurrentServer->title, mCurrentServer);
-    mPos = lstConnections->FindString(mCurrentServer->title);
-    lstConnections->SetSelection(mPos);
+	  if (!edtTitle->GetValue().empty()) {
+	    lstConnections->Delete(mPos);
+	    lstConnections->Append(mCurrentServer->title, mCurrentServer);
+	    mPos = lstConnections->FindString(mCurrentServer->title);
+	    lstConnections->SetSelection(mPos);
+	  }
   }
 }
 
@@ -310,135 +321,161 @@ void PreferencesDialog::OnTitleTextChange( wxCommandEvent &event )
 
 void PreferencesDialog::OnHostTextChange( wxCommandEvent &event )
 {
-  strncpy(mCurrentServer->host, edtHost->GetValue().c_str(), MAX_Server_INFO);
+  if (mCurrentServer)
+    strncpy(mCurrentServer->host, edtHost->GetValue().c_str(), MAX_Server_INFO);
 }
 
 void PreferencesDialog::OnPortTextChange( wxCommandEvent &event )
 {
-  GetNumValue( edtPort, port )
+  if (mCurrentServer)
+    GetNumValue( edtPort, port )
 }
 
 void PreferencesDialog::OnUsernameTextChange( wxCommandEvent &event )
 {
-  strncpy(mCurrentServer->username, edtUsername->GetValue().c_str(), MAX_Server_INFO);
+  if (mCurrentServer)
+    strncpy(mCurrentServer->username, edtUsername->GetValue().c_str(), MAX_Server_INFO);
 }
 
 void PreferencesDialog::OnPasswordTextChange( wxCommandEvent &event )
 {
-  strncpy(mCurrentServer->password, edtPassword->GetValue().c_str(), MAX_Server_INFO);
+  if (mCurrentServer)
+    strncpy(mCurrentServer->password, edtPassword->GetValue().c_str(), MAX_Server_INFO);
 }
 
 void PreferencesDialog::OnHomedirTextChange( wxCommandEvent &event )
 {
-  strncpy(mCurrentServer->home_dir, edtHomedir->GetValue().c_str(), MAX_Server_INFO);
+  if (mCurrentServer)
+    strncpy(mCurrentServer->home_dir, edtHomedir->GetValue().c_str(), MAX_Server_INFO);
 }
 
 void PreferencesDialog::OnChmodPutTextChange( wxCommandEvent &event )
 {
-  GetNumValue( edtChmodPut, chmod_value_put )
+  if (mCurrentServer)
+    GetNumValue( edtChmodPut, chmod_value_put )
 }
 
 void PreferencesDialog::OnChmodDirTextChange( wxCommandEvent &event )
 {
-  GetNumValue( edtChmodDir, chmod_value_mkdir )
+  if (mCurrentServer)
+    GetNumValue( edtChmodDir, chmod_value_mkdir )
 }
 
 void PreferencesDialog::OnKeyFilenameTextChange( wxCommandEvent &event )
 {
-  strncpy(mCurrentServer->keyfilename, edtKeyFilename->GetValue().c_str(), MAX_Server_INFO);
+  if (mCurrentServer)
+    strncpy(mCurrentServer->keyfilename, edtKeyFilename->GetValue().c_str(), MAX_Server_INFO);
 }
 
 void PreferencesDialog::OnProxyHostTextChange( wxCommandEvent &event )
 {
-  strncpy(mCurrentServer->proxy_host, edtProxyHost->GetValue().c_str(), MAX_Server_INFO);
+  if (mCurrentServer)
+    strncpy(mCurrentServer->proxy_host, edtProxyHost->GetValue().c_str(), MAX_Server_INFO);
 }
 
 void PreferencesDialog::OnProxyPortTextChange( wxCommandEvent &event )
 {
-  GetNumValue( edtProxyPort, proxy_port )
+  if (mCurrentServer)
+    GetNumValue( edtProxyPort, proxy_port )
 }
 
 void PreferencesDialog::OnProxyUsernameTextChange( wxCommandEvent &event )
 {
-  GetTextValue( edtProxyUsername, proxy_username )
+  if (mCurrentServer)
+    GetTextValue( edtProxyUsername, proxy_username )
 }
 
 void PreferencesDialog::OnProxyPasswordTextChange( wxCommandEvent &event )
 {
-  strncpy(mCurrentServer->proxy_password, edtProxyPassword->GetValue().c_str(), MAX_Server_INFO);
+  if (mCurrentServer)
+    strncpy(mCurrentServer->proxy_password, edtProxyPassword->GetValue().c_str(), MAX_Server_INFO);
 }
 
 void PreferencesDialog::OnProxyTelnetCommandTextChange( wxCommandEvent &event )
 {
-  strncpy(mCurrentServer->proxy_telnet_command, 
-    edtProxyTelnetCommand->GetValue().c_str(), MAX_Server_INFO);
+  if (mCurrentServer)
+    strncpy(mCurrentServer->proxy_telnet_command, 
+      edtProxyTelnetCommand->GetValue().c_str(), MAX_Server_INFO);
 }
 
 //-------------------------- CHECKBOX EVENTS -------------------------------------------
 
 void PreferencesDialog::chkAsk4UsernameChecked( wxCommandEvent &event )
 {
-  mCurrentServer->dont_ask4_username = !chkAsk4Username->GetValue();
+  if (mCurrentServer)
+    mCurrentServer->dont_ask4_username = !chkAsk4Username->GetValue();
 }
 
 void PreferencesDialog::chkAsk4PasswordChecked( wxCommandEvent &event )
 {
-  mCurrentServer->dont_ask4_password = !chkAsk4Password->GetValue();
+  if (mCurrentServer)
+    mCurrentServer->dont_ask4_password = !chkAsk4Password->GetValue();
 }
 
 void PreferencesDialog::chkCompressionChecked( wxCommandEvent &event )
 {
-  mCurrentServer->compression = chkCompression->GetValue();
+  if (mCurrentServer)
+    mCurrentServer->compression = chkCompression->GetValue();
 }
 
 void PreferencesDialog::chkSetMTimeChecked( wxCommandEvent &event )
 {
-  mCurrentServer->set_mtime_after_put = chkSetMTime->GetValue();
+  if (mCurrentServer)
+    mCurrentServer->set_mtime_after_put = chkSetMTime->GetValue();
 }
 
 void PreferencesDialog::chkChmodPutChecked( wxCommandEvent &event )
 {
-  mCurrentServer->set_chmod_after_put = chkChmodPut->GetValue();
+  if (mCurrentServer)
+    mCurrentServer->set_chmod_after_put = chkChmodPut->GetValue();
 }
 
 void PreferencesDialog::chkChmodDirChecked( wxCommandEvent &event )
 {
-  mCurrentServer->set_chmod_after_mkdir = chkChmodDir->GetValue();
+  if (mCurrentServer)
+    mCurrentServer->set_chmod_after_mkdir = chkChmodDir->GetValue();
 }
 
 void PreferencesDialog::chkUseKeyAuthChecked( wxCommandEvent &event )
 {
-  mCurrentServer->use_key_auth = chkUseKeyAuth->GetValue();
+  if (mCurrentServer)
+    mCurrentServer->use_key_auth = chkUseKeyAuth->GetValue();
 }
 
 void PreferencesDialog::chkAsk4PassphraseChecked( wxCommandEvent &event )
 {
-  mCurrentServer->dont_ask4_passphrase = !chkAsk4Passphrase->GetValue();
+  if (mCurrentServer)
+    mCurrentServer->dont_ask4_passphrase = !chkAsk4Passphrase->GetValue();
 }
 
 //-------------------------- CHOICE EVENTS -------------------------------------------
 
 void PreferencesDialog::cboProxyTypeChoiceSelected( wxCommandEvent &event )
 {
-  int index = cboProxyType->GetSelection();
+  if (mCurrentServer)
+  {
+	int index = cboProxyType->GetSelection();
 
-  if ((index>=PROXY_NONE) && (index<=PROXY_CMD))
-    mCurrentServer->proxy_type = index;
+    if ((index>=PROXY_NONE) && (index<=PROXY_CMD))
+      mCurrentServer->proxy_type = index;
+  }
 }
 
 //-------------------------- CHOICE EVENTS -------------------------------------------
 
 void PreferencesDialog::cboImportPuttyChecked( wxCommandEvent &event )
 {
-  mProperties->DoImportPuttySessions = cboImportPutty->GetSelection();
+  if (mCurrentServer)
+    mProperties->DoImportPuttySessions = cboImportPutty->GetSelection();
 }
 
 //-------------------------- CHOICE EVENTS -------------------------------------------
 
 void PreferencesDialog::edtImportSSHcomTextChange( wxCommandEvent &event )
 {
-  strncpy(mProperties->DoImportSSHcomSessions, 
-    edtImportSSHcom->GetValue().c_str(), MAX_Server_INFO);
+  if (mCurrentServer)
+    strncpy(mProperties->DoImportSSHcomSessions, 
+      edtImportSSHcom->GetValue().c_str(), MAX_Server_INFO);
 }
 
 //---------------------------------------------------------------------
@@ -492,4 +529,36 @@ void PreferencesDialog::ClearAndDisable()
   chkUseKeyAuth->Disable();
   chkAsk4Passphrase->Disable();
   cboProxyType->Disable();
+  //
+  btnDelete->Disable();
+}
+
+//---------------------------------------------------------------------
+
+void PreferencesDialog::Enable()
+{
+  edtTitle->Enable();
+  edtHost->Enable();
+  edtPort->Enable();
+  edtUsername->Enable();
+  edtPassword->Enable();
+  edtHomedir->Enable();
+  edtChmodPut->Enable();
+  edtChmodDir->Enable();
+  edtKeyFilename->Enable();
+  edtProxyHost->Enable();
+  edtProxyPort->Enable();
+  edtProxyUsername->Enable();
+  edtProxyPassword->Enable();
+  edtProxyTelnetCommand->Enable();
+  chkAsk4Username->Enable();
+  chkAsk4Password->Enable();
+  chkCompression->Enable();
+  chkSetMTime->Enable();
+  chkChmodPut->Enable();
+  chkChmodDir->Enable();
+  chkUseKeyAuth->Enable();
+  chkAsk4Passphrase->Enable();
+  cboProxyType->Enable();
+  btnDelete->Enable();
 }

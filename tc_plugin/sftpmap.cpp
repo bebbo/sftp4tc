@@ -25,6 +25,8 @@ TD_SFTP_DLL_FNCT_SetSftpServerAccountInfo
   SFTP_DLL_FNCT_SetSftpServerAccountInfo[MAX_Server_Count];
 TD_SFTP_DLL_FNCT_SetTransferMode
   SFTP_DLL_FNCT_SetTransferMode[MAX_Server_Count];
+TD_SFTP_DLL_FNCT_Disconnected
+  SFTP_DLL_FNCT_Disconnected[MAX_Server_Count];
 HMODULE PSFTP_DLL_HANDLER[MAX_Server_Count];
 
 //---------------------------------------------------------------------
@@ -73,6 +75,7 @@ void Unload_PSFTP_DLL_HANDLER(int ServerId)
     SFTP_DLL_FNCT_psftp_memory_hole__stopfen[ServerId] = NULL;
     SFTP_DLL_FNCT_SetSftpServerAccountInfo[ServerId] = NULL;
     SFTP_DLL_FNCT_SetTransferMode[ServerId] = NULL;
+    SFTP_DLL_FNCT_Disconnected[ServerId] = NULL;
   }
 }
 
@@ -120,6 +123,7 @@ int wcplg_sftp_connect(char *user, char *password, char *host, int port,
   SFTP_DLL_FNCT_psftp_memory_hole__stopfen[CurrentServerId] = NULL;
   SFTP_DLL_FNCT_SetSftpServerAccountInfo[CurrentServerId] = NULL;
   SFTP_DLL_FNCT_SetTransferMode[CurrentServerId] = NULL;
+  SFTP_DLL_FNCT_Disconnected[CurrentServerId] = NULL;
   PSFTP_DLL_HANDLER[CurrentServerId] = NULL;
 
   char dll_2_load[MAX_CMD_BUFFER];
@@ -189,6 +193,11 @@ int wcplg_sftp_connect(char *user, char *password, char *host, int port,
     GetProcAddress(PSFTP_DLL_HANDLER[CurrentServerId],
                    "__map__setTransferMode");
 
+  SFTP_DLL_FNCT_Disconnected[CurrentServerId] =
+    (TD_SFTP_DLL_FNCT_Disconnected)
+    GetProcAddress(PSFTP_DLL_HANDLER[CurrentServerId],
+                   "__map__disconnected");
+
   if (SFTP_DLL_FNCT_CONNECT[CurrentServerId] == NULL
       || SFTP_DLL_FNCT_DISCONNECT[CurrentServerId] == NULL
       || SFTP_DLL_FNCT_DO_SFTP[CurrentServerId] == NULL
@@ -197,7 +206,8 @@ int wcplg_sftp_connect(char *user, char *password, char *host, int port,
       || SFTP_DLL_FNCT_init_ProgressProc[CurrentServerId] == NULL
       || SFTP_DLL_FNCT_psftp_memory_hole__stopfen[CurrentServerId] == NULL
       || SFTP_DLL_FNCT_SetSftpServerAccountInfo[CurrentServerId] == NULL
-      || SFTP_DLL_FNCT_SetTransferMode[CurrentServerId] == NULL) {
+      || SFTP_DLL_FNCT_SetTransferMode[CurrentServerId] == NULL
+      || SFTP_DLL_FNCT_Disconnected[CurrentServerId] == NULL) {
     // DLL konnte zwar geladen werden aber die funktionen konnten nicht vollständig 
     // importiert werden 
     dbg("Can't load all psftp.dll's function, Fix me");
@@ -286,6 +296,7 @@ int wcplg_sftp_connect(char *user, char *password, char *host, int port,
          SFTP_DLL_FNCT_GET_LAST_ERROR_MESSAGE[CurrentServerId] ());
   if (strcmp(buf_log, "") != 0)
     LogProc_(MSGTYPE_IMPORTANTERROR, buf_log);
+
 
   //wcplg_sftp_disconnect(CurrentServerId,true);
 
@@ -377,6 +388,10 @@ int wcplg_sftp_do_commando(char *commando, char *server_output,
     sprintf(log_buf, "%s: !%s", _allServer[ServerId].title,
             SFTP_DLL_FNCT_GET_LAST_ERROR_MESSAGE[ServerId] ());
     LogProc_(MSGTYPE_IMPORTANTERROR, log_buf);
+    if (SFTP_DLL_FNCT_Disconnected[ServerId]() == 1) {
+      Unload_PSFTP_DLL_HANDLER(ServerId);
+      //reconnect would be usefull...
+    }
     return SFTP_FAILED;
   }
 
@@ -446,7 +461,7 @@ int init_ProgressProc(tProgressProc AP_ProgressProc, int Awc_PluginNr,
 
 int psftp_memory_hole__stopfen(int ServerId)
 {
-  if (SFTP_DLL_FNCT_psftp_memory_hole__stopfen[ServerId] != NULL) {
+  if ((ServerId!=-1) && (SFTP_DLL_FNCT_psftp_memory_hole__stopfen[ServerId] != NULL)) {
     return SFTP_DLL_FNCT_psftp_memory_hole__stopfen[ServerId] ();
   }
   return -1;
@@ -466,6 +481,8 @@ void init_server_dll_handlers()
     SFTP_DLL_FNCT_GET_LAST_ERROR_MESSAGE[i] = NULL;
     SFTP_DLL_FNCT_init_ProgressProc[i] = NULL;
     SFTP_DLL_FNCT_SetSftpServerAccountInfo[i] = NULL;
+    SFTP_DLL_FNCT_Disconnected[i] = NULL;
+    SFTP_DLL_FNCT_SetTransferMode[i] = NULL;
     PSFTP_DLL_HANDLER[MAX_Server_Count] = NULL;
   }
 }

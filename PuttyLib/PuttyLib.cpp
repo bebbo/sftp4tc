@@ -9,6 +9,8 @@ extern "C" {
 #include "pl_misc.h"
 #include "pl_psftp.h"
 
+int fxp_disconnected();
+
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
   switch (ul_reason_for_call) {
@@ -50,6 +52,11 @@ struct my_fxp_names *__map__wcplg_get_current_dir_struct()
 char *__map__wcplg_get_last_error_msg()
 {
   return wcplg_get_last_error_msg();
+}
+
+int __map__disconnected()
+{
+  return fxp_disconnected();
 }
 
 int __stdcall __map__init_ProgressProc(tProgressProc AP_ProgressProc,

@@ -34,6 +34,8 @@ struct sftp_packet {
 
 static const char *fxp_error_message;
 static int fxp_errtype;
+static int disconnected = 0;
+
 
 static void fxp_internal_error(char *msg);
 
@@ -209,6 +211,7 @@ static struct fxp_attrs sftp_pkt_getattrs(struct sftp_packet *pkt)
 }
 static void sftp_pkt_free(struct sftp_packet *pkt)
 {
+  if (pkt)
     if (pkt->data)
 	sfree(pkt->data);
     sfree(pkt);
@@ -409,6 +412,12 @@ static int fxp_got_status(struct sftp_packet *pktin)
 	"operation unsupported",
     };
 
+    if (pktin==NULL) {
+      disconnected = 1;
+      fxp_error_message = messages[7];
+      return -1;
+    }
+
     if (pktin->type != SSH_FXP_STATUS) {
 	fxp_error_message = "expected FXP_STATUS packet";
 	fxp_errtype = -1;
@@ -438,6 +447,11 @@ static void fxp_internal_error(char *msg)
 const char *fxp_error(void)
 {
     return fxp_error_message;
+}
+
+const int fxp_disconnected(void)
+{
+  return disconnected;
 }
 
 int fxp_error_type(void)
@@ -505,6 +519,7 @@ struct sftp_request *fxp_realpath_send(char *path)
 char *fxp_realpath_recv(struct sftp_packet *pktin, struct sftp_request *req)
 {
     sfree(req);
+  if (pktin==NULL) return NULL;
 
     if (pktin->type == SSH_FXP_NAME) {
 	int count;
@@ -556,6 +571,8 @@ struct fxp_handle *fxp_open_recv(struct sftp_packet *pktin,
 {
     sfree(req);
 
+    if (pktin==NULL) return NULL;
+
     if (pktin->type == SSH_FXP_HANDLE) {
 	char *hstring;
 	struct fxp_handle *handle;
@@ -599,6 +616,7 @@ struct fxp_handle *fxp_opendir_recv(struct sftp_packet *pktin,
 				    struct sftp_request *req)
 {
     sfree(req);
+    if (pktin==NULL) return NULL;
     if (pktin->type == SSH_FXP_HANDLE) {
 	char *hstring;
 	struct fxp_handle *handle;
@@ -772,6 +790,7 @@ int fxp_stat_recv(struct sftp_packet *pktin, struct sftp_request *req,
 		  struct fxp_attrs *attrs)
 {
     sfree(req);
+    if (pktin==NULL) return 0;
     if (pktin->type == SSH_FXP_ATTRS) {
 	*attrs = sftp_pkt_getattrs(pktin);
         sftp_pkt_free(pktin);
@@ -801,6 +820,7 @@ int fxp_fstat_recv(struct sftp_packet *pktin, struct sftp_request *req,
 		   struct fxp_attrs *attrs)
 {
     sfree(req);
+    if (pktin==NULL) return -1; //or 0?
     if (pktin->type == SSH_FXP_ATTRS) {
 	*attrs = sftp_pkt_getattrs(pktin);
         sftp_pkt_free(pktin);
@@ -939,6 +959,7 @@ struct fxp_names *fxp_readdir_recv(struct sftp_packet *pktin,
 				   struct sftp_request *req)
 {
     sfree(req);
+    if (pktin==NULL) return NULL;
     if (pktin->type == SSH_FXP_NAME) {
 	struct fxp_names *ret;
 	int i;
