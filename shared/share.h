@@ -16,7 +16,6 @@ typedef int PROXY_TYPE;
 
 int get_tmp_file_name(char *buf);
 
-#pragma pack(1)
 struct SftpServerAccountInfo {
   unsigned int id;
   char title[MAX_Server_INFO];
@@ -56,11 +55,4 @@ struct SftpServerAccountInfo {
 struct SftpServerAccountInfo get_Server_config_Struct(void);
 void set_Server_config_Struct(struct SftpServerAccountInfo
                               ServerAccountInfo);
-void DISABLE_LOGGING();
-void ENABLE_LOGGING();
-void DISABLE_LOGGING_ONCE();
-int do_logging();
-void trim_host_from_hoststring(char *str_host);
-void trim_port_from_hoststring(char *str_host);
-
 #endif                          //_SHARE_H

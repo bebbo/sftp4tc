@@ -12,7 +12,7 @@
 ; **********************************
 ; v0.1 WOK - initial release
 ; v0.2 WOK - fixed problem with $WINDIR vs. Registry source for ini-location
-; v0.3 MK  - changes to version 1.1.55.3
+; v0.3 MK  - changes to version 1.1.56.1
 ; ---------------------------------
 
 SetCompressor LZMA
@@ -20,18 +20,18 @@ XPStyle on
 
 VIAddVersionKey FileDescription "SFTP FS-plugin for TotalCommander setup"
 VIAddVersionKey ProductName SFTP4TC
-VIAddVersionKey ProductVersion 1.1.55.3
-VIAddVersionKey FileVersion 1.1.55.3
-VIAddVersionKey OriginalFilename wfx_sftp_1_1_55_3_setup.exe
+VIAddVersionKey ProductVersion 1.1.56.1
+VIAddVersionKey FileVersion 1.1.56.1
+VIAddVersionKey OriginalFilename wfx_sftp_1_1_56_1_setup.exe
 VIAddVersionKey LegalCopyright ""
 
-VIProductVersion 1.1.55.3
+VIProductVersion 1.1.56.1
 
 ; The name of the installer
 Name "SFTP FS-Plugin for TotalCommander(tm)"
 
 ; The setup-file to write
-OutFile "wfx_sftp_1_1_55_3_setup.exe"
+OutFile "wfx_sftp_1_1_56_1_setup.exe"
 
 
 ; The default installation directory

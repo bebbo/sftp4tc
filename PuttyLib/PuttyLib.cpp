@@ -1,21 +1,4 @@
 // PuttyLib.cpp : Defines the entry point for the DLL application.
-// Here come only few version notices. Everything should be noted in plugin source.
-/*
-VERSION 1.1.56.1
-[27.10.2004]
-/UPDATED to PuTTY 0.56 (first beta)
-+FIXED Text Transfer Mode (1 character on a line was skipped)
-
-VERSION 1.1.55.3
-[19.10.2004]
-*ADDED Dumb transfer mode. If one set "Text mode" he should be sure, that it's the best choice 
-       for him. There's no check for host's default mode. Assuming *nix.
-
-VERSION 1.1.55.1 
-[2.9. 2004]
-/UPDATED TO PuTTY 0.55 (first beta)
-*/
-
 #include "stdafx.h"
 #include "PuttyLib.h"
 #include "windows.h"
