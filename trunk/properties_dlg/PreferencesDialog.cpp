@@ -1,4 +1,5 @@
 #include "PreferencesDialog.h"
+#include "wx/msw/winundef.h"
 #include "putty_proxy.h"
 #include "ServerInfo.h"
 #include "ConfigProperties.h"
