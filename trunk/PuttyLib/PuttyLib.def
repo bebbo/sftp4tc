@@ -1,0 +1,10 @@
+EXPORTS
+	
+	__map__wcplg_open_sftp_session
+	__map__wcplg_close_sftp_session
+	__map__wcplg_do_sftp
+	__map__wcplg_get_current_dir_struct
+	__map__wcplg_get_last_error_msg
+	__map__init_ProgressProc
+	__map__psftp_memory_hole__stopfen
+	__map__set_Server_config_Struct
