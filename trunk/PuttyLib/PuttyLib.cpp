@@ -4,6 +4,7 @@
 VERSION 1.1.56.1
 [27.10.2004]
 /UPDATED to PuTTY 0.56 (first beta)
++FIXED Text Transfer Mode (1 character on a line was skipped)
 
 VERSION 1.1.55.3
 [19.10.2004]
