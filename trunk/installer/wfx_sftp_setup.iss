@@ -11,7 +11,7 @@ AppVerName=1.2.56.2
 DefaultDirName={pf}\TC Plugins\SFTP4TC
 UsePreviousGroup=false
 AppendDefaultGroupName=false
-AlwaysShowComponentsList=false
+AlwaysShowComponentsList=true
 DisableReadyPage=true
 ShowLanguageDialog=no
 LanguageDetectionMethod=none
@@ -23,6 +23,7 @@ OutputDir=..\..\installer
 SetupIconFile=..\SFTP.ICO
 ChangesEnvironment=yes
 LicenseFile=..\..\installer\Licence.putty
+ShowComponentSizes=yes
 
 [Languages]
 Name: en; MessagesFile: compiler:Default.isl
