@@ -1,4 +1,9 @@
 VERSION 1.1.56.2
+[23.12.2004]
++FIXED Aborting file move was deleting the source file
+[18.11.2004]
+*ADDED Password crypting support
+/CHANGED Using InnoSetup instead of NSIS for installation
 [8.11.2004]
 +FIXED missing ini file is created before starting notepad to edit it
 [3.11.2004]
