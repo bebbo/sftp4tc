@@ -2,7 +2,6 @@
 #define SFTP_FAILED 0
 #define MAX_CMD_BUFFER 1024
 #define MAX_MSG_BUFFER 2048
-#define MAX_Server 500
 
 #define HANDLE__SHOW_SFTP_SERVER 1
 #define HANDLE__SHOW_SFTP_DIR    2
@@ -13,7 +12,7 @@ int get_PluginNumber();
 
 #define QUICK_CONNECTION "Quick connection"
 
-struct SftpServerAccountInfo *GetAllServers(void);
+struct SftpServerAccountInfo *GetServerInfos(void);
 int wcplg_sftp_connect(char *user, char *password, char *host, int port,
                        SftpServerAccountInfo * allServers,
                        int CurrentServerId);

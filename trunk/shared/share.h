@@ -6,6 +6,7 @@
 #include <sys/timeb.h>
 #include <time.h>
 
+#define MAX_Server_Count 500
 #define MAX_Server_INFO 255     //this ain't so nice!!!
 #define RESULT_OK	1
 #define	RESULT_ERR	0
@@ -45,14 +46,22 @@ struct SftpServerAccountInfo {
   //Experimental - just a copy from Putty.h:Config struct
   PROXY_TYPE proxy_type;
   char proxy_host[MAX_Server_INFO];
-  int proxy_port;
+  unsigned int proxy_port;
   char proxy_username[MAX_Server_INFO];
   char proxy_password[MAX_Server_INFO];
   char proxy_telnet_command[MAX_Server_INFO];
 };
 
+struct config_properties {
+  struct SftpServerAccountInfo ServerInfos[MAX_Server_Count];
+  int ServerCount; 
+  int ImportedSessions;
+  char DoImportSSHcomSessions[MAX_Server_INFO];
+  char DoImportPuttySessions;
+  char ConfigIniFile[MAX_PATH];
+  HWND MainWindow;
+};
 
 struct SftpServerAccountInfo get_Server_config_Struct(void);
-void set_Server_config_Struct(struct SftpServerAccountInfo
-                              ServerAccountInfo);
-#endif                          //_SHARE_H
+void set_Server_config_Struct(struct SftpServerAccountInfo ServerAccountInfo);
+#endif //_SHARE_H

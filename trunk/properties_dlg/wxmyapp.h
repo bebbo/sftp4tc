@@ -6,6 +6,13 @@
 class wxMyApp: public wxApp {
 public:
   virtual bool OnInit();
+
+  void SetHWND(HWND aMainWindow);
+  wxWindow *GetHostWindow();
+  void ReleaseHostWindow();
+private:
+  HWND mMainWindow;
+  wxWindow *mHostWindow;
 };
 
 DECLARE_APP(wxMyApp);

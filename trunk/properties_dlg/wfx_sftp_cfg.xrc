@@ -520,6 +520,53 @@
         <object class="wxBoxSizer">
           <orient>wxHORIZONTAL</orient>
           <object class="spacer">
+            <size>10,1</size>
+          </object>
+          <object class="sizeritem">
+            <object class="wxStaticText">
+              <label>import putty sessions</label>
+            </object>
+            <option>1</option>
+            <flag>wxALIGN_CENTRE_VERTICAL</flag>
+          </object>
+          <object class="spacer">
+            <size>5,5</size>
+          </object>
+          <object class="sizeritem">
+            <object class="wxChoice" name="cboImportPutty">
+              <content/>
+            </object>
+            <option>2</option>
+            <flag>wxALIGN_CENTRE_VERTICAL</flag>
+          </object>
+          <object class="spacer">
+            <size>5,5</size>
+          </object>
+          <object class="sizeritem">
+            <object class="wxStaticText">
+              <label>import ssh.com sessions from:</label>
+            </object>
+            <flag>wxALIGN_CENTRE_VERTICAL</flag>
+          </object>
+          <object class="spacer">
+            <size>5,5</size>
+          </object>
+          <object class="sizeritem">
+            <object class="wxTextCtrl" name="edtImportSSHcom"/>
+            <option>2</option>
+          </object>
+          <object class="spacer">
+            <size>10,5</size>
+          </object>
+        </object>
+      </object>
+      <object class="spacer">
+        <size>5,5</size>
+      </object>
+      <object class="sizeritem">
+        <object class="wxBoxSizer">
+          <orient>wxHORIZONTAL</orient>
+          <object class="spacer">
             <size>4,1</size>
           </object>
           <object class="sizeritem">
