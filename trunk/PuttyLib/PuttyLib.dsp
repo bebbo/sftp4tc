@@ -104,6 +104,10 @@ SOURCE=.\putty\CONSOLE.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\putty\cproxy.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\putty\IMPORT.C
 # End Source File
 # Begin Source File
