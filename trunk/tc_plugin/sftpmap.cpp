@@ -153,7 +153,7 @@ int wcplg_sftp_connect(char *user, char *password, char *host, int port,
 
   if (PSFTP_DLL_HANDLER[CurrentServerId] == NULL) {
     char msg[MAX_CMD_BUFFER];
-    sprintf(msg, "can not load %s (code %d)", dll_2_load, fcret);
+    sprintf(msg, "Can't load \"%s\" (code %d)", dll_2_load, fcret);
     dbg(msg);
     return SFTP_FAILED;         // DLL nicht ladbar, warnung ausgeben 
   };
@@ -210,7 +210,7 @@ int wcplg_sftp_connect(char *user, char *password, char *host, int port,
       || SFTP_DLL_FNCT_Disconnected[CurrentServerId] == NULL) {
     // DLL konnte zwar geladen werden aber die funktionen konnten nicht vollständig 
     // importiert werden 
-    dbg("Can't load all psftp.dll's function, Fix me");
+    dbg("Can't load all of PSFTP.DLL's functions!");
     Unload_PSFTP_DLL_HANDLER(CurrentServerId);
     return SFTP_FAILED;
   }
@@ -271,17 +271,22 @@ int wcplg_sftp_connect(char *user, char *password, char *host, int port,
 
   if (SFTP_DLL_FNCT_CONNECT[CurrentServerId]
       (user, password, realHost, realPort) == 1) {
+    char sftp_cmd[MAX_CMD_BUFFER];
+    
+    sprintf(sftp_cmd, "pwd");
+    if (wcplg_sftp_do_commando(sftp_cmd, allServers[CurrentServerId].base_dir, CurrentServerId) != SFTP_SUCCESS) {
+      strcpy(allServers[CurrentServerId].base_dir, allServers[CurrentServerId].home_dir);
+    }
 
     if (allServers[CurrentServerId].home_dir != NULL) {
       if ((strlen(allServers[CurrentServerId].home_dir) > 0)
           && (strcmp(allServers[CurrentServerId].home_dir, ".") != 0)) {
-        char sftp_cmd[MAX_CMD_BUFFER];
-        sprintf(sftp_cmd, "cd \"%s\"",
-                allServers[CurrentServerId].home_dir);
+        sprintf(sftp_cmd, "cd \"%s\"", allServers[CurrentServerId].home_dir);
         winSlash2unix(sftp_cmd);
 
-        if (wcplg_sftp_do_commando(sftp_cmd, NULL, CurrentServerId) !=
-            SFTP_SUCCESS) {
+        if (wcplg_sftp_do_commando(sftp_cmd, NULL, CurrentServerId) == SFTP_SUCCESS) {
+          strcpy(allServers[CurrentServerId].base_dir, allServers[CurrentServerId].home_dir);
+        } else {
           sprintf(buf_log, "WARNING: couldn't change to home directory!");
           allServers[CurrentServerId].home_dir[0] = 0;
           LogProc_(MSGTYPE_DETAILS, buf_log);
@@ -390,6 +395,7 @@ int wcplg_sftp_do_commando(char *commando, char *server_output,
     LogProc_(MSGTYPE_IMPORTANTERROR, log_buf);
     if (SFTP_DLL_FNCT_Disconnected[ServerId]() == 1) {
       Unload_PSFTP_DLL_HANDLER(ServerId);
+      return SFTP_DISCONNECTED;
       //reconnect would be usefull...
     }
     return SFTP_FAILED;
@@ -444,6 +450,17 @@ void winSlash2unix(char *s)
   for (i = 0; i < strlen(s); i++) {
     if (s[i] == '\\')
       s[i] = '/';
+  }
+}
+
+//---------------------------------------------------------------------
+
+void UnixSlash2Win(char *s)
+{
+  unsigned int i;
+  for (i = 0; i < strlen(s); i++) {
+    if (s[i] == '/')
+      s[i] = '\\';
   }
 }
 

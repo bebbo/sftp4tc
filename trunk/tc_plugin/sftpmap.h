@@ -1,16 +1,25 @@
 #define SFTP_SUCCESS 1
 #define SFTP_FAILED 0
+#define SFTP_DISCONNECTED -1
 #define MAX_CMD_BUFFER 1024
 #define MAX_MSG_BUFFER 2048
 
 #define HANDLE__SHOW_SFTP_SERVER 1
 #define HANDLE__SHOW_SFTP_DIR    2
 
+//Links in the first level of plugin's fs
+//
+#define DefineEditConnection_define "<Edit connections>"
+#define DefineEditConnection_selected "\\<Edit connections>"
+
+#define DefineAddConnection_define "<Add connections>"
+#define DefineAddConnection_selected "\\<Add connections>"
+
+#define QUICK_CONNECTION "<Quick connection>"
+
 void LogProc_(int MsgType, char *LogString);
 tProgressProc get_ProgressProc();
 int get_PluginNumber();
-
-#define QUICK_CONNECTION "Quick connection"
 
 struct SftpServerAccountInfo *GetServerInfos(void);
 int wcplg_sftp_connect(char *user, char *password, char *host, int port,
@@ -77,6 +86,7 @@ typedef int (CALLBACK * TD_SFTP_DLL_FNCT_Disconnected)(void);
 void Unload_PSFTP_DLL_HANDLER(int ServerId);
 void *__wcplg_sftp_get_current_dir_struct(void);
 void winSlash2unix(char *s);
+void UnixSlash2Win(char *s);
 int init_ProgressProc(tProgressProc AP_ProgressProc, int Awc_PluginNr,
                       int CurrentServerId);
 int psftp_memory_hole__stopfen(int ID);

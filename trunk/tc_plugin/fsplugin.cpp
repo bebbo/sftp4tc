@@ -36,14 +36,6 @@ static char hex[17] = "0123456789ABCDEF";  //17 because of terminating 0-charact
 #define DefaultIniFileName "wcx_sftp.ini"
 #define NO_SERVER_ID -1
 
-//Links in the first level of plugin's fs
-//
-#define DefineEditConnection_define "Edit connections.lnk"
-#define DefineEditConnection_selected "\\Edit connections.lnk"
-
-#define DefineAddConnection_define "Add connections.lnk"
-#define DefineAddConnection_selected "\\Add connections.lnk"
-
 typedef struct {
   char Path[MAX_PATH];
   char LastFoundName[MAX_PATH];
@@ -198,6 +190,38 @@ int sftp_disconnect(int ServerId, bool log_message)
   }
 
   return wcplg_sftp_disconnect(ServerId, log_message);
+}
+
+//---------------------------------------------------------------------
+
+int RemoteNameIsDir(char *Path)
+{
+  char sftp_cmd[MAX_CMD_BUFFER];
+  int Server_ID;
+
+  Server_ID = get_sftpServer_ID_by_Path(Path);
+  if (Server_ID == -1)
+    return 0;
+
+  strcpy(sftp_cmd, "ls \"./");
+
+  Path += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+  strcat(sftp_cmd, Path);
+  Path -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+
+  strcat(sftp_cmd, "\"");
+
+  winSlash2unix(sftp_cmd);
+
+  //DISABLE_LOGGING();  
+  if (wcplg_sftp_do_commando_byID(sftp_cmd, NULL, Server_ID) !=
+      SFTP_SUCCESS) {
+    //ENABLE_LOGGING();
+    return 0;
+  }
+  //ENABLE_LOGGING();
+
+  return 1;
 }
 
 //---------------------------------------------------------------------
@@ -388,7 +412,8 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
     lf->sumIndex = SftpConfig.ServerCount + 1;
     strcpy(FindData->cFileName, SftpConfig.ServerInfos[lf->currentIndex].title);
 
-    FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+    FindData->dwFileAttributes = /*FILE_ATTRIBUTE_DIRECTORY |*/ FILE_ATTRIBUTE_REPARSE_POINT | 0x80000000;
+    FindData->dwReserved0 |= S_IFLNK; // Wincmd uses only this one!
     FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
     FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
     lf->searchhandle = INVALID_HANDLE_VALUE;
@@ -429,15 +454,30 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
     }    
 
     if (!CurrentDirStruct) {
+      int ret;
+
       //prepare command line
-      if (strcmp(lPath, "") == 0)
-        sprintf(sftp_cmd, "ls");
-      else
-        _snprintf(sftp_cmd, MAX_CMD_BUFFER, "ls \".%s\"", lPath);
+      if (strcmp(lPath, "") != 0) {
+        _snprintf(sftp_cmd, MAX_CMD_BUFFER, "cd \"%s\"", lPath);
+      } else {
+        _snprintf(sftp_cmd, MAX_CMD_BUFFER, "cd /");
+      }
 
       //change that command line to unix style
       winSlash2unix(sftp_cmd);
 
+      //execute commando
+      ret = wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID);
+      if (ret == SFTP_DISCONNECTED) {
+        ret = wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID);
+      }
+      if (ret != SFTP_SUCCESS) {
+        LogProc_(MSGTYPE_CONNECTCOMPLETE, "Access denied!");
+        SetLastError(ERROR_ACCESS_DENIED);
+        return INVALID_HANDLE_VALUE;
+      }
+
+      strcpy(sftp_cmd, "ls");
       //execute commando
       if (wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID) !=
           SFTP_SUCCESS) {
@@ -518,7 +558,7 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
     } else if (FileTyp == 'l') {
       FindData->dwFileAttributes =
         FILE_ATTRIBUTE_REPARSE_POINT | 0x80000000;
-      FindData->dwReserved0 += S_IFLNK; // Wincmd uses only this one!
+      FindData->dwReserved0 |= S_IFLNK; // Wincmd uses only this one!
     } else {
       FindData->dwFileAttributes = FILE_ATTRIBUTE_NORMAL | 0x80000000;
     }
@@ -566,7 +606,8 @@ BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData)
       } else {
         lf->currentIndex++;
         strcpy(FindData->cFileName, SftpConfig.ServerInfos[lf->currentIndex].title);
-        FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+        FindData->dwFileAttributes = /*FILE_ATTRIBUTE_DIRECTORY |*/ FILE_ATTRIBUTE_REPARSE_POINT | 0x80000000;
+        FindData->dwReserved0 |= S_IFLNK; // Wincmd uses only this one!
       }
     }
     FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
@@ -605,7 +646,7 @@ BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData)
     {
       FindData->dwFileAttributes =
         FILE_ATTRIBUTE_REPARSE_POINT | 0x80000000;
-      FindData->dwReserved0 += S_IFLNK; //TotalCommander uses only this one!
+      FindData->dwReserved0 |= S_IFLNK; //TotalCommander uses only this one!
     } else                      //anything else :-)
     {
       FindData->dwFileAttributes = FILE_ATTRIBUTE_NORMAL | 0x80000000;
@@ -1055,8 +1096,11 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
 
     check_Concurrent_Connection(RemoteName);
 
-    if (Risdir(RemoteName))     //if symlink
-    {
+    if ((strchr(RemoteName+1, '\\') == NULL) && (!IsAlreadyConnected()) && (wcplg_sftp_connect_byID(CurrentServer_ID)) == SFTP_SUCCESS) {
+      strcat(RemoteName, SftpConfig.ServerInfos[CurrentServer_ID].base_dir);
+      UnixSlash2Win(RemoteName);
+      return FS_EXEC_SYMLINK;
+    } else if (RemoteNameIsDir(RemoteName)) {
       return FS_EXEC_SYMLINK;
     }
   }
@@ -2616,38 +2660,6 @@ void __stdcall FsStatusInfo(char *RemoteDir, int InfoStartEnd,
         accept_refresh = true;
       }
   }
-}
-
-//---------------------------------------------------------------------
-
-int Risdir(char *Path)
-{
-  char sftp_cmd[MAX_CMD_BUFFER];
-  int Server_ID;
-
-  Server_ID = get_sftpServer_ID_by_Path(Path);
-  if (Server_ID == -1)
-    return 0;
-
-  strcpy(sftp_cmd, "ls \"./");
-
-  Path += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
-  strcat(sftp_cmd, Path);
-  Path -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
-
-  strcat(sftp_cmd, "\"");
-
-  winSlash2unix(sftp_cmd);
-
-  //DISABLE_LOGGING();  
-  if (wcplg_sftp_do_commando_byID(sftp_cmd, NULL, Server_ID) !=
-      SFTP_SUCCESS) {
-    //ENABLE_LOGGING();
-    return 0;
-  }
-  //ENABLE_LOGGING();
-
-  return 1;
 }
 
 //---------------------------------------------------------------------

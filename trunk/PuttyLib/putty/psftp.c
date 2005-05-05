@@ -31,6 +31,7 @@
 /*static*/ int psftp_connect(char *userhost, char *user, int portnumber);
 /*static*/ int do_sftp_init(void);
 void do_sftp_cleanup();
+void set_disconnected();
 
 /* ----------------------------------------------------------------------
  * sftp client state.
@@ -40,6 +41,7 @@ void do_sftp_cleanup();
 /*static*/ Backend *back;
 /*static*/ void *backhandle;
 /*static*/ Config cfg;
+char *server_output = NULL;
 
 /* ----------------------------------------------------------------------
  * Higher-level helper functions used in commands.
@@ -69,6 +71,7 @@ char *canonify(char *name)
 
   sftp_register(req = fxp_realpath_send(fullname));
   rreq = sftp_find_request(pktin = sftp_recv());
+  if (!rreq) set_disconnected();
   assert(rreq == req);
   canonname = fxp_realpath_recv(pktin, rreq);
 
@@ -224,6 +227,7 @@ int sftp_cmd_ls(struct sftp_command *cmd)
 
   if (back == NULL) {
     printf("psftp: not connected to a host; use \"open host.name\"\n");
+    set_disconnected();
     return 0;
   }
 
@@ -383,6 +387,7 @@ int sftp_cmd_cd(struct sftp_command *cmd)
 
   if (back == NULL) {
     printf("psftp: not connected to a host; use \"open host.name\"\n");
+    set_disconnected();
     return 0;
   }
 
@@ -425,11 +430,13 @@ int sftp_cmd_cd(struct sftp_command *cmd)
 int sftp_cmd_pwd(struct sftp_command *cmd)
 {
   if (back == NULL) {
+    set_disconnected();
     printf("psftp: not connected to a host; use \"open host.name\"\n");
     return 0;
   }
 
-  printf("Remote directory is %s\n", pwd);
+  if (server_output!=NULL)
+    strcpy(server_output, pwd);
   return 1;
 }
 
@@ -473,6 +480,7 @@ int sftp_general_get(struct sftp_command *cmd, int restart)
   }
 
   fname = canonify(cmd->words[1]);
+  //REGET with Textmode?
   mode = getTransferMode(fname);
 
   if (restart && fname) {
@@ -889,6 +897,7 @@ int sftp_general_put(struct sftp_command *cmd, int restart)
     offset = uint64_make(0, 0);
   }
 
+  //REPUT with Textmode?
   mode = getTransferMode(fname);
   printf("local:%s => remote:%s\n", fname, outfname);
 
@@ -971,6 +980,7 @@ int sftp_general_put(struct sftp_command *cmd, int restart)
               }
               i=start;
             } else {
+              if ((last_char==13) && (buffer[start]==10)) start++;
               xfer_upload_data(xfer, &buffer[start], i-start);
               start=i;
             }
@@ -1027,6 +1037,7 @@ int sftp_cmd_mkdir(struct sftp_command *cmd)
   int result;
 
   if (back == NULL) {
+    set_disconnected();
     printf("psftp: not connected to a host; use \"open host.name\"\n");
     return 0;
   }
@@ -1065,6 +1076,7 @@ int sftp_cmd_rmdir(struct sftp_command *cmd)
   int result;
 
   if (back == NULL) {
+    set_disconnected();
     printf("psftp: not connected to a host; use \"open host.name\"\n");
     return 0;
   }
@@ -1103,6 +1115,7 @@ int sftp_cmd_rm(struct sftp_command *cmd)
   int result;
 
   if (back == NULL) {
+    set_disconnected();
     printf("psftp: not connected to a host; use \"open host.name\"\n");
     return 0;
   }
@@ -1141,6 +1154,7 @@ int sftp_cmd_mv(struct sftp_command *cmd)
   int result;
 
   if (back == NULL) {
+    set_disconnected();
     printf("psftp: not connected to a host; use \"open host.name\"\n");
     return 0;
   }
@@ -1229,6 +1243,7 @@ int sftp_cmd_chown(struct sftp_command *cmd)
   struct sftp_request *req, *rreq;
 
   if (back == NULL) {
+    set_disconnected();
     printf("psftp: not connected to a host; use \"open host.name\"\n");
     return 0;
   }
@@ -1289,6 +1304,7 @@ int sftp_cmd_chmod(struct sftp_command *cmd)
   struct sftp_request *req, *rreq;
 
   if (back == NULL) {
+    set_disconnected();
     printf("psftp: not connected to a host; use \"open host.name\"\n");
     return 0;
   }

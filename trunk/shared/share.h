@@ -52,6 +52,7 @@ struct SftpServerAccountInfo {
   unsigned char is_imported_from_any_datasrc;  //private
   unsigned char is_imported_from_putty_registry; //private
   unsigned char is_imported_from_sshcom_registry;  //private
+  char base_dir[MAX_Server_INFO];
   //Experimental - just a copy from Putty.h:Config struct
   PROXY_TYPE proxy_type;
   char proxy_host[MAX_Server_INFO];

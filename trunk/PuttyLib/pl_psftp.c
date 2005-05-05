@@ -8,6 +8,7 @@
 //#include "pl_console.h"
 
 extern char *console_password;
+extern char *server_output;
 extern Config cfg;
 extern struct sftp_command *sftp_getcmd(FILE * fp, int mode,
                                         int modeflags);
@@ -100,6 +101,7 @@ int wcplg_do_sftp(char *_cmd, char *_server_output)
   char *_cmd_ln = NULL;
   struct sftp_command *cmd;
 
+  server_output = _server_output;
 
   _cmd_ln = (char *) malloc(strlen(_cmd) + 2);
   wcplg_set_last_error_msg("");
