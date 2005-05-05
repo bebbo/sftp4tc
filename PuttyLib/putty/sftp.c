@@ -492,6 +492,11 @@ const int fxp_disconnected(void)
   return disconnected;
 }
 
+void set_disconnected(void)
+{
+  disconnected = 1;
+}
+
 int fxp_error_type(void)
 {
     return fxp_errtype;
