@@ -614,4 +614,64 @@
       </object>
     </object>
   </object>
+  <object class="wxDialog" name="SESSION">
+    <title>Session configuration</title>
+    <centered>1</centered>
+    <style>wxDEFAULT_DIALOG_STYLE|wxDIALOG_MODAL|wxCAPTION|wxSIMPLE_BORDER</style>
+    <enabled>1</enabled>
+    <focused>1</focused>
+    <object class="wxBoxSizer">
+      <orient>wxVERTICAL</orient>
+      <object class="sizeritem">
+        <object class="wxStaticBoxSizer">
+          <label>Directory listing</label>
+          <orient>wxVERTICAL</orient>
+          <object class="spacer">
+            <size>4,4</size>
+          </object>
+          <object class="sizeritem">
+            <object class="wxCheckBox" name="chkShowHiddenFiles">
+              <label>Show hidden files</label>
+            </object>
+          </object>
+          <object class="spacer">
+            <size>4,4</size>
+          </object>
+        </object>
+        <flag>wxALL|wxEXPAND|wxGROW</flag>
+      </object>
+      <object class="spacer">
+        <size>5,5</size>
+      </object>
+      <object class="sizeritem">
+        <object class="wxBoxSizer">
+          <orient>wxHORIZONTAL</orient>
+          <object class="spacer">
+            <size>5,5</size>
+          </object>
+          <object class="sizeritem">
+            <object class="wxButton" name="btnOK">
+              <label>OK</label>
+              <default>1</default>
+            </object>
+          </object>
+          <object class="spacer">
+            <size>5,5</size>
+          </object>
+          <object class="sizeritem">
+            <object class="wxButton" name="btnCancel">
+              <label>Cancel</label>
+            </object>
+          </object>
+          <object class="spacer">
+            <size>5,5</size>
+          </object>
+        </object>
+        <border>2</border>
+      </object>
+      <object class="spacer">
+        <size>5,5</size>
+      </object>
+    </object>
+  </object>
 </resource>

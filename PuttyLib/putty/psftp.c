@@ -763,19 +763,7 @@ int sftp_general_put(struct sftp_command *cmd, int restart)
     return 0;
   }
 
-  if (restart) {
-    //fname hat syntax LocalsrcFile?Path2myCurrentRemoteDir, we have to split fname 
-    //SegFault Check!!! 1+ !!!
-    fname_tmp = strchr(cmd->words[1], '?');
-    do_dirty_parse = fname_tmp;
-    if (do_dirty_parse != NULL) {
-      fname_tmp[0] = '\0';
-      fname = cmd->words[1];
-    }
-  } else {
-    // normal put, leave fname as it is
-    fname = cmd->words[1];
-  }
+  fname = (cmd->nwords==2 ? stripslashes(cmd->words[1], 1): cmd->words[1]);
 
   origoutfname = (cmd->nwords == 2 ?
                   stripslashes(cmd->words[1], 1) : cmd->words[2]);
@@ -806,6 +794,7 @@ int sftp_general_put(struct sftp_command *cmd, int restart)
     return 0;
   }
   if (restart) {
+    /*
     if (do_dirty_parse != NULL) {
       //OK - das aktuelle verzeichniss das TC übergeben hat noch reinquetschen
       // SegFault chk
@@ -832,6 +821,7 @@ int sftp_general_put(struct sftp_command *cmd, int restart)
         // ARGHHH - what a fight //
       }
     }
+    */
     sftp_register(req = fxp_open_send(outfname, SSH_FXF_WRITE));
   } else {
     sftp_register(req = fxp_open_send(outfname, SSH_FXF_WRITE |
