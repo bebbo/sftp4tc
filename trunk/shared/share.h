@@ -53,6 +53,7 @@ struct SftpServerAccountInfo {
   unsigned char is_imported_from_putty_registry; //private
   unsigned char is_imported_from_sshcom_registry;  //private
   char base_dir[MAX_Server_INFO];
+  char show_hidden_files;
   //Experimental - just a copy from Putty.h:Config struct
   PROXY_TYPE proxy_type;
   char proxy_host[MAX_Server_INFO];
@@ -66,6 +67,7 @@ struct config_properties {
   struct SftpServerAccountInfo ServerInfos[MAX_Server_Count];
   int ServerCount;
   int ImportedSessions;
+  int SelectedSession;
   char DoImportSSHcomSessions[MAX_Server_INFO];
   char DoImportPuttySessions;
   char CacheFS;

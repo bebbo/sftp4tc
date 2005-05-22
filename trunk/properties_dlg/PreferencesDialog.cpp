@@ -94,8 +94,8 @@ PreferencesDialog::PreferencesDialog(config_properties *aProperties, wxWindow *a
 
   if (dlgres) {
     lstConnections = XRCCTRL(*this, lstConnections_ID, wxListBox);
-	btnDelete = XRCCTRL(*this, btnDelete_ID, wxButton);
-	//
+	  btnDelete = XRCCTRL(*this, btnDelete_ID, wxButton);
+	  //
     edtTitle = XRCCTRL(*this, edtTitle_ID, wxTextCtrl);
     edtHost = XRCCTRL(*this, edtHost_ID, wxTextCtrl);
     edtPort = XRCCTRL(*this, edtPort_ID, wxTextCtrl);

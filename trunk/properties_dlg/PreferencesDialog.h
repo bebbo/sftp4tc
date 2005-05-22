@@ -3,9 +3,10 @@
 
 #include <wx/wx.h>
 #include "wx/xrc/xmlres.h"          // XRC XML resouces
+#include "CommonDialog.h"
 #include "share.h"
 
-class PreferencesDialog : public wxDialog
+class PreferencesDialog : public CommonDialog
 {
 public: 
   // Constructor.
@@ -16,8 +17,6 @@ public:
   
   // Destructor.                  
   ~PreferencesDialog();
-
-  bool loaded() {return dlgres;};
 
 private:
   // Stuff to do when "My Button" gets clicked
@@ -57,7 +56,6 @@ private:
   void ClearAndDisable();
   void Enable();
 
-  bool dlgres;
   struct config_properties *mProperties;
 
   SftpServerAccountInfo *mCurrentServer;

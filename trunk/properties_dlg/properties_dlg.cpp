@@ -1,4 +1,5 @@
 #include "PreferencesDialog.h"
+#include "SessionConfigDialog.h"
 #include "wxmyapp.h"
 #include "wx/xrc/xmlres.h"          // XRC XML resouces
 #include "properties_dlg.h"
@@ -73,24 +74,29 @@ bool __stdcall Properties(int Mode, struct config_properties *aProperties)
     wxXmlResource *xmlres = wxXmlResource::Get();
 #ifdef _SFTP_DEBUG
     if (xmlres==NULL)
-  	OutputDebugStringA("wxXmlResource::Get() failed");
+  	  OutputDebugStringA("wxXmlResource::Get() failed");
 #endif
     xmlres->InitAllHandlers();
     bool loadres = xmlres->Load(wxT(xrcFileName));
 #ifdef _SFTP_DEBUG
     if (loadres)
-  	OutputDebugStringA("Loaded");
+  	  OutputDebugStringA("Loaded");
     else
-  	OutputDebugStringA("Not Loaded");
+  	  OutputDebugStringA("Not Loaded");
     wxLog::FlushActive();
 #endif
 
     app->SetHWND(aProperties->MainWindow);
-    PreferencesDialog *dlg = new PreferencesDialog(aProperties, app->GetHostWindow());
+    CommonDialog *dlg;
+    if (Mode==2)
+      dlg = new SessionConfigDialog(aProperties, app->GetHostWindow());
+    else
+      dlg = new PreferencesDialog(aProperties, app->GetHostWindow());
     
     try
     {
-      if (dlg->loaded()) {
+      if (dlg->loaded()) 
+      {
         dlg->ShowModal();
         res = true;
       }

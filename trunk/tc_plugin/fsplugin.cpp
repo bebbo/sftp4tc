@@ -108,6 +108,13 @@ char *CaptionAskSecond = "PasswordCrypter's master-password (verification)";
 
 //---------------------------------------------------------------------
 
+char *TCPath2RemotePath(char* path)
+{
+  return path + (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
+}
+
+//---------------------------------------------------------------------
+
 //copy maximum of maxlen characters
 static char *strlcpy(char *p, char *p2, size_t maxlen)
 {
@@ -409,7 +416,9 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
     }
    
     lf->currentIndex = 0;
-    lf->sumIndex = SftpConfig.ServerCount + 1;
+    lf->sumIndex = SftpConfig.ServerCount;
+    if (!hDialogDLL)
+      lf->sumIndex++;
     strcpy(FindData->cFileName, SftpConfig.ServerInfos[lf->currentIndex].title);
 
     FindData->dwFileAttributes = /*FILE_ATTRIBUTE_DIRECTORY |*/ FILE_ATTRIBUTE_REPARSE_POINT | 0x80000000;
@@ -523,13 +532,18 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
 
     //skip some directories
     while ((lf->currentIndex < lf->sumIndex) &&
-           ((strcmp
+           ((strlen(lf->CurrentDirStruct->names[lf->currentIndex].filename)==0)
+            || 
+            (strcmp
              (lf->CurrentDirStruct->names[lf->currentIndex].filename,
               ".") == 0)
             ||
             (strcmp
              (lf->CurrentDirStruct->names[lf->currentIndex].filename,
-              "..") == 0)))
+              "..") == 0)
+            || ((SftpConfig.ServerInfos[CurrentServer_ID].show_hidden_files=='0') && (lf->CurrentDirStruct->names[lf->currentIndex].filename[0]=='.'))
+           )
+          )
       (lf->currentIndex)++;
 
     //is there anything?
@@ -599,7 +613,7 @@ BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData)
       strcpy(FindData->cFileName, DefineEditConnection_define);
       FindData->dwFileAttributes = 0;
     } else {
-      if (lf->currentIndex == lf->sumIndex - 2) {
+      if ((lf->currentIndex == lf->sumIndex - 2) && (!hDialogDLL)) {
         lf->currentIndex++;
         strcpy(FindData->cFileName, DefineAddConnection_define);
         FindData->dwFileAttributes = 0;
@@ -619,13 +633,17 @@ BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData)
   if (lf->SearchMode == HANDLE__SHOW_SFTP_DIR) {
     lf->currentIndex++;
     while ((lf->currentIndex < lf->sumIndex) &&
-           ((strcmp
+           ((strlen(lf->CurrentDirStruct->names[lf->currentIndex].filename)==0)
+            || 
+            (strcmp
              (lf->CurrentDirStruct->names[lf->currentIndex].filename,
               ".") == 0)
             ||
             (strcmp
              (lf->CurrentDirStruct->names[lf->currentIndex].filename,
-              "..") == 0)))
+              "..") == 0)
+            || ((SftpConfig.ServerInfos[CurrentServer_ID].show_hidden_files=='0') && (lf->CurrentDirStruct->names[lf->currentIndex].filename[0]=='.'))
+            ))
       (lf->currentIndex)++;
 
     if (lf->currentIndex >= lf->sumIndex)
@@ -935,7 +953,7 @@ int remote_chmod(char *RemoteName, unsigned int value)
 int remote_mtime(char *RemoteName, unsigned long value)
 {
   check_Concurrent_Connection(RemoteName);
-  char *lRemoteName = RemoteName + (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+  char *lRemoteName = RemoteName + (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
   char sftp_cmd[MAX_CMD_BUFFER];
 
   _snprintf(sftp_cmd, MAX_CMD_BUFFER, "mtime %d \"%s\"", value, lRemoteName);
@@ -961,7 +979,7 @@ BOOL __stdcall FsMkDir(char *Path)
 
   check_Concurrent_Connection(Path);
 
-  lPath += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+  lPath += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
 
   sprintf(cmd_buf, "mkdir \"%s\"", lPath);
 
@@ -1055,6 +1073,55 @@ void formcorrectpath(char *completepath)
 }
 //---------------------------------------------------------------------
 
+void SetMTime(char* LocalName, char* RemoteName)
+{
+  if (SftpConfig.ServerInfos[CurrentServer_ID].set_mtime_after_put)
+  {
+    bool f;
+    HANDLE myFile;
+    FILETIME LastWriteTime, LastWriteTimeUTC;
+
+    myFile = CreateFile(LocalName, // file name
+      GENERIC_READ,     // access mode
+      FILE_SHARE_READ,  // share mode
+      NULL,             // security descriptor
+      OPEN_EXISTING,    // how to create
+      FILE_ATTRIBUTE_NORMAL | // file attributes
+      FILE_FLAG_SEQUENTIAL_SCAN, NULL); // handle to template file
+
+    f = (myFile != INVALID_HANDLE_VALUE);
+
+    if (f)
+    {
+      f = (GetFileTime(myFile,       // gets last-write time for file
+         NULL, NULL, &LastWriteTimeUTC)==TRUE);
+      CloseHandle(myFile);
+    }
+
+    if (f) {
+      SYSTEMTIME stLocal;
+      TIME_ZONE_INFORMATION tzinfo;
+      DWORD info = GetTimeZoneInformation(&tzinfo);
+      tm atm;
+      FileTimeToLocalFileTime(&LastWriteTimeUTC, &LastWriteTime);
+      FileTimeToSystemTime(&LastWriteTime, &stLocal);
+
+      atm.tm_year = stLocal.wYear - 1900;
+      atm.tm_mon = stLocal.wMonth - 1;
+      atm.tm_mday = stLocal.wDay;
+      atm.tm_hour = stLocal.wHour;
+      atm.tm_min = stLocal.wMinute;
+      atm.tm_sec = stLocal.wSecond;
+      atm.tm_isdst = -1;
+      unsigned long new_mtime = mktime(&atm);
+      
+      remote_mtime(RemoteName, new_mtime);
+    }
+  }
+}
+
+//---------------------------------------------------------------------
+
 //This function needs a real revision
 int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
 {
@@ -1105,30 +1172,6 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
     }
   }
 
-  if (_strnicmp(Verb, "quote root ", 11) == 0) {
-
-    if (CurrentServer_ID == -1)
-      return FS_EXEC_ERROR;
-
-    if (SftpConfig.CacheFS)
-      free_cache();
-
-    strcpy(SftpConfig.ServerInfos[CurrentServer_ID].home_dir, &Verb[11]);
-    /*size_t i = strlen(SftpConfig.ServerInfos[CurrentServer_ID].home_dir);
-    char last_one = SftpConfig.ServerInfos[CurrentServer_ID].home_dir[i - 1];*/
-
-    sprintf(sftp_cmd, "cd %s", SftpConfig.ServerInfos[CurrentServer_ID].home_dir);
-    winSlash2unix(sftp_cmd);
-    if (wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID) !=
-        SFTP_SUCCESS) {
-      sprintf(log_sftp_cmd, "change root failed!");
-      LogProc_(MSGTYPE_DETAILS, log_sftp_cmd);
-    }
-
-    sprintf(RemoteName, "\\%s\\", SftpConfig.ServerInfos[CurrentServer_ID].title);
-    return FS_EXEC_SYMLINK;
-  }
-
   //explicit REPUT SUPPORT
   if (stricmp(Verb, "quote reput") == 0 || stricmp(Verb, "quote reput ") == 0
       || (strlen(Verb) >= strlen("quote reput  ")
@@ -1147,6 +1190,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
     strcpy(buf, Verb);
     if (_strnicmp(buf, "quote reput ", 12) == 0) {
       char remote_users_current_dir[MAX_CMD_BUFFER];
+      char remote_filename[MAX_CMD_BUFFER];
       int sftp_ret;
 
       if ((RemoteName == NULL) || (strlen(RemoteName) <= 0)
@@ -1157,39 +1201,27 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
 
       check_Concurrent_Connection(RemoteName);
 
-      //we must use tricks
-      // segFault check!!!
-
-      strncpy(remote_users_current_dir, buf + strlen("quote reput") + 1,
-              MAX_CMD_BUFFER);
-      strncat(remote_users_current_dir, "?", MAX_CMD_BUFFER);
-      strncat(remote_users_current_dir,
-        RemoteName + 2 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title), MAX_CMD_BUFFER);
+      strncpy(remote_users_current_dir, TCPath2RemotePath(RemoteName), MAX_CMD_BUFFER);
 
       winSlash2unix(remote_users_current_dir);
 
+      char *local_name = buf + strlen("quote reput") + 1;
+
       //Log msg
-      _snprintf(log_sftp_cmd, MAX_CMD_BUFFER, "reput %s",
-                remote_users_current_dir);
+      _snprintf(sftp_cmd, MAX_CMD_BUFFER, "reput \"%s\" \"%s\"", local_name, remote_users_current_dir);
 
-      strncpy(sftp_cmd, "reput ", MAX_CMD_BUFFER);
-      strncat(sftp_cmd, "\"", MAX_CMD_BUFFER);
-      strncat(sftp_cmd, remote_users_current_dir, MAX_CMD_BUFFER);
-      strncat(sftp_cmd, "\"", MAX_CMD_BUFFER);
+      ProgressProc(PluginNumber, local_name, remote_filename, 0);
 
-      char *buf_shifted = buf + strlen("quote reput") + 1;
-
-      ProgressProc(PluginNumber, buf_shifted, buf_shifted, 0);
-
-      LogProc_(MSGTYPE_DETAILS, log_sftp_cmd);
+      LogProc_(MSGTYPE_DETAILS, sftp_cmd);
       DISABLE_LOGGING_ONCE();
 
       sftp_ret = wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID);
       //Put done
-      ProgressProc(PluginNumber, buf_shifted, buf_shifted, 100);
+      ProgressProc(PluginNumber, local_name, remote_filename, 100);
 
       //any error?
       if (sftp_ret == SFTP_SUCCESS) {
+        SetMTime(local_name, RemoteName);
         return FS_EXEC_OK;
       }
 
@@ -1217,7 +1249,6 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
     strcpy(buf, Verb);
     if (_strnicmp(buf, "quote reget ", 12) == 0) {
       char remote_users_current_dir[MAX_CMD_BUFFER];
-      char log_sftp_cmd[MAX_CMD_BUFFER];
       int sftp_ret;
 
       if (RemoteName == NULL || strlen(RemoteName) <= 0
@@ -1228,30 +1259,22 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
 
       check_Concurrent_Connection(RemoteName);
 
-      char *buf_shifted = buf + strlen("quote reget") + 1;
+      char *local_name = buf + strlen("quote reget") + 1;
 
-      //we must use tricks
-      // segFault check!!!
-      strcpy(remote_users_current_dir, buf_shifted);
+      strcpy(remote_users_current_dir, TCPath2RemotePath(RemoteName));
 
-      //Log msg
-      _snprintf(log_sftp_cmd, MAX_CMD_BUFFER, "reget %s", remote_users_current_dir);
-
-      strcat(remote_users_current_dir, "?");
-      strcat(remote_users_current_dir,
-        RemoteName + 2 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
       winSlash2unix(remote_users_current_dir);
 
-      _snprintf(sftp_cmd, MAX_CMD_BUFFER, "reget \"%s\"", remote_users_current_dir);
+      _snprintf(sftp_cmd, MAX_CMD_BUFFER, "reget \"%s\" \"%s\"", remote_users_current_dir, local_name);
 
-      ProgressProc(PluginNumber, buf_shifted, buf_shifted, 0);
+      ProgressProc(PluginNumber, RemoteName, local_name, 0);
 
-      LogProc_(MSGTYPE_DETAILS, log_sftp_cmd);
+      LogProc_(MSGTYPE_DETAILS, sftp_cmd);
       DISABLE_LOGGING_ONCE();
 
       sftp_ret = wcplg_sftp_do_commando_byID(sftp_cmd, NULL, CurrentServer_ID);
       //Done
-      ProgressProc(PluginNumber, buf_shifted, buf_shifted, 100);
+      ProgressProc(PluginNumber, RemoteName, local_name, 100);
 
       //Any errors?
       if (sftp_ret == SFTP_SUCCESS) {
@@ -1295,9 +1318,9 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
     if (_strnicmp(RemoteName+1, SftpConfig.ServerInfos[CurrentServer_ID].title, 
       strlen(SftpConfig.ServerInfos[CurrentServer_ID].title))==0) {
       if (hDialogDLL) {
+        SftpConfig.SelectedSession = CurrentServer_ID;
         if (hProperties(2, &SftpConfig)) {
-          RemoteName[1] = '\0';
-          return FS_EXEC_SYMLINK;
+          return FS_EXEC_OK;
         }
       }
       return FS_EXEC_OK;
@@ -1311,13 +1334,13 @@ int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
       lVerb += 6;
     lVerb += 6;
     check_Concurrent_Connection(lRemoteName);
-    lRemoteName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+    lRemoteName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
 
     strcpy(sftp_cmd, "chmod ");
     strcat(sftp_cmd, lVerb);
     if (Verb[0]!='q')
     {
-      strcat(sftp_cmd, " \"./");
+      strcat(sftp_cmd, " \"");
       strcat(sftp_cmd, lRemoteName);
       strcat(sftp_cmd, "\"");
     }
@@ -1429,17 +1452,17 @@ int __stdcall FsRenMovFile(char *OldName, char *NewName, BOOL Move,
       }
     }
     // Rename!
-    OldName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
-    NewName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+    OldName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
+    NewName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
 
-    strcpy(cmd_buf, "rename \"./");
+    strcpy(cmd_buf, "rename \"");
     strcat(cmd_buf, OldName);
-    strcat(cmd_buf, "\" \"./");
+    strcat(cmd_buf, "\" \"");
     strcat(cmd_buf, NewName);
     strcat(cmd_buf, "\"");
 
-    OldName -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
-    NewName -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+    OldName -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
+    NewName -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
 
     winSlash2unix(cmd_buf);
 
@@ -1482,17 +1505,11 @@ int __stdcall FsGetFile(char *RemoteName, char *LocalName, int CopyFlags,
   if (CopyFlags & FS_COPYFLAGS_RESUME) {
     //reget
     int ret = FS_EXEC_ERROR;
-    char path_[MAX_CMD_BUFFER];
-    char fname_[MAX_CMD_BUFFER];
     char wd_saved[MAX_CMD_BUFFER];
     char wd_curr[MAX_CMD_BUFFER];
 
-    get_basename_from_Path(path_, RemoteName);
-    strcpy(fname_, RemoteName + (strlen(path_) + 1));
-
     strcpy(cmd_buf, "quote reget ");
-    strcat(cmd_buf, fname_);
-    strcat(path_, "\\");
+    strcat(cmd_buf, LocalName);
 
     if (getcwd(wd_saved, MAX_PATH) == NULL) {
       return FS_FILE_WRITEERROR;
@@ -1502,7 +1519,7 @@ int __stdcall FsGetFile(char *RemoteName, char *LocalName, int CopyFlags,
       return FS_FILE_WRITEERROR;
     }
 
-    ret = FsExecuteFile((HWND) NULL, path_, cmd_buf);
+    ret = FsExecuteFile((HWND) NULL, RemoteName, cmd_buf);
     chdir(wd_saved);
 
     if (ret == FS_EXEC_OK) {
@@ -1513,11 +1530,11 @@ int __stdcall FsGetFile(char *RemoteName, char *LocalName, int CopyFlags,
 
   check_Concurrent_Connection(RemoteName);
 
-  strcpy(cmd_buf, "get \"./");
+  strcpy(cmd_buf, "get \"");
 
-  RemoteName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+  RemoteName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
   strcat(cmd_buf, RemoteName);
-  RemoteName -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+  RemoteName -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
   winSlash2unix(cmd_buf);
   strcat(cmd_buf, "\"");
 
@@ -1557,7 +1574,6 @@ int __stdcall FsGetFile(char *RemoteName, char *LocalName, int CopyFlags,
   }
   return FS_FILE_READERROR;
 }
-
 //---------------------------------------------------------------------
 
 int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
@@ -1585,17 +1601,11 @@ int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
   if (CopyFlags & FS_COPYFLAGS_RESUME) {
     //reput
     int ret = FS_EXEC_ERROR;
-    char path_[MAX_CMD_BUFFER];
-    char fname_[MAX_CMD_BUFFER];
     char wd_saved[MAX_CMD_BUFFER];
     char wd_curr[MAX_CMD_BUFFER];
 
-    get_basename_from_Path(path_, RemoteName);
-    strcpy(fname_, RemoteName + (strlen(path_) + 1));
-
     strcpy(cmd_buf, "quote reput ");
-    strcat(cmd_buf, fname_);
-    strcat(path_, "\\");
+    strcat(cmd_buf, LocalName);
 
     if (getcwd(wd_saved, MAX_PATH) == NULL) {
       return FS_FILE_WRITEERROR;
@@ -1607,7 +1617,7 @@ int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
       return FS_FILE_WRITEERROR;
     }
 
-    ret = FsExecuteFile((HWND) NULL, path_, cmd_buf);
+    ret = FsExecuteFile((HWND) NULL, RemoteName, cmd_buf);
     chdir(wd_saved);
 
     if (ret == FS_EXEC_OK) {
@@ -1621,9 +1631,9 @@ int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
 
   strcpy(cmd_buf, "put \"");
   strcat(cmd_buf, LocalName);
-  strcat(cmd_buf, "\" \"./");
+  strcat(cmd_buf, "\" \"");
 
-  char *lRemoteName = RemoteName + (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+  char *lRemoteName = RemoteName + (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
   strcpy(buf2, lRemoteName);
   winSlash2unix(buf2);
   strcat(cmd_buf, buf2);
@@ -1650,46 +1660,7 @@ int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
       {
         remote_chmod(RemoteName, SftpConfig.ServerInfos[CurrentServer_ID].chmod_value_put);
       }
-      if (SftpConfig.ServerInfos[CurrentServer_ID].set_mtime_after_put)
-      {
-        bool f;
-        HANDLE myFile;
-        FILETIME LastWriteTime;
-
-        myFile = CreateFile(LocalName, // file name
-          GENERIC_READ,     // access mode
-          FILE_SHARE_READ,  // share mode
-          NULL,             // security descriptor
-          OPEN_EXISTING,    // how to create
-          FILE_ATTRIBUTE_NORMAL | // file attributes
-          FILE_FLAG_SEQUENTIAL_SCAN, NULL); // handle to template file
-
-        f = (myFile != INVALID_HANDLE_VALUE);
-
-        if (f)
-        {
-          f = (GetFileTime(myFile,       // gets last-write time for file
-             NULL, NULL, &LastWriteTime)==TRUE);
-          CloseHandle(myFile);
-        }
-
-        if (f) {
-          SYSTEMTIME st;
-          tm atm;
-          FileTimeToSystemTime(&LastWriteTime, &st);
-
-          atm.tm_year = st.wYear - 1900;
-          atm.tm_mon = st.wMonth - 1;
-          atm.tm_mday = st.wDay;
-          atm.tm_hour = st.wHour;
-          atm.tm_min = st.wMinute;
-          atm.tm_sec = st.wSecond;
-          atm.tm_isdst = 0;
-          unsigned long new_mtime = mktime(&atm);
-          
-          remote_mtime(RemoteName, new_mtime);
-        }
-      }
+      SetMTime(LocalName, RemoteName);
       return FS_FILE_OK;
     }
   }
@@ -1706,14 +1677,14 @@ BOOL __stdcall FsDeleteFile(char *RemoteName)
   if (RemoteName[0] != '\\')
     return false;
 
-  strcpy(cmd_buf, "rm \"./");
+  strcpy(cmd_buf, "rm \"");
 
   ProgressProc(PluginNumber, RemoteName, RemoteName, 0);
   check_Concurrent_Connection(RemoteName);
 
-  RemoteName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+  RemoteName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
   strcat(cmd_buf, RemoteName);
-  RemoteName -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+  RemoteName -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
   strcat(cmd_buf, "\"");
 
   winSlash2unix(cmd_buf);
@@ -1767,11 +1738,11 @@ BOOL __stdcall FsRemoveDir(char *RemoteName)
     }
   }
 
-  strcpy(cmd_buf, "rmdir \"./");
+  strcpy(cmd_buf, "rmdir \"");
 
-  RemoteName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+  RemoteName += (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
   strcat(cmd_buf, RemoteName);
-  RemoteName -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title) + 1);
+  RemoteName -= (1 + strlen(SftpConfig.ServerInfos[CurrentServer_ID].title));
 
   strcat(cmd_buf, "\"");
 
@@ -2167,6 +2138,7 @@ void LoadServers()
 
       // TODO check if title already exists, in such case we change it a little, e.g. append '[1]'
 
+      SftpConfig.ServerInfos[ID].show_hidden_files='1';
       strcpy(SftpConfig.ServerInfos[ID].title, buf_title);
       strcpy(SftpConfig.ServerInfos[ID].host, buf_host);
       strcpy(SftpConfig.ServerInfos[ID].host_cached, buf_host);
