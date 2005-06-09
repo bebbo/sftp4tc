@@ -28,7 +28,7 @@ void cleanup_exit(int code)
      */
     sk_cleanup();
 
-    WSACleanup(); //hangs sometime !!!
+    //WSACleanup(); //hangs sometime !!!
 
     if (cfg.protocol == PROT_SSH) {
 
@@ -41,7 +41,8 @@ void cleanup_exit(int code)
 }
 
 int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
-			 char *keystr, char *fingerprint)
+			 char *keystr, char *fingerprint,
+       void (*callback)(void *ctx, int result), void *ctx)
 {
     int ret;
     HANDLE hin;
@@ -112,7 +113,7 @@ int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
     ret = verify_host_key(host, port, keytype, keystr);
 
     if (ret == 0)		       /* success - key matched OK */
-	return 0;
+	return 1;
 
     if (ret == 2) {		       /* key was different */
 	if (console_batch_mode) {
@@ -157,14 +158,14 @@ int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
 
     if (msgBoxRet == IDYES) {
 	store_host_key(host, port, keytype, keystr);
-	return 0;
+	return 1;
     }
 
     if (msgBoxRet == IDNO) {
-	return 0;
+	return 1;
     }
 	
-    return 1;//ansonsten Abruch 
+    return 0;//ansonsten Abruch 
 
     if (line[0] != '\0' && line[0] != '\r' && line[0] != '\n') {
 	if (line[0] == 'y' || line[0] == 'Y')
@@ -230,11 +231,69 @@ void askcipher(void *frontend, char *ciphername, int cs)
     }
 }
 
+void notify_remote_exit(void *frontend)
+{
+}
+
+void set_busy_status(void *frontend, int status)
+{
+}
+
+void timer_change_notify(long next)
+{
+}
+
+/*
+ * Ask whether the selected algorithm is acceptable (since it was
+ * below the configured 'warn' threshold).
+ */
+int askalg(void *frontend, const char *algtype, const char *algname,
+	   void (*callback)(void *ctx, int result), void *ctx)
+{
+    HANDLE hin;
+    DWORD savemode, i;
+
+    static const char msg[] =
+	"The first %s supported by the server is\n"
+	"%s, which is below the configured warning threshold.\n"
+	"Continue with connection? (y/n) ";
+    static const char msg_batch[] =
+	"The first %s supported by the server is\n"
+	"%s, which is below the configured warning threshold.\n"
+	"Connection abandoned.\n";
+    static const char abandoned[] = "Connection abandoned.\n";
+
+    char line[32];
+
+    if (console_batch_mode) {
+	fprintf(stderr, msg_batch, algtype, algname);
+	return 0;
+    }
+
+    fprintf(stderr, msg, algtype, algname);
+    fflush(stderr);
+
+    hin = GetStdHandle(STD_INPUT_HANDLE);
+    GetConsoleMode(hin, &savemode);
+    SetConsoleMode(hin, (savemode | ENABLE_ECHO_INPUT |
+			 ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT));
+    ReadFile(hin, line, sizeof(line) - 1, &i, NULL);
+    SetConsoleMode(hin, savemode);
+
+    if (line[0] == 'y' || line[0] == 'Y') {
+	return 1;
+    } else {
+	fprintf(stderr, abandoned);
+	return 0;
+    }
+}
+
 /*
  * Ask whether to wipe a session log file before writing to it.
  * Returns 2 for wipe, 1 for append, 0 for cancel (don't log).
  */
-int askappend(void *frontend, Filename filename)
+int askappend(void *frontend, Filename filename,
+              void (*callback)(void *ctx, int result), void *ctx)
 {
     HANDLE hin;
     DWORD savemode, i;

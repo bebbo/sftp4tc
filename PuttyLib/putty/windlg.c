@@ -40,8 +40,6 @@ static struct dlgparam dp;
 static char **events = NULL;
 static int nevents = 0, negsize = 0;
 
-static int requested_help;
-
 extern Config cfg;		       /* defined in window.c */
 
 struct sesslist sesslist;	       /* exported to window.c */
@@ -175,6 +173,7 @@ static int CALLBACK LicenceProc(HWND hwnd, UINT msg,
       case WM_COMMAND:
 	switch (LOWORD(wParam)) {
 	  case IDOK:
+	  case IDCANCEL:
 	    EndDialog(hwnd, 1);
 	    return 0;
 	}
@@ -208,7 +207,7 @@ static int CALLBACK AboutProc(HWND hwnd, UINT msg,
 	  case IDA_LICENCE:
 	    EnableWindow(hwnd, 0);
 	    DialogBox(hinst, MAKEINTRESOURCE(IDD_LICENCEBOX),
-		      NULL, LicenceProc);
+		      hwnd, LicenceProc);
 	    EnableWindow(hwnd, 1);
 	    SetActiveWindow(hwnd);
 	    return 0;
@@ -226,6 +225,57 @@ static int CALLBACK AboutProc(HWND hwnd, UINT msg,
 	return 0;
     }
     return 0;
+}
+
+static int SaneDialogBox(HINSTANCE hinst,
+			 LPCTSTR tmpl,
+			 HWND hwndparent,
+			 DLGPROC lpDialogFunc)
+{
+    WNDCLASS wc;
+    HWND hwnd;
+    MSG msg;
+    int flags;
+    int ret;
+    int gm;
+
+    wc.style = CS_DBLCLKS | CS_SAVEBITS | CS_BYTEALIGNWINDOW;
+    wc.lpfnWndProc = DefDlgProc;
+    wc.cbClsExtra = 0;
+    wc.cbWndExtra = DLGWINDOWEXTRA + 8;
+    wc.hInstance = hinst;
+    wc.hIcon = NULL;
+    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc.hbrBackground = (HBRUSH) (COLOR_BACKGROUND +1);
+    wc.lpszMenuName = NULL;
+    wc.lpszClassName = "PuTTYConfigBox";
+    RegisterClass(&wc);
+
+    hwnd = CreateDialog(hinst, tmpl, hwndparent, lpDialogFunc);
+
+    SetWindowLong(hwnd, BOXFLAGS, 0); /* flags */
+    SetWindowLong(hwnd, BOXRESULT, 0); /* result from SaneEndDialog */
+
+    while ((gm=GetMessage(&msg, NULL, 0, 0)) > 0) {
+	flags=GetWindowLong(hwnd, BOXFLAGS);
+	if (!(flags & DF_END) && !IsDialogMessage(hwnd, &msg))
+	    DispatchMessage(&msg);
+	if (flags & DF_END)
+	    break;
+    }
+
+    if (gm == 0)
+        PostQuitMessage(msg.wParam); /* We got a WM_QUIT, pass it on */
+
+    ret=GetWindowLong(hwnd, BOXRESULT);
+    DestroyWindow(hwnd);
+    return ret;
+}
+
+static void SaneEndDialog(HWND hwnd, int ret)
+{
+    SetWindowLong(hwnd, BOXRESULT, ret);
+    SetWindowLong(hwnd, BOXFLAGS, DF_END);
 }
 
 /*
@@ -299,7 +349,7 @@ static void create_controls(HWND hwnd, char *path)
 	 * Otherwise, we're creating the controls for a particular
 	 * panel.
 	 */
-	ctlposinit(&cp, hwnd, 80, 3, 13);
+	ctlposinit(&cp, hwnd, 100, 3, 13);
 	wc = &ctrls_panel;
 	base_id = IDCX_PANELBASE;
     }
@@ -312,6 +362,8 @@ static void create_controls(HWND hwnd, char *path)
 
 /*
  * This function is the configuration box.
+ * (Being a dialog procedure, in general it returns 0 if the default
+ * dialog processing should be performed, and 1 if it should not.)
  */
 static int CALLBACK GenericMainDlgProc(HWND hwnd, UINT msg,
 				       WPARAM wParam, LPARAM lParam)
@@ -360,7 +412,7 @@ static int CALLBACK GenericMainDlgProc(HWND hwnd, UINT msg,
 	    HWND tvstatic;
 
 	    r.left = 3;
-	    r.right = r.left + 75;
+	    r.right = r.left + 95;
 	    r.top = 3;
 	    r.bottom = r.top + 10;
 	    MapDialogRect(hwnd, &r);
@@ -374,7 +426,7 @@ static int CALLBACK GenericMainDlgProc(HWND hwnd, UINT msg,
 	    SendMessage(tvstatic, WM_SETFONT, font, MAKELPARAM(TRUE, 0));
 
 	    r.left = 3;
-	    r.right = r.left + 75;
+	    r.right = r.left + 95;
 	    r.top = 13;
 	    r.bottom = r.top + 219;
 	    MapDialogRect(hwnd, &r);
@@ -597,7 +649,7 @@ int do_config(void)
     int ret;
 
     ctrlbox = ctrl_new_box();
-    setup_config_box(ctrlbox, &sesslist, FALSE, 0);
+    setup_config_box(ctrlbox, &sesslist, FALSE, 0, 0);
     win_setup_config_box(ctrlbox, &dp.hwnd, (help_path != NULL), FALSE);
     dp_init(&dp);
     winctrl_init(&ctrls_base);
@@ -623,7 +675,7 @@ int do_config(void)
     return ret;
 }
 
-int do_reconfig(HWND hwnd)
+int do_reconfig(HWND hwnd, int protcfginfo)
 {
     Config backup_cfg;
     int ret;
@@ -631,7 +683,7 @@ int do_reconfig(HWND hwnd)
     backup_cfg = cfg;		       /* structure copy */
 
     ctrlbox = ctrl_new_box();
-    setup_config_box(ctrlbox, NULL, TRUE, cfg.protocol);
+    setup_config_box(ctrlbox, &sesslist, TRUE, cfg.protocol, protcfginfo);
     win_setup_config_box(ctrlbox, &dp.hwnd, (help_path != NULL), TRUE);
     dp_init(&dp);
     winctrl_init(&ctrls_base);
@@ -660,7 +712,7 @@ int do_reconfig(HWND hwnd)
 void logevent(void *frontend, const char *string)
 {
     char timebuf[40];
-    time_t t;
+    struct tm tm;
 
     log_eventlog(logctx, string);
 
@@ -669,9 +721,8 @@ void logevent(void *frontend, const char *string)
 	events = sresize(events, negsize, char *);
     }
 
-    time(&t);
-    strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S\t",
-	     localtime(&t));
+    tm=ltime();
+    strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S\t", &tm);
 
     events[nevents] = snewn(strlen(timebuf) + strlen(string) + 1, char);
     strcpy(events[nevents], timebuf);
@@ -701,8 +752,9 @@ void showabout(HWND hwnd)
     DialogBox(hinst, MAKEINTRESOURCE(IDD_ABOUTBOX), hwnd, AboutProc);
 }
 
-void verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
-			 char *keystr, char *fingerprint)
+int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
+                        char *keystr, char *fingerprint,
+                        void (*callback)(void *ctx, int result), void *ctx)
 {
     int ret;
 
@@ -744,72 +796,78 @@ void verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
     ret = verify_host_key(host, port, keytype, keystr);
 
     if (ret == 0)		       /* success - key matched OK */
-	return;
+	return 1;
     if (ret == 2) {		       /* key was different */
 	int mbret;
-	char *message, *title;
-	message = dupprintf(wrongmsg, appname, keytype, fingerprint, appname);
-	title = dupprintf(mbtitle, appname);
-	mbret = MessageBox(NULL, message, title,
-			   MB_ICONWARNING | MB_YESNOCANCEL);
-	sfree(message);
-	sfree(title);
-	if (mbret == IDYES)
+	char *text = dupprintf(wrongmsg, appname, keytype, fingerprint,
+			       appname);
+	char *caption = dupprintf(mbtitle, appname);
+	mbret = message_box(text, caption,
+			    MB_ICONWARNING | MB_YESNOCANCEL | MB_DEFBUTTON3,
+			    HELPCTXID(errors_hostkey_changed));
+	assert(mbret==IDYES || mbret==IDNO || mbret==IDCANCEL);
+	sfree(text);
+	sfree(caption);
+	if (mbret == IDYES) {
 	    store_host_key(host, port, keytype, keystr);
-	if (mbret == IDCANCEL)
-	    cleanup_exit(0);
+	    return 1;
+	} else if (mbret == IDNO)
+	    return 1;
+        return 0;
     }
     if (ret == 1) {		       /* key was absent */
 	int mbret;
-	char *message, *title;
-	message = dupprintf(absentmsg, keytype, fingerprint, appname);
-	title = dupprintf(mbtitle, appname);
-	mbret = MessageBox(NULL, message, title,
-			   MB_ICONWARNING | MB_YESNOCANCEL);
-	sfree(message);
-	sfree(title);
-	if (mbret == IDYES)
+	char *text = dupprintf(absentmsg, keytype, fingerprint, appname);
+	char *caption = dupprintf(mbtitle, appname);
+	mbret = message_box(text, caption,
+			    MB_ICONWARNING | MB_YESNOCANCEL | MB_DEFBUTTON3,
+			    HELPCTXID(errors_hostkey_absent));
+	assert(mbret==IDYES || mbret==IDNO || mbret==IDCANCEL);
+	sfree(text);
+	sfree(caption);
+	if (mbret == IDYES) {
 	    store_host_key(host, port, keytype, keystr);
-	if (mbret == IDCANCEL)
-	    cleanup_exit(0);
+	    return 1;
+	} else if (mbret == IDNO)
+	    return 1;
+        return 0;
     }
 }
 
 /*
- * Ask whether the selected cipher is acceptable (since it was
+ * Ask whether the selected algorithm is acceptable (since it was
  * below the configured 'warn' threshold).
- * cs: 0 = both ways, 1 = client->server, 2 = server->client
  */
-void askcipher(void *frontend, char *ciphername, int cs)
+int askalg(void *frontend, const char *algtype, const char *algname,
+	   void (*callback)(void *ctx, int result), void *ctx)
 {
     static const char mbtitle[] = "%s Security Alert";
     static const char msg[] =
-	"The first %.35scipher supported by the server\n"
+	"The first %s supported by the server\n"
 	"is %.64s, which is below the configured\n"
 	"warning threshold.\n"
 	"Do you want to continue with this connection?\n";
     char *message, *title;
     int mbret;
 
-    message = dupprintf(msg, ((cs == 0) ? "" :
-			      (cs == 1) ? "client-to-server " :
-			      "server-to-client "), ciphername);
+    message = dupprintf(msg, algtype, algname);
     title = dupprintf(mbtitle, appname);
     mbret = MessageBox(NULL, message, title,
-		       MB_ICONWARNING | MB_YESNO);
+		       MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2);
     sfree(message);
     sfree(title);
     if (mbret == IDYES)
-	return;
+	return 1;
     else
-	cleanup_exit(0);
+	return 0;
 }
 
 /*
  * Ask whether to wipe a session log file before writing to it.
  * Returns 2 for wipe, 1 for append, 0 for cancel (don't log).
  */
-int askappend(void *frontend, Filename filename)
+int askappend(void *frontend, Filename filename,
+	      void (*callback)(void *ctx, int result), void *ctx)
 {
     static const char msgtemplate[] =
 	"The session log file \"%.*s\" already exists.\n"
@@ -826,7 +884,7 @@ int askappend(void *frontend, Filename filename)
     mbtitle = dupprintf("%s Log to File", appname);
 
     mbret = MessageBox(NULL, message, mbtitle,
-		       MB_ICONQUESTION | MB_YESNOCANCEL);
+		       MB_ICONQUESTION | MB_YESNOCANCEL | MB_DEFBUTTON3);
 
     sfree(message);
     sfree(mbtitle);
@@ -853,7 +911,7 @@ void old_keyfile_warning(void)
 {
     static const char mbtitle[] = "%s Key File Warning";
     static const char message[] =
-	"You are loading an SSH 2 private key which has an\n"
+	"You are loading an SSH-2 private key which has an\n"
 	"old version of the file format. This means your key\n"
 	"file is not fully tamperproof. Future versions of\n"
 	"%s may stop supporting this private key format,\n"

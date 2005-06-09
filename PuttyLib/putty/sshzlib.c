@@ -1073,7 +1073,7 @@ int zlib_decompress_block(void *handle, unsigned char *block, int len,
              */
             header = (((dctx->bits & 0xFF00) >> 8) |
                       ((dctx->bits & 0x00FF) << 8));
-	    EATBITS(16);
+            EATBITS(16);
 
             /*
              * Check the header:

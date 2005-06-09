@@ -6,14 +6,158 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#include "winstuff.h"
+#include "putty.h"
 #include "misc.h"
 
 #ifdef TESTMODE
-/* Definitions to allow this module to be compiled standalone for testing. */
+/* Definitions to allow this module to be compiled standalone for testing
+ * split_into_argv(). */
 #define smalloc malloc
 #define srealloc realloc
 #define sfree free
 #endif
+
+/*
+ * GetOpenFileName/GetSaveFileName tend to muck around with the process'
+ * working directory on at least some versions of Windows.
+ * Here's a wrapper that gives more control over this, and hides a little
+ * bit of other grottiness.
+ */
+
+struct filereq_tag {
+    TCHAR cwd[MAX_PATH];
+};
+
+/*
+ * `of' is expected to be initialised with most interesting fields, but
+ * this function does some administrivia. (assume `of' was memset to 0)
+ * save==1 -> GetSaveFileName; save==0 -> GetOpenFileName
+ * `state' is optional.
+ */
+BOOL request_file(filereq *state, OPENFILENAME *of, int preserve, int save)
+{
+    TCHAR cwd[MAX_PATH]; /* process CWD */
+    BOOL ret;
+
+    /* Get process CWD */
+    if (preserve) {
+	DWORD r = GetCurrentDirectory(lenof(cwd), cwd);
+	if (r == 0 || r >= lenof(cwd))
+	    /* Didn't work, oh well. Stop trying to be clever. */
+	    preserve = 0;
+    }
+
+    /* Open the file requester, maybe setting lpstrInitialDir */
+    {
+#ifdef OPENFILENAME_SIZE_VERSION_400
+	of->lStructSize = OPENFILENAME_SIZE_VERSION_400;
+#else
+	of->lStructSize = sizeof(*of);
+#endif
+	of->lpstrInitialDir = (state && state->cwd[0]) ? state->cwd : NULL;
+	/* Actually put up the requester. */
+	ret = save ? GetSaveFileName(of) : GetOpenFileName(of);
+    }
+
+    /* Get CWD left by requester */
+    if (state) {
+	DWORD r = GetCurrentDirectory(lenof(state->cwd), state->cwd);
+	if (r == 0 || r >= lenof(state->cwd))
+	    /* Didn't work, oh well. */
+	    state->cwd[0] = '\0';
+    }
+    
+    /* Restore process CWD */
+    if (preserve)
+	/* If it fails, there's not much we can do. */
+	(void) SetCurrentDirectory(cwd);
+
+    return ret;
+}
+
+filereq *filereq_new(void)
+{
+    filereq *ret = snew(filereq);
+    ret->cwd[0] = '\0';
+    return ret;
+}
+
+void filereq_free(filereq *state)
+{
+    sfree(state);
+}
+
+/*
+ * Message box with optional context help.
+ */
+
+/* Callback function to launch context help. */
+static VOID CALLBACK message_box_help_callback(LPHELPINFO lpHelpInfo)
+{
+    if (help_path) {
+	char *context = NULL;
+#define CHECK_CTX(name) \
+	do { \
+	    if (lpHelpInfo->dwContextId == WINHELP_CTXID_ ## name) \
+		context = WINHELP_CTX_ ## name; \
+	} while (0)
+	CHECK_CTX(errors_hostkey_absent);
+	CHECK_CTX(errors_hostkey_changed);
+	CHECK_CTX(errors_cantloadkey);
+	CHECK_CTX(option_cleanup);
+	CHECK_CTX(pgp_fingerprints);
+#undef CHECK_CTX
+	if (context) {
+	    /* We avoid using malloc, in case we're in a situation where
+	     * it would be awkward to do so. */
+	    char cmd[WINHELP_CTX_MAXLEN+10];
+	    sprintf(cmd, "JI(`',`%.*s')", WINHELP_CTX_MAXLEN, context);
+	    WinHelp(hwnd, help_path, HELP_COMMAND, (DWORD)cmd);
+	    requested_help = TRUE;
+	}
+    }
+}
+
+int message_box(LPCTSTR text, LPCTSTR caption, DWORD style, DWORD helpctxid)
+{
+    MSGBOXPARAMS mbox;
+    
+    /*
+     * We use MessageBoxIndirect() because it allows us to specify a
+     * callback function for the Help button.
+     */
+    mbox.cbSize = sizeof(mbox);
+    /* Assumes the globals `hinst' and `hwnd' have sensible values. */
+    mbox.hInstance = hinst;
+    mbox.hwndOwner = hwnd;
+    mbox.lpfnMsgBoxCallback = &message_box_help_callback;
+    mbox.dwLanguageId = LANG_NEUTRAL;
+    mbox.lpszText = text;
+    mbox.lpszCaption = caption;
+    mbox.dwContextHelpId = helpctxid;
+    mbox.dwStyle = style;
+    if (helpctxid != 0 && help_path) mbox.dwStyle |= MB_HELP;
+    return MessageBoxIndirect(&mbox);
+}
+
+/*
+ * Display the fingerprints of the PGP Master Keys to the user.
+ */
+void pgp_fingerprints(void)
+{
+    message_box("These are the fingerprints of the PuTTY PGP Master Keys. They can\n"
+		"be used to establish a trust path from this executable to another\n"
+		"one. See the manual for more information.\n"
+		"(Note: these fingerprints have nothing to do with SSH!)\n"
+		"\n"
+		"PuTTY Master Key (RSA), 1024-bit:\n"
+		"  " PGP_RSA_MASTER_KEY_FP "\n"
+		"PuTTY Master Key (DSA), 1024-bit:\n"
+		"  " PGP_DSA_MASTER_KEY_FP,
+		"PGP fingerprints", MB_ICONINFORMATION | MB_OK,
+		HELPCTXID(pgp_fingerprints));
+}
 
 /*
  * Split a complete command line into argc/argv, attempting to do

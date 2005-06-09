@@ -177,12 +177,21 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
      * the least we can do is ensure it never makes it to any other
      * platform (at least unless someone fixes it!).
      */
-    s = ctrl_getset(b, "Window/Translation", "input",
-		    "Enable character set translation on input data");
+    s = ctrl_getset(b, "Window/Translation", "tweaks", NULL);
     ctrl_checkbox(s, "Caps Lock acts as Cyrillic switch", 's',
 		  HELPCTX(translation_cyrillic),
 		  dlg_stdcheckbox_handler,
 		  I(offsetof(Config,xlat_capslockcyr)));
+
+    /*
+     * On Windows we can use but not enumerate translation tables
+     * from the operating system. Briefly document this.
+     */
+    s = ctrl_getset(b, "Window/Translation", "trans",
+		    "Character set translation on received data");
+    ctrl_text(s, "(Codepages supported by Windows but not listed here, "
+	      "such as CP866 on many systems, can be entered manually)",
+	      HELPCTX(translation_codepage));
 
     /*
      * Windows has the weird OEM font mode, which gives us some

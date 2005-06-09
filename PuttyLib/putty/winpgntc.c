@@ -93,7 +93,7 @@ int agent_query(void *in, int inlen, void **out, int *outlen,
 				0, AGENT_MAX_MSGLEN, mapname);
     if (!filemap)
 	return 1;		       /* *out == NULL, so failure */
-    p = (unsigned char *) MapViewOfFile(filemap, FILE_MAP_WRITE, 0, 0, 0);
+    p = MapViewOfFile(filemap, FILE_MAP_WRITE, 0, 0, 0);
     memcpy(p, in, inlen);
     cds.dwData = AGENT_COPYDATA_ID;
     cds.cbData = 1 + strlen(mapname);
@@ -128,7 +128,7 @@ int agent_query(void *in, int inlen, void **out, int *outlen,
      * query is required to be synchronous) or CreateThread failed.
      * Either way, we need a synchronous request.
      */
-    id = SendMessage(hwnd, WM_COPYDATA, (WPARAM) NULL, (LPARAM) & cds);
+    id = SendMessage(hwnd, WM_COPYDATA, (WPARAM) NULL, (LPARAM) &cds);
     if (id > 0) {
 	retlen = 4 + GET_32BIT(p);
 	ret = snewn(retlen, unsigned char);

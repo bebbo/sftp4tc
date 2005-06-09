@@ -1,7 +1,12 @@
 /*
- * winhelp.h - define Windows Help context names for the controls
- * in the PuTTY config box.
+ * winhelp.h - define Windows Help context names. These match up with
+ * the \cfg{winhelp-topic} directives in the Halibut source.
  */
+
+/* Maximum length for WINHELP_CTX_foo strings */
+#define WINHELP_CTX_MAXLEN 80
+
+/* These are used in the cross-platform configuration dialog code. */
 
 #define HELPCTX(x) P(WINHELP_CTX_ ## x)
 
@@ -13,6 +18,7 @@
 #define WINHELP_CTX_logging_main "logging.main"
 #define WINHELP_CTX_logging_filename "logging.filename"
 #define WINHELP_CTX_logging_exists "logging.exists"
+#define WINHELP_CTX_logging_flush "logging.flush"
 #define WINHELP_CTX_logging_ssh_omit_password "logging.ssh.omitpassword"
 #define WINHELP_CTX_logging_ssh_omit_data "logging.ssh.omitdata"
 #define WINHELP_CTX_keyboard_backspace "keyboard.backspace"
@@ -31,6 +37,8 @@
 #define WINHELP_CTX_features_qtitle "features.qtitle"
 #define WINHELP_CTX_features_dbackspace "features.dbackspace"
 #define WINHELP_CTX_features_charset "features.charset"
+#define WINHELP_CTX_features_arabicshaping "features.arabicshaping"
+#define WINHELP_CTX_features_bidi "features.bidi"
 #define WINHELP_CTX_terminal_autowrap "terminal.autowrap"
 #define WINHELP_CTX_terminal_decom "terminal.decom"
 #define WINHELP_CTX_terminal_lfhascr "terminal.lfhascr"
@@ -63,6 +71,7 @@
 #define WINHELP_CTX_connection_username "connection.username"
 #define WINHELP_CTX_connection_keepalive "connection.keepalive"
 #define WINHELP_CTX_connection_nodelay "connection.nodelay"
+#define WINHELP_CTX_connection_ipversion "connection.ipversion"
 #define WINHELP_CTX_connection_tcpkeepalive "connection.tcpkeepalive"
 #define WINHELP_CTX_proxy_type "proxy.type"
 #define WINHELP_CTX_proxy_main "proxy.main"
@@ -83,6 +92,8 @@
 #define WINHELP_CTX_ssh_protocol "ssh.protocol"
 #define WINHELP_CTX_ssh_command "ssh.command"
 #define WINHELP_CTX_ssh_compress "ssh.compress"
+#define WINHELP_CTX_ssh_kexlist "ssh.kex.order"
+#define WINHELP_CTX_ssh_kex_repeat "ssh.kex.repeat"
 #define WINHELP_CTX_ssh_auth_privkey "ssh.auth.privkey"
 #define WINHELP_CTX_ssh_auth_agentfwd "ssh.auth.agentfwd"
 #define WINHELP_CTX_ssh_auth_changeuser "ssh.auth.changeuser"
@@ -94,22 +105,43 @@
 #define WINHELP_CTX_selection_charclasses "selection.charclasses"
 #define WINHELP_CTX_selection_linedraw "selection.linedraw"
 #define WINHELP_CTX_selection_rtf "selection.rtf"
+#define WINHELP_CTX_colours_ansi "colours.ansi"
+#define WINHELP_CTX_colours_xterm256 "colours.xterm256"
 #define WINHELP_CTX_colours_bold "colours.bold"
 #define WINHELP_CTX_colours_system "colours.system"
 #define WINHELP_CTX_colours_logpal "colours.logpal"
 #define WINHELP_CTX_colours_config "colours.config"
 #define WINHELP_CTX_translation_codepage "translation.codepage"
+#define WINHELP_CTX_translation_cjk_ambig_wide "translation.cjkambigwide"
 #define WINHELP_CTX_translation_cyrillic "translation.cyrillic"
 #define WINHELP_CTX_translation_linedraw "translation.linedraw"
 #define WINHELP_CTX_ssh_tunnels_x11 "ssh.tunnels.x11"
 #define WINHELP_CTX_ssh_tunnels_x11auth "ssh.tunnels.x11auth"
 #define WINHELP_CTX_ssh_tunnels_portfwd "ssh.tunnels.portfwd"
 #define WINHELP_CTX_ssh_tunnels_portfwd_localhost "ssh.tunnels.portfwd.localhost"
+#define WINHELP_CTX_ssh_tunnels_portfwd_ipversion "ssh.tunnels.portfwd.ipversion"
 #define WINHELP_CTX_ssh_bugs_ignore1 "ssh.bugs.ignore1"
 #define WINHELP_CTX_ssh_bugs_plainpw1 "ssh.bugs.plainpw1"
 #define WINHELP_CTX_ssh_bugs_rsa1 "ssh.bugs.rsa1"
 #define WINHELP_CTX_ssh_bugs_hmac2 "ssh.bugs.hmac2"
 #define WINHELP_CTX_ssh_bugs_derivekey2 "ssh.bugs.derivekey2"
 #define WINHELP_CTX_ssh_bugs_rsapad2 "ssh.bugs.rsapad2"
-#define WINHELP_CTX_ssh_bugs_dhgex2 "ssh.bugs.dhgex2"
 #define WINHELP_CTX_ssh_bugs_pksessid2 "ssh.bugs.pksessid2"
+#define WINHELP_CTX_ssh_bugs_rekey2 "ssh.bugs.rekey2"
+
+/* These are used in Windows-specific bits of the frontend.
+ * We (ab)use "help context identifiers" (dwContextId) to identify them. */
+
+#define HELPCTXID(x) WINHELP_CTXID_ ## x
+
+#define WINHELP_CTXID_no_help 0
+#define WINHELP_CTX_errors_hostkey_absent "errors.hostkey.absent"
+#define WINHELP_CTXID_errors_hostkey_absent 1
+#define WINHELP_CTX_errors_hostkey_changed "errors.hostkey.changed"
+#define WINHELP_CTXID_errors_hostkey_changed 2
+#define WINHELP_CTX_errors_cantloadkey "errors.cantloadkey"
+#define WINHELP_CTXID_errors_cantloadkey 3
+#define WINHELP_CTX_option_cleanup "options.cleanup"
+#define WINHELP_CTXID_option_cleanup 4
+#define WINHELP_CTX_pgp_fingerprints "pgpfingerprints"
+#define WINHELP_CTXID_pgp_fingerprints 5

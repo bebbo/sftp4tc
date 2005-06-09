@@ -230,10 +230,11 @@ void hmacmd5_free_context(void *handle)
     sfree(handle);
 }
 
-void hmacmd5_key(void *handle, unsigned char const *key, int len)
+void hmacmd5_key(void *handle, void const *keyv, int len)
 {
     struct MD5Context *keys = (struct MD5Context *)handle;
     unsigned char foo[64];
+    unsigned char const *key = (unsigned char const *)keyv;
     int i;
 
     memset(foo, 0x36, 64);
@@ -294,13 +295,13 @@ static void hmacmd5_do_hmac_ssh(void *handle, unsigned char const *blk, int len,
 }
 
 static void hmacmd5_generate(void *handle, unsigned char *blk, int len,
-			 unsigned long seq)
+			     unsigned long seq)
 {
     hmacmd5_do_hmac_ssh(handle, blk, len, seq, blk + len);
 }
 
 static int hmacmd5_verify(void *handle, unsigned char *blk, int len,
-		      unsigned long seq)
+			  unsigned long seq)
 {
     unsigned char correct[16];
     hmacmd5_do_hmac_ssh(handle, blk, len, seq, correct);

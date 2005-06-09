@@ -78,17 +78,18 @@ void *open_settings_w(const char *sessionname, char **errmsg)
     if (ret != ERROR_SUCCESS) {
 	sfree(p);
         *errmsg = dupprintf("Unable to create registry key\n"
-                            "HKEY_CURRENT_USER%s", puttystr);
+                            "HKEY_CURRENT_USER\\%s", puttystr);
 	return NULL;
     }
     ret = RegCreateKey(subkey1, p, &sesskey);
-    sfree(p);
     RegCloseKey(subkey1);
     if (ret != ERROR_SUCCESS) {
         *errmsg = dupprintf("Unable to create registry key\n"
-                            "HKEY_CURRENT_USER%s\\%s", puttystr, p);
+                            "HKEY_CURRENT_USER\\%s\\%s", puttystr, p);
+	sfree(p);
 	return NULL;
     }
+    sfree(p);
     return (void *) sesskey;
 }
 
@@ -103,7 +104,7 @@ void write_setting_i(void *handle, const char *key, int value)
 {
     if (handle)
 	RegSetValueEx((HKEY) handle, key, 0, REG_DWORD,
-		      (CONST BYTE *) & value, sizeof(value));
+		      (CONST BYTE *) &value, sizeof(value));
 }
 
 void close_settings_w(void *handle)
@@ -156,7 +157,7 @@ int read_setting_i(void *handle, const char *key, int defvalue)
 
     if (!handle ||
 	RegQueryValueEx((HKEY) handle, key, 0, &type,
-			(BYTE *) & val, &size) != ERROR_SUCCESS ||
+			(BYTE *) &val, &size) != ERROR_SUCCESS ||
 	size != sizeof(val) || type != REG_DWORD)
 	return defvalue;
     else
