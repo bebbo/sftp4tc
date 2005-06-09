@@ -44,7 +44,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PUTTYLIB_EXPORTS" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I "..\PuttyLib" /I "..\PuttyLib\putty" /I "..\tc_plugin" /I "..\shared" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PUTTYLIB_EXPORTS" /FR /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "..\PuttyLib" /I "..\PuttyLib\putty" /I "..\tc_plugin" /I "..\shared" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PUTTYLIB_EXPORTS" /D "NO_IPV6" /D "NO_WS2" /FR /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x407 /d "NDEBUG"
@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PUTTYLIB_EXPORTS" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gi /GX /Zi /Od /I "..\PuttyLib" /I "..\PuttyLib\putty" /I "..\tc_plugin" /I "..\shared" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PUTTYLIB_EXPORTS" /FR /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gi /GX /Zi /Od /I "..\PuttyLib" /I "..\PuttyLib\putty" /I "..\tc_plugin" /I "..\shared" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PUTTYLIB_EXPORTS" /D "_NO_IPV6" /D "NO_WS2" /FR /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x407 /d "_DEBUG"
@@ -80,7 +80,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 WSOCK32.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /version:1.0 /dll /map /debug /machine:I386 /out:"../tc_plugin/Debug/psftp.dll" /pdbtype:sept
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /version:1.0 /dll /map /debug /machine:I386 /out:"../tc_plugin/Debug/psftp.dll" /pdbtype:sept
 
 !ELSEIF  "$(CFG)" == "PuttyLib - Win32 Release Optimized"
 
@@ -130,10 +130,6 @@ SOURCE=.\putty\CMDLINE.C
 # End Source File
 # Begin Source File
 
-SOURCE=.\putty\CONSOLE.C
-# End Source File
-# Begin Source File
-
 SOURCE=.\putty\cproxy.c
 # End Source File
 # Begin Source File
@@ -154,11 +150,7 @@ SOURCE=.\putty\MISC.C
 # End Source File
 # Begin Source File
 
-SOURCE=.\putty\NOISE.C
-# End Source File
-# Begin Source File
-
-SOURCE=.\putty\PAGEANTC.C
+SOURCE=.\putty\pinger.c
 # End Source File
 # Begin Source File
 
@@ -303,11 +295,15 @@ SOURCE=.\putty\TELNET.C
 # End Source File
 # Begin Source File
 
-SOURCE=.\putty\TREE234.C
+SOURCE=.\putty\time.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\putty\UNICODE.C
+SOURCE=.\putty\timing.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\putty\TREE234.C
 # End Source File
 # Begin Source File
 
@@ -323,6 +319,10 @@ SOURCE=.\putty\WILDCARD.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\putty\wincons.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\putty\windefs.c
 # End Source File
 # Begin Source File
@@ -335,7 +335,15 @@ SOURCE=.\putty\WINNET.C
 # End Source File
 # Begin Source File
 
-SOURCE=.\putty\winsftp_cutdown.c
+SOURCE=.\putty\winnoise.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\putty\winpgntc.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\putty\winsftp.c
 # End Source File
 # Begin Source File
 

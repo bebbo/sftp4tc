@@ -52,7 +52,7 @@ int wcplg_open_sftp_session(char *userhost, char *user, char *pass,
 
   do_defaults(NULL, &cfg);
 
-  init_winsock();
+//  init_winsock();
   sk_init();
 
   back = NULL;

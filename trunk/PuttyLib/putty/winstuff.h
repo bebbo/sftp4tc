@@ -9,6 +9,7 @@
 #include <winsock2.h>
 #endif
 #include <windows.h>
+#include <Commdlg.h>
 #include <stdio.h>		       /* for FILENAME_MAX */
 
 #include "tree234.h"
@@ -57,6 +58,9 @@ typedef struct terminal_tag Terminal;
 #define PUTTY_REG_GPARENT "Software"
 #define PUTTY_REG_GPARENT_CHILD "SimonTatham"
 
+#define PUTTY_HELP_FILE "putty.hlp"
+#define PUTTY_HELP_CONTENTS "putty.cnt"
+
 #define GETTICKCOUNT GetTickCount
 #define CURSORBLINK GetCaretBlinkTime()
 #define TICKSPERSEC 1000	       /* GetTickCount returns milliseconds */
@@ -66,9 +70,10 @@ typedef struct terminal_tag Terminal;
 typedef HDC Context;
 
 /*
- * Window handles for the dialog boxes that can be running during a
+ * Window handles for the windows that can be running during a
  * PuTTY session.
  */
+GLOBAL HWND hwnd;	/* the main terminal window */
 GLOBAL HWND logbox;
 
 /*
@@ -81,6 +86,7 @@ GLOBAL HINSTANCE hinst;
  */
 GLOBAL char *help_path;
 GLOBAL int help_has_contents;
+GLOBAL int requested_help;
 
 /*
  * The terminal and logging context are notionally local to the
@@ -117,11 +123,11 @@ GLOBAL void *logctx;
 /*
  * sk_getxdmdata() does not exist under Windows (not that I
  * couldn't write it if I wanted to, but I haven't bothered), so
- * it's a macro which always returns FALSE. With any luck this will
+ * it's a macro which always returns NULL. With any luck this will
  * cause the compiler to notice it can optimise away the
  * implementation of XDM-AUTHORIZATION-1 in x11fwd.c :-)
  */
-#define sk_getxdmdata(socket, ip, port) (0)
+#define sk_getxdmdata(socket, lenp) (NULL)
 
 /*
  * File-selector filter strings used in the config box. On Windows,
@@ -132,6 +138,15 @@ GLOBAL void *logctx;
 			      "All Files (*.*)\0*\0\0\0")
 #define FILTER_WAVE_FILES ("Wave Files (*.wav)\0*.WAV\0" \
 			       "All Files (*.*)\0*\0\0\0")
+
+/*
+ * On some versions of Windows, it has been known for WM_TIMER to
+ * occasionally get its callback time simply wrong, and call us
+ * back several minutes early. Defining these symbols enables
+ * compensation code in timing.c.
+ */
+#define TIMING_SYNC
+#define TIMING_SYNC_TICKCOUNT
 
 /*
  * winnet.c dynamically loads WinSock 2 or WinSock 1 depending on
@@ -150,6 +165,8 @@ extern int (WINAPI *p_WSAGetLastError)(void);
 extern int (WINAPI *p_WSAEnumNetworkEvents)
     (SOCKET s, WSAEVENT hEventObject, LPWSANETWORKEVENTS lpNetworkEvents);
 
+extern int socket_writable(SOCKET skt);
+
 /*
  * Exports from winctrls.c.
  */
@@ -167,6 +184,11 @@ struct ctlpos {
 /*
  * Exports from winutils.c.
  */
+typedef struct filereq_tag filereq; /* cwd for file requester */
+BOOL request_file(filereq *state, OPENFILENAME *of, int preserve, int save);
+filereq *filereq_new(void);
+void filereq_free(filereq *state);
+int message_box(LPCTSTR text, LPCTSTR caption, DWORD style, DWORD helpctxid);
 void split_into_argv(char *, int *, char ***, char ***);
 
 /*
@@ -325,7 +347,7 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
  */
 void defuse_showwindow(void);
 int do_config(void);
-int do_reconfig(HWND);
+int do_reconfig(HWND, int);
 void showeventlog(HWND);
 void showabout(HWND);
 void force_normal(HWND hwnd);
@@ -335,14 +357,6 @@ void show_help(HWND hwnd);
 /*
  * Exports from winmisc.c.
  */
-
-int SaneDialogBox(HINSTANCE hinst,
-		  LPCTSTR tmpl,
-		  HWND hwndparent,
-		  DLGPROC lpDialogFunc);
-
-void SaneEndDialog(HWND hwnd, int ret);
-
 extern OSVERSIONINFO osVersion;
 BOOL init_winver(void);
 
