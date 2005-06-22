@@ -1674,6 +1674,12 @@ BOOL __stdcall FsDeleteFile(char *RemoteName)
 {
   char cmd_buf[MAX_CMD_BUFFER];
 
+  // user is trying to delete a connection!
+  if (delete_only_connection) {
+    SetLastError(ERROR_NO_MORE_FILES);
+    return false;
+  }
+
   if (RemoteName[0] != '\\')
     return false;
 

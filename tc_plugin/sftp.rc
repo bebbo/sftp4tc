@@ -28,8 +28,8 @@ LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,2,57,2
- PRODUCTVERSION 1,2,57,2
+ FILEVERSION 1,2,58,1
+ PRODUCTVERSION 1,2,58,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -47,14 +47,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "SFTP Plugin for Total Commander\0"
-            VALUE "FileVersion", "1.2.57.2\0"
+            VALUE "FileVersion", "1.2.58.1\0"
             VALUE "InternalName", "plugin_sftp\0"
             VALUE "LegalCopyright", "\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "plugin_sftp.wfx\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "plugin_sftp\0"
-            VALUE "ProductVersion", "1.2.57.2\0"
+            VALUE "ProductVersion", "1.2.58.1\0"
             VALUE "SpecialBuild", "\0"
         END
     END
