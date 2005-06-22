@@ -650,6 +650,9 @@ void trim_host_from_hoststring(char *hoststring)
   buf = strstr(hoststring, ":");
   if (buf == NULL)
     return;                     //Kein Port angegeben
+  char* buf2=strstr(buf+1, ":");
+  if (buf2 != NULL)
+    return;                     //Kein Port angegeben
   hoststring[strlen(hoststring) - strlen(buf)] = '\0';
 }
 

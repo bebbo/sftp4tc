@@ -1,3 +1,10 @@
+VERSION 1.2.58.1
+*ADDED FR #954: hide the unix hidden files
+*ADDED FR #505: access to parent directories
++FIXED Bug #3669: Shifted file date
++FIXED Bug #4054: ASCII Transfer
+/CHANGED Patching sources to version Putty's version 0.58 (-> preliminary IPv6 support)
+
 VERSION 1.2.57.2
 +FIXED connection to FreeBSD 5.3 works now
 +FIXED connection dialog doesn't cause Exception on exit, when parenthandle unknown

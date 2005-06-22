@@ -141,6 +141,10 @@ SOURCE=.\properties_dlg.rc
 
 SOURCE=..\shared\ServerInfo.cpp
 # End Source File
+# Begin Source File
+
+SOURCE=.\SessionConfigDialog.cpp
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -152,6 +156,10 @@ SOURCE=.\PreferencesDialog.h
 # Begin Source File
 
 SOURCE=.\resource.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\SessionConfigDialog.h
 # End Source File
 # Begin Source File
 
