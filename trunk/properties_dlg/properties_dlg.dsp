@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "properties_dlg___Win32_Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PROPERTIES_DLG_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "..\shared\\" /I "$(WXWIDGETS)\lib\msw" /I "$(WXWIDGETS)\contrib\include" /I "..\PuttyLib\putty" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "PROPERTIES_DLG_EXPORTS" /D "__WXMSW__" /D WXUSINGDLL=1 /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "..\shared\\" /I "$(WXWIDGETS)\lib\msw" /I "$(WXWIDGETS)\contrib\include" /I "..\PuttyLib\putty" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "PROPERTIES_DLG_EXPORTS" /D "__WXMSW__" /D WXUSINGDLL=1 /FR /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x407 /d "NDEBUG"

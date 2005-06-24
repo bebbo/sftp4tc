@@ -2363,7 +2363,6 @@ void LoadServers()
     //import the putty saved session if...
     imported_num = 0;
     imported_num += ImportPuttySessions(ID, buf_divers);
-    SftpConfig.ImportedSessions = imported_num;
     ID += imported_num;
   }
   if (strlen(buf_divers)>0)
@@ -2371,6 +2370,7 @@ void LoadServers()
   else
     SftpConfig.DoImportPuttySessions = '0';
 
+  SftpConfig.ImportedSessions = imported_num;
   // DO ssh.com Import ?
   strcpy(buf_divers, "");
   GetPrivateProfileString(INI_CONFIG_SECTION_NAME,
