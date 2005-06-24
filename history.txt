@@ -1,3 +1,7 @@
+VERSION 1.2.58.1a
++FIXED configuration dialog didn't saved connections
++FIXED connection list was empty, after setting import sessions back to "no" from one of the other options
+
 VERSION 1.2.58.1
 *ADDED FR #954: hide the unix hidden files
 *ADDED FR #505: access to parent directories
