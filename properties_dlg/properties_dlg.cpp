@@ -3,6 +3,7 @@
 #include "wxmyapp.h"
 #include "wx/xrc/xmlres.h"          // XRC XML resouces
 #include "properties_dlg.h"
+#include "wx/module.h"
 
 //---------------------------------------------------------------------
 #define DefaultXrcFileName "rc\\wfx_sftp_cfg.xrc"
@@ -29,8 +30,6 @@ void __stdcall InitializeCfgDLL(HMODULE hModule)
     p = xrcFileName;
   strcpy(p, DefaultXrcFileName);
 
-//  for(size_t i=0; xrcFileName[i]!=0; i++) if (xrcFileName[i]=='\\') xrcFileName[i]='/';
-
 #ifdef _SFTP_DEBUG
   OutputDebugStringA(xrcFileName);
 #endif
@@ -45,6 +44,10 @@ void __stdcall InitializeCfgDLL(HMODULE hModule)
 #else
   app->Initialize();
 #endif
+
+  //wxFileSystem::AddHandler(new wxLocalFSHandler);
+  wxModule::RegisterModules();
+  wxModule::InitializeModules();
 
 #ifdef _SFTP_DEBUG
   wxLog::SetActiveTarget(new wxLogGui());
@@ -62,11 +65,12 @@ void __stdcall FreeCfgDLL()
     app->CleanUp();
     app = NULL;
   }
+  wxModule::CleanUpModules();
 }
 
 //---------------------------------------------------------------------
 
-bool __stdcall Properties(int Mode, struct config_properties *aProperties)
+bool __stdcall Properties(int Mode, ConfigPropertiesType *aProperties)
 {
   bool res = false;
   try
@@ -115,7 +119,7 @@ bool __stdcall Properties(int Mode, struct config_properties *aProperties)
 
 //---------------------------------------------------------------------
 
-IMPLEMENT_APP_NO_MAIN(wxMyApp);
+IMPLEMENT_APP(wxMyApp); //_NO_MAIN
 
 //---------------------------------------------------------------------
 

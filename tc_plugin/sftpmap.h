@@ -1,3 +1,6 @@
+#ifndef sftpmap_h
+#define sftpmap_h
+
 #define SFTP_SUCCESS 1
 #define SFTP_FAILED 0
 #define SFTP_DISCONNECTED -1
@@ -18,21 +21,19 @@
 #define QUICK_CONNECTION "<Quick connection>"
 
 void LogProc_(int MsgType, char *LogString);
-tProgressProc get_ProgressProc();
+ProgressProcType get_ProgressProc();
 int get_PluginNumber();
 
 struct SftpServerAccountInfo *GetServerInfos(void);
-int wcplg_sftp_connect(char *user, char *password, char *host, int port,
-                       SftpServerAccountInfo * allServers,
-                       int CurrentServerId);
+int Connect(char *user, char *password, char *host, int port, 
+            SftpServerAccountInfo * allServers, int CurrentServerId);
 int wcplg_sftp_connect_byID(int id);
-void wcplg_sftp_transfermode(int id, char *mode);
-int wcplg_sftp_disconnect(int id, bool nolog);
+void SetTransferMode(int id, char *mode);
+int Disconnect(int id, bool nolog);
 int get_current_server_id(void);
-int wcplg_sftp_do_commando(char *commando, char *server_output,
-                           int CurrentServerId);
-struct fxp_names *wcplg_sftp_get_current_dir_struct(int ID);
-void wcplg_sftp_getLastError(int id, char *buf);
+int ExecuteCommand(char *command, char *serverOutput, int serverId);
+struct fxp_names* GetCurrentDirectoryStruct(int serverId);
+void GetLastPsftpError(int id, char *buf);
 
 void __stdcall dbg(char *msg);
 
@@ -65,44 +66,38 @@ struct my_fxp_names {
   struct fxp_name **names;
 };
 
-typedef int (__stdcall CALLBACK * TD_SFTP_DLL_FNCT_CONNECT) (char *,
-                                                             char *,
-                                                             char *, int);
-typedef int (__stdcall CALLBACK * TD_SFTP_DLL_FNCT_DO_SFTP) (char *,
-                                                             char *);
-typedef my_fxp_names *(__stdcall CALLBACK *
-                       TD_SFTP_DLL_FNCT_GET_CURRENT_DIR_STRUCT) (void);
-typedef char *(__stdcall CALLBACK * TD_SFTP_DLL_FNCT_GLASTERRMSG) (void);
-typedef int (__stdcall CALLBACK *
-             TD_SFTP_DLL_FNCT_init_ProgressProc) (tProgressProc
-                                                  AP_ProgressProc,
-                                                  int Awc_PluginNr);
-typedef void (__stdcall CALLBACK *
-              TD_SFTP_DLL_FNCT_SetSftpServerAccountInfo)
-  (SftpServerAccountInfo ServerAccountInfo);
-typedef void (CALLBACK * TD_SFTP_DLL_FNCT_SetTransferMode)(char *mode);
-typedef int (CALLBACK * TD_SFTP_DLL_FNCT_Disconnected)(void);
+typedef int (__stdcall CALLBACK * PsftpConnectProcType) (char *, char *, char *, int);
+typedef int (__stdcall CALLBACK * PsftpDoSftpProcType) (char *, char *);
+typedef my_fxp_names *(__stdcall CALLBACK * PsftpGetCurrentDirStructProcType) (void);
+typedef char *(__stdcall CALLBACK * PsftpGetLastErrorMessageProcType) (void);
+typedef int (__stdcall CALLBACK * PsftpInitProgressProcProcType) 
+    (ProgressProcType AP_ProgressProc, int Awc_PluginNr);
+typedef void (__stdcall CALLBACK * PsftpSetSftpServerAccountInfoProcType)
+    (SftpServerAccountInfo ServerAccountInfo);
+typedef void (CALLBACK * PsftpSetTransferModeProcType)(char *mode);
+typedef int (CALLBACK * PsftpDisconnectedProcType)(void);
 
 void Unload_PSFTP_DLL_HANDLER(int ServerId);
 void *__wcplg_sftp_get_current_dir_struct(void);
-void winSlash2unix(char *s);
-void UnixSlash2Win(char *s);
-int init_ProgressProc(tProgressProc AP_ProgressProc, int Awc_PluginNr,
+void convert_slash_windows_to_unix(char* string);
+void convert_slash_unix_to_windows(char* string);
+int InitProgressProc(ProgressProcType AP_ProgressProc, int Awc_PluginNr,
                       int CurrentServerId);
 int psftp_memory_hole__stopfen(int ID);
-void init_server_dll_handlers(void);
-void get_psftpDll_path(char *buf);
-int fileCopy(char *src, char *dest);
-void unlink_dll_tmp_file(int id);
-void unlink_ALL_dll_tmp_files(void);
-int file_exists(char *fname);
+void InitPsftpWrappers(void);
+void GetPsftpDllPath(char *buf);
+int FileCopy(char *src, char *dest);
+void UnlinkTemporaryDllFile(int id);
+void UnlinkAllTemporaryDllFiles(void);
+int FileExists(char* fname);
 int Risdir(char *Path);
 
 bool IsAlreadyConnected();
 void ResetAlreadyConnected();
-
-void DISABLE_LOGGING_ONCE();
-
 void trim_host_from_hoststring(char *hoststring);
 void trim_port_from_hoststring(char *hoststring);
-int do_logging();
+
+void DisableLoggingOnce();
+int DoLogging();
+
+#endif //sftpmap_h

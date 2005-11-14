@@ -13,3 +13,4 @@ EXPORTS
 	FsDisconnect
 	FsGetDefRootName
 	FsStatusInfo
+	FsExtractCustomIcon

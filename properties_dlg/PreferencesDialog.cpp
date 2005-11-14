@@ -87,7 +87,7 @@ END_EVENT_TABLE()
 
 //---------------------------------------------------------------------
 
-PreferencesDialog::PreferencesDialog(config_properties *aProperties, wxWindow *aParent): 
+PreferencesDialog::PreferencesDialog(ConfigPropertiesType *aProperties, wxWindow *aParent): 
   mProperties(aProperties), mCurrentServer(0), mPos(-1), mSave(true)
 {
   dlgres = wxXmlResource::Get()->LoadDialog(this, aParent, wxT("CONNECTIONS"));
@@ -180,14 +180,14 @@ PreferencesDialog::~PreferencesDialog()
 
 void PreferencesDialog::OnNewButtonClicked( wxCommandEvent &event )
 {
-  if (mProperties->ServerCount<MAX_Server_Count) {
+  if (mProperties->ServerCount<MAX_SERVER_COUNT) {
 	Enable();
     wxCommandEvent dummy_event;
     int pos = mProperties->ServerCount++;
     mProperties->ServerInfos[pos].id = pos;
     SetDefaultsToServerInfo(&mProperties->ServerInfos[pos]);
-    strncpy(mProperties->ServerInfos[pos].title, "<new>", MAX_Server_INFO);
-    strncpy(mProperties->ServerInfos[pos].host, "<new>", MAX_Server_INFO);
+    strncpy(mProperties->ServerInfos[pos].title, "<new>", MAX_SERVER_INFO);
+    strncpy(mProperties->ServerInfos[pos].host, "<new>", MAX_SERVER_INFO);
     mPos = -1;
     lstConnections->Append(mProperties->ServerInfos[pos].title, &mProperties->ServerInfos[pos]);
     pos = lstConnections->FindString(mProperties->ServerInfos[pos].title);
@@ -200,7 +200,7 @@ void PreferencesDialog::OnNewButtonClicked( wxCommandEvent &event )
 
 void PreferencesDialog::OnDuplicateButtonClicked( wxCommandEvent &event )
 {
-  if (mProperties->ServerCount<MAX_Server_Count) {
+  if (mProperties->ServerCount<MAX_SERVER_COUNT) {
 	Enable();
     wxCommandEvent dummy_event;
     int pos = mProperties->ServerCount++;
@@ -253,7 +253,7 @@ void PreferencesDialog::OnListBox( wxCommandEvent &event )
 {
   int pos = lstConnections->GetSelection();
   if (pos!=mPos) {
-    char buf[MAX_Server_INFO];
+    char buf[MAX_SERVER_INFO];
     mPos = pos;
     mCurrentServer = (SftpServerAccountInfo *)lstConnections->GetClientData(mPos);
     //TextBoxes
@@ -300,14 +300,14 @@ void PreferencesDialog::OnListBox( wxCommandEvent &event )
   }
 
 #define GetTextValue(edt, field) \
-  strncpy(mCurrentServer->field, edt->GetValue().c_str(), MAX_Server_INFO);
+  strncpy(mCurrentServer->field, edt->GetValue().c_str(), MAX_SERVER_INFO);
 
 //-------------------------- TEXT CHANGE EVENTS -------------------------------------------
 
 void PreferencesDialog::OnTitleTextChange( wxCommandEvent &event )
 {
   if (mPos!=-1) {
-    strncpy(mCurrentServer->title, edtTitle->GetValue().c_str(), MAX_Server_INFO);
+    strncpy(mCurrentServer->title, edtTitle->GetValue().c_str(), MAX_SERVER_INFO);
 	  if (!edtTitle->GetValue().empty()) {
 	    lstConnections->Delete(mPos);
 	    lstConnections->Append(mCurrentServer->title, mCurrentServer);
@@ -322,7 +322,7 @@ void PreferencesDialog::OnTitleTextChange( wxCommandEvent &event )
 void PreferencesDialog::OnHostTextChange( wxCommandEvent &event )
 {
   if (mCurrentServer)
-    strncpy(mCurrentServer->host, edtHost->GetValue().c_str(), MAX_Server_INFO);
+    strncpy(mCurrentServer->host, edtHost->GetValue().c_str(), MAX_SERVER_INFO);
 }
 
 void PreferencesDialog::OnPortTextChange( wxCommandEvent &event )
@@ -334,19 +334,19 @@ void PreferencesDialog::OnPortTextChange( wxCommandEvent &event )
 void PreferencesDialog::OnUsernameTextChange( wxCommandEvent &event )
 {
   if (mCurrentServer)
-    strncpy(mCurrentServer->username, edtUsername->GetValue().c_str(), MAX_Server_INFO);
+    strncpy(mCurrentServer->username, edtUsername->GetValue().c_str(), MAX_SERVER_INFO);
 }
 
 void PreferencesDialog::OnPasswordTextChange( wxCommandEvent &event )
 {
   if (mCurrentServer)
-    strncpy(mCurrentServer->password, edtPassword->GetValue().c_str(), MAX_Server_INFO);
+    strncpy(mCurrentServer->password, edtPassword->GetValue().c_str(), MAX_SERVER_INFO);
 }
 
 void PreferencesDialog::OnHomedirTextChange( wxCommandEvent &event )
 {
   if (mCurrentServer)
-    strncpy(mCurrentServer->home_dir, edtHomedir->GetValue().c_str(), MAX_Server_INFO);
+    strncpy(mCurrentServer->home_dir, edtHomedir->GetValue().c_str(), MAX_SERVER_INFO);
 }
 
 void PreferencesDialog::OnChmodPutTextChange( wxCommandEvent &event )
@@ -364,13 +364,13 @@ void PreferencesDialog::OnChmodDirTextChange( wxCommandEvent &event )
 void PreferencesDialog::OnKeyFilenameTextChange( wxCommandEvent &event )
 {
   if (mCurrentServer)
-    strncpy(mCurrentServer->keyfilename, edtKeyFilename->GetValue().c_str(), MAX_Server_INFO);
+    strncpy(mCurrentServer->keyfilename, edtKeyFilename->GetValue().c_str(), MAX_SERVER_INFO);
 }
 
 void PreferencesDialog::OnProxyHostTextChange( wxCommandEvent &event )
 {
   if (mCurrentServer)
-    strncpy(mCurrentServer->proxy_host, edtProxyHost->GetValue().c_str(), MAX_Server_INFO);
+    strncpy(mCurrentServer->proxy_host, edtProxyHost->GetValue().c_str(), MAX_SERVER_INFO);
 }
 
 void PreferencesDialog::OnProxyPortTextChange( wxCommandEvent &event )
@@ -388,14 +388,14 @@ void PreferencesDialog::OnProxyUsernameTextChange( wxCommandEvent &event )
 void PreferencesDialog::OnProxyPasswordTextChange( wxCommandEvent &event )
 {
   if (mCurrentServer)
-    strncpy(mCurrentServer->proxy_password, edtProxyPassword->GetValue().c_str(), MAX_Server_INFO);
+    strncpy(mCurrentServer->proxy_password, edtProxyPassword->GetValue().c_str(), MAX_SERVER_INFO);
 }
 
 void PreferencesDialog::OnProxyTelnetCommandTextChange( wxCommandEvent &event )
 {
   if (mCurrentServer)
     strncpy(mCurrentServer->proxy_telnet_command, 
-      edtProxyTelnetCommand->GetValue().c_str(), MAX_Server_INFO);
+      edtProxyTelnetCommand->GetValue().c_str(), MAX_SERVER_INFO);
 }
 
 //-------------------------- CHECKBOX EVENTS -------------------------------------------
@@ -472,7 +472,7 @@ void PreferencesDialog::edtImportSSHcomTextChange( wxCommandEvent &event )
 {
   if (mCurrentServer)
     strncpy(mProperties->DoImportSSHcomSessions, 
-      edtImportSSHcom->GetValue().c_str(), MAX_Server_INFO);
+      edtImportSSHcom->GetValue().c_str(), MAX_SERVER_INFO);
 }
 
 //---------------------------------------------------------------------

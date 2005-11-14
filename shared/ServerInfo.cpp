@@ -6,15 +6,15 @@ void CopyServerInfo(SftpServerAccountInfo* ServerInfos, int SourceIndex, int Des
   //cached part isn't important now
   //imported connections aren't here, so imported fields aren't relevant
   ServerInfos[DestIndex].id = DestIndex;
-  _snprintf(ServerInfos[DestIndex].title, MAX_Server_INFO, "copy of %s", 
+  _snprintf(ServerInfos[DestIndex].title, MAX_SERVER_INFO, "copy of %s", 
     ServerInfos[SourceIndex].title);
-  strncpy(ServerInfos[DestIndex].username, ServerInfos[SourceIndex].username, MAX_Server_INFO);
-  strncpy(ServerInfos[DestIndex].password, ServerInfos[SourceIndex].password, MAX_Server_INFO);
-  strncpy(ServerInfos[DestIndex].passphrase, ServerInfos[SourceIndex].passphrase, MAX_Server_INFO);
-  strncpy(ServerInfos[DestIndex].host, ServerInfos[SourceIndex].host, MAX_Server_INFO);
-  strncpy(ServerInfos[DestIndex].home_dir, ServerInfos[SourceIndex].home_dir, MAX_Server_INFO);
+  strncpy(ServerInfos[DestIndex].username, ServerInfos[SourceIndex].username, MAX_SERVER_INFO);
+  strncpy(ServerInfos[DestIndex].password, ServerInfos[SourceIndex].password, MAX_SERVER_INFO);
+  strncpy(ServerInfos[DestIndex].passphrase, ServerInfos[SourceIndex].passphrase, MAX_SERVER_INFO);
+  strncpy(ServerInfos[DestIndex].host, ServerInfos[SourceIndex].host, MAX_SERVER_INFO);
+  strncpy(ServerInfos[DestIndex].home_dir, ServerInfos[SourceIndex].home_dir, MAX_SERVER_INFO);
   strncpy(ServerInfos[DestIndex].keyfilename, 
-    ServerInfos[SourceIndex].keyfilename, MAX_Server_INFO);
+    ServerInfos[SourceIndex].keyfilename, MAX_SERVER_INFO);
   ServerInfos[DestIndex].port = ServerInfos[SourceIndex].port;
   ServerInfos[DestIndex].chmod_value_put = ServerInfos[SourceIndex].chmod_value_put;
   ServerInfos[DestIndex].chmod_value_mkdir = ServerInfos[SourceIndex].chmod_value_mkdir;
@@ -27,14 +27,14 @@ void CopyServerInfo(SftpServerAccountInfo* ServerInfos, int SourceIndex, int Des
   ServerInfos[DestIndex].dont_ask4_password = ServerInfos[SourceIndex].dont_ask4_password;
   ServerInfos[DestIndex].dont_ask4_passphrase = ServerInfos[SourceIndex].dont_ask4_passphrase;
   ServerInfos[DestIndex].proxy_type = ServerInfos[SourceIndex].proxy_type;
-  strncpy(ServerInfos[DestIndex].proxy_host, ServerInfos[SourceIndex].proxy_host, MAX_Server_INFO);
+  strncpy(ServerInfos[DestIndex].proxy_host, ServerInfos[SourceIndex].proxy_host, MAX_SERVER_INFO);
   ServerInfos[DestIndex].proxy_port = ServerInfos[SourceIndex].proxy_port;
   strncpy(ServerInfos[DestIndex].proxy_username, 
-    ServerInfos[SourceIndex].proxy_username, MAX_Server_INFO);
+    ServerInfos[SourceIndex].proxy_username, MAX_SERVER_INFO);
   strncpy(ServerInfos[DestIndex].proxy_password, 
-    ServerInfos[SourceIndex].proxy_password, MAX_Server_INFO);
+    ServerInfos[SourceIndex].proxy_password, MAX_SERVER_INFO);
   strncpy(ServerInfos[DestIndex].proxy_telnet_command, 
-    ServerInfos[SourceIndex].proxy_telnet_command, MAX_Server_INFO);
+    ServerInfos[SourceIndex].proxy_telnet_command, MAX_SERVER_INFO);
 }
 
 void SetDefaultsToServerInfo(SftpServerAccountInfo* ServerInfo)
@@ -84,10 +84,10 @@ void SetDefaultsToServerInfo(SftpServerAccountInfo* ServerInfo)
   value, aProperties->ConfigIniFile); 
 
 void SaveServerInfo(int SectionNumber, struct SftpServerAccountInfo *ServerInfo, 
-                    struct config_properties *aProperties)
+                    ConfigPropertiesType *aProperties)
 {
-  char section_name[MAX_Server_INFO];
-  char buf[MAX_Server_INFO];
+  char section_name[MAX_SERVER_INFO];
+  char buf[MAX_SERVER_INFO];
   sprintf(section_name, "%i", SectionNumber);
   WriteServerInfo("title", title)
   WriteServerInfo("host", host)

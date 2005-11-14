@@ -17,7 +17,7 @@
 #include "int64.h"
 #include "pl_psftp.h"
 #include "sys/stat.h"
-#include "share.h"
+#include "sftp4tc_share.h"
 
 #define STEP 64000
 

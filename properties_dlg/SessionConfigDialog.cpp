@@ -10,7 +10,7 @@ BEGIN_EVENT_TABLE(SessionConfigDialog, wxDialog)
   EVT_CHECKBOX( XRCID( chkShowHiddenFiles_ID ), SessionConfigDialog::chkShowHiddenFilesChecked )
 END_EVENT_TABLE()
 
-SessionConfigDialog::SessionConfigDialog(config_properties *aProperties, wxWindow *aParent):
+SessionConfigDialog::SessionConfigDialog(ConfigPropertiesType *aProperties, wxWindow *aParent):
   mProperties(aProperties)
 {
   dlgres = wxXmlResource::Get()->LoadDialog(this, aParent, wxT("SESSION"));

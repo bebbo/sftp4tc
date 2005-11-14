@@ -1,3 +1,6 @@
+#ifndef fsplugin_h
+#define fsplugin_h
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -63,6 +66,14 @@ extern "C" {
 #define FS_STATUS_OP_EXEC 11
 #define FS_STATUS_OP_CALCSIZE 12
 
+  #define FS_ICONFLAG_SMALL 1
+#define FS_ICONFLAG_BACKGROUND 2
+
+#define FS_ICON_USEDEFAULT 0
+#define FS_ICON_EXTRACTED 1
+#define FS_ICON_EXTRACTED_DESTROY 2
+#define FS_ICON_DELAYED 3
+
 typedef struct {
   DWORD SizeLow, SizeHigh;
   FILETIME LastWriteTime;
@@ -70,19 +81,19 @@ typedef struct {
 } RemoteInfoStruct;
 
 // callback functions
-typedef int (__stdcall * tProgressProc) (int PluginNr, char *SourceName,
+typedef int (__stdcall * ProgressProcType) (int PluginNr, char *SourceName,
                                          char *TargetName,
                                          int PercentDone);
-typedef void (__stdcall * tLogProc) (int PluginNr, int MsgType,
+typedef void (__stdcall * LogProcType) (int PluginNr, int MsgType,
                                      char *LogString);
-typedef BOOL(__stdcall * tRequestProc) (int PluginNr, int RequestType,
+typedef BOOL(__stdcall * RequestProcType) (int PluginNr, int RequestType,
                                         char *CustomTitle,
                                         char *CustomText,
                                         char *ReturnedText, int maxlen);
 
 // Function prototypes
-int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc,
-                     tLogProc pLogProc, tRequestProc pRequestProc);
+int __stdcall FsInit(int PluginNr, ProgressProcType pProgressProc,
+                     LogProcType pLogProc, RequestProcType pRequestProc);
 HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData);
 BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData);
 int __stdcall FsFindClose(HANDLE Hdl);
@@ -103,7 +114,10 @@ BOOL __stdcall FsSetTime(char *RemoteName, FILETIME * CreationTime,
 void __stdcall FsStatusInfo(char *RemoteDir, int InfoStartEnd,
                             int InfoOperation);
 void __stdcall FsGetDefRootName(char *DefRootName, int maxlen);
+int __stdcall FsExtractCustomIcon(char* RemoteName,int ExtractFlags,HICON* TheIcon);
 
 #ifdef __cplusplus
 }
 #endif
+
+#endif //fsplugin_h

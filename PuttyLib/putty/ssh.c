@@ -7,7 +7,7 @@
 #include "tree234.h"
 #include "ssh.h"
 #include "pl_misc.h"
-#include "share.h"
+#include "sftp4tc_share.h"
 
 #ifndef FALSE
 #define FALSE 0
