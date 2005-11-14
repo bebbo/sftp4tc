@@ -1,9 +1,9 @@
 #include "ConfigProperties.h"
 #include "ServerInfo.h"
 
-void SaveProperties(struct config_properties *aProperties)
+void SaveProperties(ConfigPropertiesType *aProperties)
 {
-  char buf[MAX_Server_INFO];
+  char buf[MAX_SERVER_INFO];
   sprintf(buf, "%d", aProperties->DoImportPuttySessions-'0');
   WritePrivateProfileString(INI_CONFIG_SECTION_NAME, INI_CONFIG_IMPORT_PUTTY_SSH_SESS, buf,
     aProperties->ConfigIniFile);

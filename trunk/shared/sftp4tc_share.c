@@ -1,4 +1,4 @@
-#include "share.h"
+#include "sftp4tc_share.h"
 
 struct SftpServerAccountInfo MyServerAccountInfo;
 unsigned long tmp_count = 0;

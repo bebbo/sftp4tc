@@ -4,7 +4,7 @@
 #include <wx/wx.h>
 #include "wx/xrc/xmlres.h"          // XRC XML resouces
 #include "CommonDialog.h"
-#include "share.h"
+#include "sftp4tc_share.h"
 
 class PreferencesDialog : public CommonDialog
 {
@@ -13,7 +13,7 @@ public:
   /*
       \param parent The parent window. Simple constructor.
     */    
-  PreferencesDialog(struct config_properties *aProperties, wxWindow *aParent);
+  PreferencesDialog(ConfigPropertiesType *aProperties, wxWindow *aParent);
   
   // Destructor.                  
   ~PreferencesDialog();
@@ -56,7 +56,7 @@ private:
   void ClearAndDisable();
   void Enable();
 
-  struct config_properties *mProperties;
+  ConfigPropertiesType *mProperties;
 
   SftpServerAccountInfo *mCurrentServer;
   int mPos;

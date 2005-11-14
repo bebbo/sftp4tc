@@ -10,7 +10,7 @@
 #include <vector>
 
 extern "C" {
-#include "share.h"
+#include "sftp4tc_share.h"
 #include "pl_misc.h"
 #include "pl_psftp.h"
 

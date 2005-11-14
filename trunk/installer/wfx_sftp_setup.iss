@@ -59,8 +59,8 @@ Name: PASSWORD_CRYPTER; Description: {cm:PasswordCrypter}; Types: full custom
 ;Name: support_files; Description: {cm:RuntimeSupportFiles}; Types: full
 
 [Tasks]
-Name: all_users_setup_tc; Description: {cm:all_users_setup_tc}; GroupDescription: setup_tc_group_desc; Flags: checkedonce; Components: SFTP_Plugin
-Name: curr_user_setup_tc; Description: {cm:curr_user_setup_tc}; GroupDescription: setup_tc_group_desc; Flags: checkedonce; Components: SFTP_Plugin
+Name: all_users_setup_tc; Description: {cm:all_users_setup_tc}; GroupDescription: {cm:setup_tc_group_desc}; Flags: checkedonce; Components: SFTP_Plugin
+Name: curr_user_setup_tc; Description: {cm:curr_user_setup_tc}; GroupDescription: {cm:setup_tc_group_desc}; Flags: checkedonce; Components: SFTP_Plugin
 
 [Code]
 const

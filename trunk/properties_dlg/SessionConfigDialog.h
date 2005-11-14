@@ -4,7 +4,7 @@
 #include <wx/wx.h>
 #include "wx/xrc/xmlres.h"          // XRC XML resouces
 #include "CommonDialog.h"
-#include "share.h"
+#include "sftp4tc_share.h"
 
 class SessionConfigDialog : public CommonDialog
 {
@@ -13,7 +13,7 @@ public:
   /*
       \param parent The parent window. Simple constructor.
     */    
-  SessionConfigDialog(struct config_properties *aProperties, wxWindow *aParent);
+  SessionConfigDialog(ConfigPropertiesType *aProperties, wxWindow *aParent);
   
   // Destructor.                  
   ~SessionConfigDialog();
@@ -24,7 +24,7 @@ private:
   void OnOKButtonClicked( wxCommandEvent &event );
   DECLARE_EVENT_TABLE()
 
-  struct config_properties *mProperties;
+  ConfigPropertiesType *mProperties;
   wxCheckBox *chkShowHiddenFiles;
 };
 

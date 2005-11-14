@@ -1,7 +1,7 @@
 #include "putty.h"
 #include "pl_misc.h"
 #include "misc.h"
-#include "share.h"
+#include "sftp4tc_share.h"
 #include "psftp.h"
 #include "pl_psftp.h"
 #include "pl_consts.h"
