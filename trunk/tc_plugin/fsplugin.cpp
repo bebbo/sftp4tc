@@ -2981,6 +2981,10 @@ int import_one_putty_session(SftpServerAccountInfoType *ServerAccountInfo, char 
          sizeof(PublicKeyFile));
 
     if (strlen(HostName) > 0 && strcmp(Protocol, "ssh") == 0) {
+		if (strstr(HostName,"@")!=NULL) { // get username from hostname if it's there
+			int count=strstr(HostName,"@")-HostName;
+			strncpy(UserName,HostName,count);
+		}
       ServerAccountInfoDefaults(ServerAccountInfo);
       if (!PortNumber || PortNumber < 1) {
         PortNumber = 22;
