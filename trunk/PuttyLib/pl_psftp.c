@@ -48,7 +48,7 @@ int wcplg_open_sftp_session(char *userhost, char *user, char *pass,
   console_password = dupstr(pass);
   flags = 0;                    //FLAG_STDERR | FLAG_INTERACTIVE;
   cmdline_tooltype = TOOLTYPE_FILETRANSFER;
-  ssh_get_line = &console_get_line;
+  //ssh_get_line = &console_get_line;
 
   do_defaults(NULL, &cfg);
 
@@ -81,7 +81,7 @@ int wcplg_close_sftp_session()
 
   wcplg_set_last_error_msg("");
 
-  if ((back != NULL) && (back->socket(backhandle) != NULL)) {
+  if ((back != NULL) && (back->connected(backhandle))) {
     char ch;
     back->special(backhandle, TS_EOF);
     sftp_recvdata(&ch, 1);

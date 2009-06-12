@@ -1,5 +1,5 @@
 /*
- * console.c: various interactive-prompt routines shared between
+ * wincons.c - various interactive-prompt routines shared between
  * the Windows console PuTTY tools
  */
 
@@ -11,12 +11,9 @@
 #include "storage.h"
 #include "ssh.h"
 
-#include <windows.h>
-
 int console_batch_mode = FALSE;
 
 static void *console_logctx = NULL;
-extern Config cfg;
 
 /*
  * Clean up and exit.
@@ -28,21 +25,29 @@ void cleanup_exit(int code)
      */
     sk_cleanup();
 
-    //WSACleanup(); //hangs sometime !!!
-
-    if (cfg.protocol == PROT_SSH) {
-
-	random_save_seed();
+    random_save_seed();
 #ifdef MSCRYPTOAPI
-	crypto_wrapup();
+    crypto_wrapup();
 #endif
 
-    }
+    exit(code);
+}
+
+void set_busy_status(void *frontend, int status)
+{
+}
+
+void notify_remote_exit(void *frontend)
+{
+}
+
+void timer_change_notify(long next)
+{
 }
 
 int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
-			 char *keystr, char *fingerprint,
-       void (*callback)(void *ctx, int result), void *ctx)
+                        char *keystr, char *fingerprint,
+                        void (*callback)(void *ctx, int result), void *ctx)
 {
     int ret;
     HANDLE hin;
@@ -55,21 +60,19 @@ int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
 	"The server's %s key fingerprint is:\n"
 	"%s\n"
 	"Connection abandoned.\n";
-
     static const char absentmsg[] =
 	"The server's host key is not cached in the registry. You\n"
 	"have no guarantee that the server is the computer you\n"
 	"think it is.\n"
-	"The server's key fingerprint is:\n"
-	"%s\n\n"
-	"If you trust this host, click \"Yes\" to add the key to\n"
+	"The server's %s key fingerprint is:\n"
+	"%s\n"
+	"If you trust this host, enter \"y\" to add the key to\n"
 	"PuTTY's cache and carry on connecting.\n"
 	"If you want to carry on connecting just once, without\n"
-	"adding the key to the cache, click \"No\".\n"
-	"If you do not trust this host, click \"Cancel\" or hit ESC to abandon the connection.\n"
-	"\n"
-	"Store key in cache? (Yes/No) \n"
-	"Cancel Connection? (Cancel or ESC) ";
+	"adding the key to the cache, enter \"n\".\n"
+	"If you do not trust this host, press Return to abandon the\n"
+	"connection.\n"
+	"Store key in cache? (y/n) ";
 
     static const char wrongmsg_batch[] =
 	"WARNING - POTENTIAL SECURITY BREACH!\n"
@@ -81,7 +84,6 @@ int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
 	"The new %s key fingerprint is:\n"
 	"%s\n"
 	"Connection abandoned.\n";
-
     static const char wrongmsg[] =
 	"WARNING - POTENTIAL SECURITY BREACH!\n"
 	"The server's host key does not match the one PuTTY has\n"
@@ -89,23 +91,20 @@ int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
 	"server administrator has changed the host key, or you\n"
 	"have actually connected to another computer pretending\n"
 	"to be the server.\n"
-	"The new key fingerprint is:\n"
-	"%s\n\n"
+	"The new %s key fingerprint is:\n"
+	"%s\n"
 	"If you were expecting this change and trust the new key,\n"
-	"click \"Yes\" to update PuTTY's cache and continue connecting.\n"
+	"enter \"y\" to update PuTTY's cache and continue connecting.\n"
 	"If you want to carry on connecting but without updating\n"
-	"the cache, click \"No\".\n"
-	"If you want to abandon the connection completely, click \"Cancel\" or hit ESC.\n"
-	"Canceling is the ONLY guaranteed safe choice\n"
-	"\n"
-	"Update cached key? (Yes/No) \n"
-	"Cancel Connection? (Cancel or ESC) ";
+	"the cache, enter \"n\".\n"
+	"If you want to abandon the connection completely, press\n"
+	"Return to cancel. Pressing Return is the ONLY guaranteed\n"
+	"safe choice.\n"
+	"Update cached key? (y/n, Return cancels connection) ";
 
     static const char abandoned[] = "Connection abandoned.\n";
 
     char line[32];
-    int msgBoxRet;
-    char buf1[10000];		// :-|
 
     /*
      * Verify the key against the registry.
@@ -118,33 +117,16 @@ int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
     if (ret == 2) {		       /* key was different */
 	if (console_batch_mode) {
 	    fprintf(stderr, wrongmsg_batch, keytype, fingerprint);
-	    cleanup_exit(1);
+            return 0;
 	}
-
-	sprintf(buf1,wrongmsg,fingerprint);
-	msgBoxRet=MessageBox(
-	    NULL,							// handle of owner window
-	    buf1,							// address of text in message box
-	    "PuTTY Security Alert (TC sftp Plugin)",			// address of title of message box
-	    MB_YESNOCANCEL|MB_DEFBUTTON3|MB_TASKMODAL|MB_TOPMOST	// style of message box
-	);
-
 	fprintf(stderr, wrongmsg, keytype, fingerprint);
 	fflush(stderr);
     }
     if (ret == 1) {		       /* key was absent */
 	if (console_batch_mode) {
 	    fprintf(stderr, absentmsg_batch, keytype, fingerprint);
-	    cleanup_exit(1);
+            return 0;
 	}
-
-	sprintf(buf1,absentmsg,fingerprint);
-	msgBoxRet=MessageBox(
-	    NULL,							// handle of owner window
-	    buf1,							// address of text in message box
-	    "PuTTY Security Alert (TC sftp Plugin)",			// address of title of message box
-	    MB_YESNOCANCEL|MB_DEFBUTTON3|MB_TASKMODAL|MB_TOPMOST	// style of message box
-	);
 	fprintf(stderr, absentmsg, keytype, fingerprint);
 	fflush(stderr);
     }
@@ -156,90 +138,17 @@ int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
     ReadFile(hin, line, sizeof(line) - 1, &i, NULL);
     SetConsoleMode(hin, savemode);
 
-    if (msgBoxRet == IDYES) {
-	store_host_key(host, port, keytype, keystr);
-	return 1;
-    }
-
-    if (msgBoxRet == IDNO) {
-	return 1;
-    }
-	
-    return 0;//ansonsten Abruch 
-
     if (line[0] != '\0' && line[0] != '\r' && line[0] != '\n') {
 	if (line[0] == 'y' || line[0] == 'Y')
 	    store_host_key(host, port, keytype, keystr);
+        return 1;
     } else {
 	fprintf(stderr, abandoned);
-	cleanup_exit(0);
+        return 0;
     }
 }
 
 void update_specials_menu(void *frontend)
-{
-}
-
-/*
- * Ask whether the selected cipher is acceptable (since it was
- * below the configured 'warn' threshold).
- * cs: 0 = both ways, 1 = client->server, 2 = server->client
- */
-void askcipher(void *frontend, char *ciphername, int cs)
-{
-    HANDLE hin;
-    DWORD savemode, i;
-
-    static const char msg[] =
-	"The first %scipher supported by the server is\n"
-	"%s, which is below the configured warning threshold.\n"
-	"Continue with connection? (y/n) ";
-    static const char msg_batch[] =
-	"The first %scipher supported by the server is\n"
-	"%s, which is below the configured warning threshold.\n"
-	"Connection abandoned.\n";
-    static const char abandoned[] = "Connection abandoned.\n";
-
-    char line[32];
-
-    if (console_batch_mode) {
-	fprintf(stderr, msg_batch,
-		(cs == 0) ? "" :
-		(cs == 1) ? "client-to-server " : "server-to-client ",
-		ciphername);
-	cleanup_exit(1);
-    }
-
-    fprintf(stderr, msg,
-	    (cs == 0) ? "" :
-	    (cs == 1) ? "client-to-server " : "server-to-client ",
-	    ciphername);
-    fflush(stderr);
-
-    hin = GetStdHandle(STD_INPUT_HANDLE);
-    GetConsoleMode(hin, &savemode);
-    SetConsoleMode(hin, (savemode | ENABLE_ECHO_INPUT |
-			 ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT));
-    ReadFile(hin, line, sizeof(line) - 1, &i, NULL);
-    SetConsoleMode(hin, savemode);
-
-    if (line[0] == 'y' || line[0] == 'Y') {
-	return;
-    } else {
-	fprintf(stderr, abandoned);
-	cleanup_exit(0);
-    }
-}
-
-void notify_remote_exit(void *frontend)
-{
-}
-
-void set_busy_status(void *frontend, int status)
-{
-}
-
-void timer_change_notify(long next)
 {
 }
 
@@ -293,7 +202,7 @@ int askalg(void *frontend, const char *algtype, const char *algname,
  * Returns 2 for wipe, 1 for append, 0 for cancel (don't log).
  */
 int askappend(void *frontend, Filename filename,
-              void (*callback)(void *ctx, int result), void *ctx)
+	      void (*callback)(void *ctx, int result), void *ctx)
 {
     HANDLE hin;
     DWORD savemode, i;
@@ -349,7 +258,7 @@ int askappend(void *frontend, Filename filename,
 void old_keyfile_warning(void)
 {
     static const char message[] =
-	"You are loading an SSH 2 private key which has an\n"
+	"You are loading an SSH-2 private key which has an\n"
 	"old version of the file format. This means your key\n"
 	"file is not fully tamperproof. Future versions of\n"
 	"PuTTY may stop supporting this private key format,\n"
@@ -362,6 +271,22 @@ void old_keyfile_warning(void)
     fputs(message, stderr);
 }
 
+/*
+ * Display the fingerprints of the PGP Master Keys to the user.
+ */
+void pgp_fingerprints(void)
+{
+    fputs("These are the fingerprints of the PuTTY PGP Master Keys. They can\n"
+	  "be used to establish a trust path from this executable to another\n"
+	  "one. See the manual for more information.\n"
+	  "(Note: these fingerprints have nothing to do with SSH!)\n"
+	  "\n"
+	  "PuTTY Master Key (RSA), 1024-bit:\n"
+	  "  " PGP_RSA_MASTER_KEY_FP "\n"
+	  "PuTTY Master Key (DSA), 1024-bit:\n"
+	  "  " PGP_DSA_MASTER_KEY_FP "\n", stdout);
+}
+
 void console_provide_logctx(void *logctx)
 {
     console_logctx = logctx;
@@ -369,67 +294,109 @@ void console_provide_logctx(void *logctx)
 
 void logevent(void *frontend, const char *string)
 {
-    if (console_logctx)
-	log_eventlog(console_logctx, string);
+    log_eventlog(console_logctx, string);
+}
+
+static void console_data_untrusted(HANDLE hout, const char *data, int len)
+{
+    DWORD dummy;
+    /* FIXME: control-character filtering */
+    WriteFile(hout, data, len, &dummy, NULL);
 }
 
 char *console_password = NULL;
 
-int console_get_line(const char *prompt, char *str,
-			    int maxlen, int is_pw)
+int console_get_userpass_input(prompts_t *p, unsigned char *in, int inlen)
 {
     HANDLE hin, hout;
-    DWORD savemode, newmode, i;
+    size_t curr_prompt;
 
-    if (is_pw && console_password) {
-		
-	static int tried_once = 0;
-
-	if (tried_once) {
-	    return 0;
-	} else {
-	    strncpy(str, console_password, maxlen);
-	    str[maxlen - 1] = '\0';
-	    tried_once = 1;
-	    return 1;
-	}
+    /*
+     * Zero all the results, in case we abort half-way through.
+     */
+    {
+	int i;
+	for (i = 0; i < (int)p->n_prompts; i++)
+	    memset(p->prompts[i]->result, 0, p->prompts[i]->result_len);
     }
 
-    if (console_batch_mode) {
-	if (maxlen > 0)
-	    str[0] = '\0';
-    } else {
-	hin = GetStdHandle(STD_INPUT_HANDLE);
-	hout = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (hin == INVALID_HANDLE_VALUE || hout == INVALID_HANDLE_VALUE) {
-	    fprintf(stderr, "Cannot get standard input/output handles\n");
-	    cleanup_exit(1);
-	}
+    if (console_batch_mode)
+	return 0;
+
+    hin = GetStdHandle(STD_INPUT_HANDLE);
+    hout = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hin == INVALID_HANDLE_VALUE || hout == INVALID_HANDLE_VALUE) {
+	fprintf(stderr, "Cannot get standard input/output handles\n");
+	cleanup_exit(1);
+    }
+
+    /*
+     * Preamble.
+     */
+    /* We only print the `name' caption if we have to... */
+    if (p->name_reqd && p->name) {
+	size_t l = strlen(p->name);
+	console_data_untrusted(hout, p->name, l);
+	if (p->name[l-1] != '\n')
+	    console_data_untrusted(hout, "\n", 1);
+    }
+    /* ...but we always print any `instruction'. */
+    if (p->instruction) {
+	size_t l = strlen(p->instruction);
+	console_data_untrusted(hout, p->instruction, l);
+	if (p->instruction[l-1] != '\n')
+	    console_data_untrusted(hout, "\n", 1);
+    }
+
+    for (curr_prompt = 0; curr_prompt < p->n_prompts; curr_prompt++) {
+
+	DWORD savemode, newmode, i = 0;
+	prompt_t *pr = p->prompts[curr_prompt];
+	BOOL r;
+
+    if (console_password) {
+		
+		static int tried_once = 0;
+
+		if (tried_once) {
+			return 0;
+		} else {
+			strncpy(pr->result, console_password, pr->result_len - 1);
+			pr->result[pr->result_len - 1] = '\0';
+			tried_once = 1;
+			continue;
+		}
+    }
 
 	GetConsoleMode(hin, &savemode);
 	newmode = savemode | ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT;
-	if (is_pw)
+	if (!pr->echo)
 	    newmode &= ~ENABLE_ECHO_INPUT;
 	else
 	    newmode |= ENABLE_ECHO_INPUT;
 	SetConsoleMode(hin, newmode);
 
-	WriteFile(hout, prompt, strlen(prompt), &i, NULL);
-	ReadFile(hin, str, maxlen - 1, &i, NULL);
+	console_data_untrusted(hout, pr->prompt, strlen(pr->prompt));
+
+	r = ReadFile(hin, pr->result, pr->result_len - 1, &i, NULL);
 
 	SetConsoleMode(hin, savemode);
 
-	if ((int) i > maxlen)
-	    i = maxlen - 1;
+	if ((int) i > pr->result_len)
+	    i = pr->result_len - 1;
 	else
 	    i = i - 2;
-	str[i] = '\0';
+	pr->result[i] = '\0';
 
-	if (is_pw)
-	    WriteFile(hout, "\r\n", 2, &i, NULL);
+	if (!pr->echo) {
+	    DWORD dummy;
+	    WriteFile(hout, "\r\n", 2, &dummy, NULL);
+	}
 
     }
-    return 1;
+
+    return 1; /* success */
+
 }
 
 void frontend_keypress(void *handle)
