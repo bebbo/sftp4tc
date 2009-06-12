@@ -13,18 +13,6 @@
 #include "tree234.h"
 #include "sftp.h"
 
-#define GET_32BIT(cp) \
-    (((unsigned long)(unsigned char)(cp)[0] << 24) | \
-    ((unsigned long)(unsigned char)(cp)[1] << 16) | \
-    ((unsigned long)(unsigned char)(cp)[2] << 8) | \
-    ((unsigned long)(unsigned char)(cp)[3]))
-
-#define PUT_32BIT(cp, value) { \
-    (cp)[0] = (unsigned char)((value) >> 24); \
-    (cp)[1] = (unsigned char)((value) >> 16); \
-    (cp)[2] = (unsigned char)((value) >> 8); \
-    (cp)[3] = (unsigned char)(value); }
-
 struct sftp_packet {
     char *data;
     unsigned length, maxlen;
@@ -34,18 +22,17 @@ struct sftp_packet {
 
 static const char *fxp_error_message;
 static int fxp_errtype;
-static int disconnected = 0;
-static int connected = 0;
-
 
 static void fxp_internal_error(char *msg);
+
+static int disconnected = 0;
 
 /* ----------------------------------------------------------------------
  * SFTP packet construction functions.
  */
 static void sftp_pkt_ensure(struct sftp_packet *pkt, int length)
 {
-    if (pkt->maxlen < length) {
+    if ((int)pkt->maxlen < length) {
 	pkt->maxlen = length + 256;
 	pkt->data = sresize(pkt->data, pkt->maxlen, char);
     }
@@ -159,14 +146,14 @@ static int sftp_pkt_getuint32(struct sftp_packet *pkt, unsigned long *ret)
     return 1;
 }
 static int sftp_pkt_getstring(struct sftp_packet *pkt,
-			       char **p, int *length)
+			      char **p, int *length)
 {
     *p = NULL;
     if (pkt->length - pkt->savedpos < 4)
 	return 0;
     *length = GET_32BIT(pkt->data + pkt->savedpos);
     pkt->savedpos += 4;
-    if (pkt->length - pkt->savedpos < *length || *length < 0) {
+    if ((int)(pkt->length - pkt->savedpos) < *length || *length < 0) {
 	*length = 0;
 	return 0;
     }
@@ -219,7 +206,6 @@ static int sftp_pkt_getattrs(struct sftp_packet *pkt, struct fxp_attrs *ret)
 }
 static void sftp_pkt_free(struct sftp_packet *pkt)
 {
-  if (pkt)
     if (pkt->data)
 	sfree(pkt->data);
     sfree(pkt);
@@ -246,27 +232,12 @@ struct sftp_packet *sftp_recv(void)
     if (!sftp_recvdata(x, 4))
 	return NULL;
 
-    //this is experimental :-(
-    if (!connected)
-    {
-      while ((x[0]!=0) || (x[1]!=0) || (x[2]!=0) || (x[3]!=5)) {
-        x[0]=x[1];
-        x[1]=x[2];
-        x[2]=x[3];
-        if (!sftp_recvdata(&x[3], 1))
-	        return NULL;
-      }
-      connected=1;
-    }
-
     pkt = snew(struct sftp_packet);
     pkt->savedpos = 0;
     pkt->length = pkt->maxlen = GET_32BIT(x);
     pkt->data = snewn(pkt->length, char);
 
-    //the first part just makes sure, that we have some buffer to there
-    //this can happen, if your .bash_rc echoes something
-    if ((!pkt->data) || (!sftp_recvdata(pkt->data, pkt->length))) {
+    if (!sftp_recvdata(pkt->data, pkt->length)) {
 	sftp_pkt_free(pkt);
 	return NULL;
     }
@@ -339,7 +310,7 @@ static struct sftp_request *sftp_alloc_request(void)
     high = tsize;
     while (high - low > 1) {
 	mid = (high + low) / 2;
-	r = (struct sftp_request *)index234(sftp_requests, mid);
+	r = index234(sftp_requests, mid);
 	if (r->id == mid + REQUEST_ID_OFFSET)
 	    low = mid;		       /* this one is fine */
 	else
@@ -393,7 +364,7 @@ struct sftp_request *sftp_find_request(struct sftp_packet *pktin)
 	fxp_internal_error("did not receive a valid SFTP packet\n");
 	return NULL;
     }
-    req = (struct sftp_request *)find234(sftp_requests, &id, sftp_reqfind);
+    req = find234(sftp_requests, &id, sftp_reqfind);
 
     if (!req || !req->registered) {
 	fxp_internal_error("request ID mismatch\n");
@@ -460,12 +431,12 @@ static int fxp_got_status(struct sftp_packet *pktin)
 	    fxp_errtype = -1;
 	} else {
 	    fxp_errtype = ul;
-	if (fxp_errtype < 0 ||
-	    fxp_errtype >= sizeof(messages) / sizeof(*messages))
+	    if (fxp_errtype < 0 ||
+		fxp_errtype >= sizeof(messages) / sizeof(*messages))
 		fxp_error_message = "unknown error code";
-	else
-	    fxp_error_message = messages[fxp_errtype];
-    }
+	    else
+		fxp_error_message = messages[fxp_errtype];
+	}
     }
 
     if (fxp_errtype == SSH_FX_OK)
@@ -566,7 +537,6 @@ struct sftp_request *fxp_realpath_send(char *path)
 char *fxp_realpath_recv(struct sftp_packet *pktin, struct sftp_request *req)
 {
     sfree(req);
-  if (pktin==NULL) return NULL;
 
     if (pktin->type == SSH_FXP_NAME) {
 	unsigned long count;
@@ -616,8 +586,6 @@ struct fxp_handle *fxp_open_recv(struct sftp_packet *pktin,
 {
     sfree(req);
 
-    if (pktin==NULL) return NULL;
-
     if (pktin->type == SSH_FXP_HANDLE) {
 	char *hstring;
 	struct fxp_handle *handle;
@@ -660,7 +628,6 @@ struct fxp_handle *fxp_opendir_recv(struct sftp_packet *pktin,
 				    struct sftp_request *req)
 {
     sfree(req);
-    if (pktin==NULL) return NULL;
     if (pktin->type == SSH_FXP_HANDLE) {
 	char *hstring;
 	struct fxp_handle *handle;
@@ -833,14 +800,13 @@ int fxp_stat_recv(struct sftp_packet *pktin, struct sftp_request *req,
 		  struct fxp_attrs *attrs)
 {
     sfree(req);
-    if (pktin==NULL) return 0;
     if (pktin->type == SSH_FXP_ATTRS) {
 	if (!sftp_pkt_getattrs(pktin, attrs)) {
 	    fxp_internal_error("malformed SSH_FXP_ATTRS packet");
 	    sftp_pkt_free(pktin);
 	    return 0;
 	}
-        sftp_pkt_free(pktin);
+	sftp_pkt_free(pktin);
 	return 1;
     } else {
 	fxp_got_status(pktin);
@@ -867,14 +833,13 @@ int fxp_fstat_recv(struct sftp_packet *pktin, struct sftp_request *req,
 		   struct fxp_attrs *attrs)
 {
     sfree(req);
-    if (pktin==NULL) return -1; //or 0?
     if (pktin->type == SSH_FXP_ATTRS) {
 	if (!sftp_pkt_getattrs(pktin, attrs)) {
 	    fxp_internal_error("malformed SSH_FXP_ATTRS packet");
 	    sftp_pkt_free(pktin);
 	    return 0;
 	}
-        sftp_pkt_free(pktin);
+	sftp_pkt_free(pktin);
 	return 1;
     } else {
 	fxp_got_status(pktin);
@@ -1014,7 +979,6 @@ struct fxp_names *fxp_readdir_recv(struct sftp_packet *pktin,
 				   struct sftp_request *req)
 {
     sfree(req);
-    if (pktin==NULL) return NULL;
     if (pktin->type == SSH_FXP_NAME) {
 	struct fxp_names *ret;
 	unsigned long i;
@@ -1048,7 +1012,7 @@ struct fxp_names *fxp_readdir_recv(struct sftp_packet *pktin,
 	ret = snew(struct fxp_names);
 	ret->nnames = i;
 	ret->names = snewn(ret->nnames, struct fxp_name);
-	for (i = 0; i < ret->nnames; i++) {
+	for (i = 0; i < (unsigned long)ret->nnames; i++) {
 	    char *str1, *str2;
 	    int len1, len2;
 	    if (!sftp_pkt_getstring(pktin, &str1, &len1) ||
@@ -1183,7 +1147,7 @@ static struct fxp_xfer *xfer_init(struct fxp_handle *fh, uint64 offset)
     xfer->offset = offset;
     xfer->head = xfer->tail = NULL;
     xfer->req_totalsize = 0;
-    xfer->req_maxsize = 16384;
+    xfer->req_maxsize = 1048576;
     xfer->err = 0;
     xfer->filesize = uint64_make(ULONG_MAX, ULONG_MAX);
     xfer->furthestdata = uint64_make(0, 0);
@@ -1223,7 +1187,7 @@ void xfer_download_queue(struct fxp_xfer *xfer)
 	xfer->tail = rr;
 	rr->next = NULL;
 
-	rr->len = 4096;
+	rr->len = 32768;
 	rr->buffer = snewn(rr->len, char);
 	sftp_register(req = fxp_read_send(xfer->fh, rr->offset, rr->len));
 	fxp_set_userdata(req, rr);
