@@ -8214,8 +8214,10 @@ static void ssh2_msg_disconnect(Ssh ssh, struct Packet *pktin)
     }
     logevent(buf);
     sfree(buf);
-    buf = dupprintf("Disconnection message text: %n%.*s",
-		    &nowlen, msglen, msg);
+    buf = dupprintf("Disconnection message text: %s", msg);
+	nowlen=0;
+//    buf = dupprintf("Disconnection message text: %n%.*s",
+//		    &nowlen, msglen, msg);
     logevent(buf);
     bombout(("Server sent disconnect message\ntype %d (%s):\n\"%s\"",
 	     reason,

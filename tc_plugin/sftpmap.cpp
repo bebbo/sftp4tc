@@ -19,7 +19,7 @@ typedef struct
   FARPROC Disconnect;
   FARPROC SFTP_DLL_FNCT_psftp_memory_hole__stopfen;
   PsftpGetLastErrorMessageProcType GetLastErrorMessage;
-  PsftpInitProgressProcProcType InitProgressProc;
+  PsftpInitProcsProcType InitProgressProc;
   PsftpSetSftpServerAccountInfoProcType SetSftpServerAccountInfo;
   PsftpSetTransferModeProcType SetTransferMode;
   PsftpDisconnectedProcType Disconnected;
@@ -95,6 +95,8 @@ void SetTransferMode(int id, char *mode)
     strncat(gDefaultTransferMode, mode, 2048);
 }
 
+int (*getPasswordDialog)(char const * const, int, char * const, int);
+
 //---------------------------------------------------------------------
 
 int Connect(char* user, char* password, char* host, int port,
@@ -163,7 +165,7 @@ int Connect(char* user, char* password, char* host, int port,
   currect_psftp->GetLastErrorMessage =
     (PsftpGetLastErrorMessageProcType) GetProcAddress(dll, "__map__wcplg_get_last_error_msg");
   currect_psftp->InitProgressProc =
-    (PsftpInitProgressProcProcType) GetProcAddress(dll, "__map__init_ProgressProc");
+    (PsftpInitProcsProcType) GetProcAddress(dll, "__map__init_Procs");
   currect_psftp->SFTP_DLL_FNCT_psftp_memory_hole__stopfen =
     GetProcAddress(dll, "__map__psftp_memory_hole__stopfen");
   currect_psftp->SetSftpServerAccountInfo =
@@ -182,20 +184,20 @@ int Connect(char* user, char* password, char* host, int port,
       || currect_psftp->SFTP_DLL_FNCT_psftp_memory_hole__stopfen == NULL
       || currect_psftp->SetSftpServerAccountInfo == NULL
       || currect_psftp->SetTransferMode == NULL
-      || currect_psftp->Disconnected == NULL) {
+      || currect_psftp->Disconnected == NULL
+	  ) {
     // DLL loaded successfuly, but not all functions could be imported
     dbg("Can't load all of PSFTP.DLL's functions!");
     UnloadPsftpDll(currentServerId);
     return SFTP_FAILED;
   }
 
-
   /* 
      DLL-loading and functionsimport successed,
      now try to connect to server
    */
 
-  InitProgressProc(gProgressProc, gPluginNumber, currentServerId);
+  InitProcs(gRequestProc, gProgressProc, gPluginNumber, currentServerId);
 
   if ((current_server->keyfilename[0]) & (!current_server->dont_ask4_passphrase)) //get passphrase for private key
   {
@@ -427,7 +429,7 @@ struct fxp_names* GetCurrentDirectoryStruct(int serverId)
 
 //---------------------------------------------------------------------
 
-inline void convert_slash_windows_to_unix(char* string)
+void convert_slash_windows_to_unix(char* string)
 {
   unsigned int i = 0;
   unsigned int length = strlen(string);
@@ -452,11 +454,11 @@ void convert_slash_unix_to_windows(char* string)
 
 //---------------------------------------------------------------------
 
-int InitProgressProc(ProgressProcType progressProc, int pluginNr, int serverId)
+int InitProcs(RequestProcType requestProc, ProgressProcType progressProc, int pluginNr, int serverId)
 {
   if (PsftpWrapper[serverId].InitProgressProc != NULL) 
   {
-    return PsftpWrapper[serverId].InitProgressProc(progressProc, pluginNr);
+    return PsftpWrapper[serverId].InitProgressProc(requestProc, progressProc, pluginNr);
   }
 
   return 0;

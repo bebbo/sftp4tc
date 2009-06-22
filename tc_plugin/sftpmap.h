@@ -70,8 +70,8 @@ typedef int (__stdcall CALLBACK * PsftpConnectProcType) (char *, char *, char *,
 typedef int (__stdcall CALLBACK * PsftpDoSftpProcType) (char *, char *);
 typedef my_fxp_names *(__stdcall CALLBACK * PsftpGetCurrentDirStructProcType) (void);
 typedef char *(__stdcall CALLBACK * PsftpGetLastErrorMessageProcType) (void);
-typedef int (__stdcall CALLBACK * PsftpInitProgressProcProcType) 
-    (ProgressProcType AP_ProgressProc, int Awc_PluginNr);
+typedef int (__stdcall CALLBACK * PsftpInitProcsProcType) 
+    (RequestProcType AP_RequestProc, ProgressProcType AP_ProgressProc, int Awc_PluginNr);
 typedef void (__stdcall CALLBACK * PsftpSetSftpServerAccountInfoProcType)
     (SftpServerAccountInfo ServerAccountInfo);
 typedef void (CALLBACK * PsftpSetTransferModeProcType)(char *mode);
@@ -81,7 +81,7 @@ void Unload_PSFTP_DLL_HANDLER(int ServerId);
 void *__wcplg_sftp_get_current_dir_struct(void);
 void convert_slash_windows_to_unix(char* string);
 void convert_slash_unix_to_windows(char* string);
-int InitProgressProc(ProgressProcType AP_ProgressProc, int Awc_PluginNr,
+int InitProcs(RequestProcType AP_RequestProc, ProgressProcType AP_ProgressProc, int Awc_PluginNr,
                       int CurrentServerId);
 int psftp_memory_hole__stopfen(int ID);
 void InitPsftpWrappers(void);

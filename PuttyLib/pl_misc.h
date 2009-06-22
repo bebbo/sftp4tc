@@ -9,10 +9,14 @@ void wcplg_set_last_error_msg(const char *str_);
 typedef int (__stdcall * tProgressProc) (int PluginNr, char *SourceName,
                                          char *TargetName,
                                          int PercentDone);
+typedef int (__stdcall * tRequestProcType) (int PluginNr, int RequestType,
+                                        char *CustomTitle,
+                                        char *CustomText,
+                                        char *ReturnedText, int maxlen);
 
 
 int ProgressProc(char *SourceName, char *TargetName, int PercentDone);
-int init_ProgressProc(tProgressProc AP_ProgressProc, int Awc_PluginNr);
+int init_Procs(tRequestProcType AP_RequestProc, tProgressProc AP_ProgressProc, int Awc_PluginNr);
 int psftp_memory_hole__stopfen(void);
 
 #endif

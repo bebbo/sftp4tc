@@ -3,6 +3,7 @@
 #include "sftp4tc_share.h"
 #include "sftp.h"
 
+RequestProcType gRequestProc = NULL;
 ProgressProcType gProgressProc = NULL;
 int gTotalCommanderPluginNr = -1;
 char gTotalCommanderLastErrorMessage[1000];
@@ -53,9 +54,16 @@ int ProgressProc(char *SourceName, char *TargetName, int PercentDone)
   return RESULT_ERR;
 }
 
-int init_ProgressProc(ProgressProcType pprogressProc, int totalCommaderPluginNr)
+int init_Procs(RequestProcType prequestProc, ProgressProcType pprogressProc, int totalCommaderPluginNr)
 {
+  gRequestProc = prequestProc;
   gProgressProc = pprogressProc;
   gTotalCommanderPluginNr = totalCommaderPluginNr;
   return 1;
+}
+
+
+int getPasswordDialog(char * caption, int isPw, char * dest, int len) {
+	return gRequestProc(gTotalCommanderPluginNr, isPw ? RT_UserName : RT_Password, caption, 
+              NULL, dest, len - 1);
 }

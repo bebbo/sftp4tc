@@ -64,10 +64,10 @@ int __map__disconnected()
   return fxp_disconnected();
 }
 
-int __stdcall __map__init_ProgressProc(tProgressProc AP_ProgressProc,
+int __stdcall __map__init_Procs(tRequestProcType AP_RequestProc, tProgressProc AP_ProgressProc,
                                        int Awc_PluginNr)
 {
-  return init_ProgressProc(AP_ProgressProc, Awc_PluginNr);
+  return init_Procs(AP_RequestProc, AP_ProgressProc, Awc_PluginNr);
 }
 
 int __stdcall __map__psftp_memory_hole__stopfen(void)
