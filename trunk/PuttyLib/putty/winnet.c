@@ -308,6 +308,11 @@ void sk_cleanup(void)
 #endif
 }
 
+
+int sk_isClosed() {
+	return !sktree;
+}
+
 char *winsock_error_string(int error)
 {
     switch (error) {
@@ -1318,7 +1323,7 @@ int select_result(WPARAM wParam, LPARAM lParam)
 
     /* wParam is the socket itself */
 
-    if (wParam == 0)
+    if (wParam == 0 || !sktree)
 	return 1;		       /* boggle */
 
     s = find234(sktree, (void *) wParam, cmpforsearch);
@@ -1591,6 +1596,7 @@ SOCKET first_socket(int *state)
 {
     Actual_Socket s;
     *state = 0;
+	if (!sktree) return INVALID_SOCKET;
     s = index234(sktree, (*state)++);
     return s ? s->s : INVALID_SOCKET;
 }
