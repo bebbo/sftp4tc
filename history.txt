@@ -1,3 +1,8 @@
+VERSION 1.2.60.0
+/UPDATED to PuTTY 0.60
++FIXED hang on key authentication if key is missing -> added password prompt
++FIXED crash on exit if no connection is established
+
 VERSION 1.2.58.1a
 +FIXED configuration dialog didn't saved connections
 +FIXED connection list was empty, after setting import sessions back to "no" from one of the other options
