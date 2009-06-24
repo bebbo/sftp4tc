@@ -1,3 +1,6 @@
+VERSION 1.2.60.1
++ FIXED broken progress bars
+
 VERSION 1.2.60.0
 /UPDATED to PuTTY 0.60
 +FIXED hang on key authentication if key is missing -> added password prompt
@@ -55,9 +58,9 @@ VERSION 1.1.56.1
 VERSION 1.1.55.3
 [19.10.2004]
 ?TODO  Translate german comments to english ones
-/UPDATED using GNU's indent for source files now. (-lp -nut -ci2 -i2 -ts2 -kr) Not 
+/UPDATED using GNU's indent for source files now. (-lp -nut -ci2 -i2 -ts2 -kr) Not
        for all PuTTY files, but for some of them, too.
-*ADDED Dumb transfer mode. If one set "Text mode" he should be sure, that it's the best choice 
+*ADDED Dumb transfer mode. If one set "Text mode" he should be sure, that it's the best choice
        for him. There's no check for host's default mode. Assuming *nix.
 *ADDED CHMOD after PUT/MKDIR
 
@@ -65,7 +68,7 @@ VERSION 1.1.55.2
 [21.9. 2004]
 +FIXED copying DLL without admin rights
 
-VERSION 1.1.55.1 
+VERSION 1.1.55.1
 [2.9. 2004]
 /UPDATED TO PuTTY 0.55 (first beta)
 
@@ -75,7 +78,7 @@ VERSION 1.09	[24. Jan 2004]
 
 VERSION 1.08b   [10.Mar.2003]
 +FIXED sftp cd & sftp ls & "quote root"
-*ADDED some New Connection Dlgs 
+*ADDED some New Connection Dlgs
 
 VERSION 1.08a	[28.Feb.2003]
 +FIXED Connect/Disconnect design is a little bit wrong, so now happen no troubles anymore, but it's not the best solution
@@ -108,7 +111,7 @@ VERSION 1.06   [17.Jan.2003]
 /CHANGED Ported to latest PuttySource (0.53b)
 
 VERSION 1.05
-+FIXED Y2K Problem in UnixTimeToLocalTime() changed 		if (st.wYear<30  || (st.wYear<200 && st.wYear>=100)) to if ((st.wYear>=30 && st.wYear<=99) || (st.wYear<200 && st.wYear>=100)) 
++FIXED Y2K Problem in UnixTimeToLocalTime() changed 		if (st.wYear<30  || (st.wYear<200 && st.wYear>=100)) to if ((st.wYear>=30 && st.wYear<=99) || (st.wYear<200 && st.wYear>=100))
 +FIXED root commando works good now
 *ADDED import session from putty && ssh.com (optional)
 *ADDED Host Key Warnigs
@@ -148,7 +151,7 @@ ADDED - handle 'quote' command for command line, currently only for 'cd' command
 TODO's
 FIXED - time atri wrong
 FIXED - dir size wrong
- - escaping in cmd string for " \ * and like this 
+ - escaping in cmd string for " \ * and like this
 FIXED - handle symbolic links on sftp server ?
 FIXED - Correct Error handling
 FIXED - disconnect while an open sftp session handling
@@ -159,12 +162,12 @@ FIXED - rmdir error "!"
  - ask username and password, HOW, how 2 store password ???
  - form dialog for edit wcx_sftp.ini
 FIXED  - where i am *.dll ?!?!
-FIXED  - change file atri 
+FIXED  - change file atri
 FIXED  - what todo when 0 servers in *.ini
- - title in allServers: no duplicates 
+ - title in allServers: no duplicates
  - psftp are slow ?? it's not cpu and not network traffic
-FIXED  - psftp have memory leak, have to fix this perhaps in psftp.c or sftp.c 
- - creating README & INSTALL 
+FIXED  - psftp have memory leak, have to fix this perhaps in psftp.c or sftp.c
+ - creating README & INSTALL
 FIXED  - How 2 disconnect a sftp session
 FIXED  - other place for wcx_sftp.ini & psftp.dll ???
  - parse the cmd 4 unsecure chars !!!!
@@ -177,7 +180,7 @@ BOGUS - define pluginroot in wcx_sftp.ini ???
  - socks support, anytime ?!??!?
  - connection timeout ?!? what 2do ?
 FIXED - does psftp support compressing ???
-FIXED  - tmp file in wcplg_sftp_do_commando, FIX ME P-L-E-A-S-E 
+FIXED  - tmp file in wcplg_sftp_do_commando, FIX ME P-L-E-A-S-E
  - cleaning the code !!!
 FIXED - hostkey abfrage, TESTEN !!!
  - cmd box API function ???
@@ -188,16 +191,16 @@ FIXED  - in psftp.dll stdout umleiten zu char *logBuf und dann an LogProc() weit
 FIXED - "Bookmark" funst ned, müsste aba an WC selbst geändert werden, have 2 talk with Ghisler
  - WC merkt sich nicht die "aktuelle Position" wenn man z.B.: von plugion nach C: und dann wieda zu Plugin geht, have 2 talk with Ghisler
  - ftp <-> plugin filetransfer funst ned, API!, have 2 talk with Ghisler
-FIXED - !!!alle delete aktionen  deaktivieren wenn der user nicht in seinem ensprechendem sftp dir drinn ist!!! 
+FIXED - !!!alle delete aktionen  deaktivieren wenn der user nicht in seinem ensprechendem sftp dir drinn ist!!!
  - wie komm ich an das windowscommander tmp $wc ran ???
 FIXED - progressbar noch abstimmen
  - fsrenmv(): fehler abfangen wenn user im serverRoot folder moven oder renamen will
 FIXED  - Verbinfungsleiste "oben ", geht manchmal ned wech obwohl disconnect gedrückt) API error ?  have 2 talk with Ghisler
-FIXED  - Manchmal Segfault error wenn in dir wechseln will wo keine berechtigung 
+FIXED  - Manchmal Segfault error wenn in dir wechseln will wo keine berechtigung
 FIXED  - SetLastError(ERROR_ACCESS_DENIED) in fsFindFirst !!! wechselt nach C zurück ?!?!?
 FIXED  - Nach chmod: dir refresh zeigt aktuelle werte nicht an obwohl auf server gesetzt, cached by WC ?!
 FIXED - DWORD    dwFileAttributes=FILE_ATTRIBUTE_REPARSE_POINT; wc sollte link als symbol auch anzeigen
 FIXED - API fehler, wenn man die Filelisten sortiert und dann fasfifirst called
 FIXED - Drag & Drop funst irgendwie ned
 FIXED - API Bug FsPutFile() gibt als LocalFile noch ''' hinzu ?!?!?
-- Testing 
+- Testing

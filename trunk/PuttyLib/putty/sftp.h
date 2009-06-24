@@ -1,3 +1,5 @@
+#ifndef __SFTP_H__
+#define __SFTP_H__
 /*
  * sftp.h: definitions for SFTP and the sftp.c routines.
  */
@@ -251,3 +253,5 @@ int xfer_upload_gotpkt(struct fxp_xfer *xfer, struct sftp_packet *pktin);
 int xfer_done(struct fxp_xfer *xfer);
 void xfer_set_error(struct fxp_xfer *xfer);
 void xfer_cleanup(struct fxp_xfer *xfer);
+
+#endif // __SFTP_H__
