@@ -591,7 +591,7 @@ HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData)
 
     FindData->nFileSizeHigh =
       (DWORD) lf->mCurrentDirStruct->names[lf->mCurrentIndex].attrs.size.hi;
-    FindData->nFileSizeLow =
+	FindData->nFileSizeLow = (FindData->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 0 :
       (DWORD) lf->mCurrentDirStruct->names[lf->mCurrentIndex].attrs.size.lo;
     strcpy(FindData->cFileName,
            CurrentDirStruct->names[lf->mCurrentIndex].filename);
@@ -684,7 +684,7 @@ BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData)
 
     FindData->nFileSizeHigh =
       (DWORD) lf->mCurrentDirStruct->names[lf->mCurrentIndex].attrs.size.hi;
-    FindData->nFileSizeLow =
+    FindData->nFileSizeLow = (FindData->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 0 :
       (DWORD) lf->mCurrentDirStruct->names[lf->mCurrentIndex].attrs.size.lo;
 
     return true;
