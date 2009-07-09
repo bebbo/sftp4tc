@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="9,00"
 	Name="PuttyLib"
 	ProjectGUID="{2B495F1C-1249-4F24-A8CD-105D9C2A21C0}"
+	RootNamespace="PuttyLib"
+	TargetFrameworkVersion="0"
 	>
 	<Platforms>
 		<Platform
@@ -49,7 +51,7 @@
 				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
+				FavorSizeOrSpeed="2"
 				EnableFiberSafeOptimizations="true"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="..\PuttyLib,..\PuttyLib\putty,..\tc_plugin,..\shared"
@@ -82,7 +84,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib odbc32.lib odbccp32.lib WS2_32.lib comdlg32.lib"
+				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib odbc32.lib odbccp32.lib WS2_32.lib comdlg32.lib comctl32.lib"
 				OutputFile="../tc_plugin/Release/psftp.dll"
 				Version="1.0"
 				LinkIncremental="1"
@@ -113,9 +115,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -184,7 +183,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib odbc32.lib odbccp32.lib comdlg32.lib"
+				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib odbc32.lib odbccp32.lib comdlg32.lib comctl32.lib"
 				OutputFile="../tc_plugin/Debug/psftp.dll"
 				Version="1.0"
 				LinkIncremental="2"
@@ -216,9 +215,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -277,6 +273,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\putty\CONFIG.C"
+				>
+			</File>
+			<File
 				RelativePath="putty\cproxy.c"
 				>
 				<FileConfiguration
@@ -297,6 +297,10 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\putty\DIALOG.C"
+				>
 			</File>
 			<File
 				RelativePath="putty\IMPORT.C"
@@ -385,6 +389,10 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\putty\NOPRINT.C"
+				>
 			</File>
 			<File
 				RelativePath="putty\pinger.c"
@@ -631,6 +639,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\putty\SERCFG.C"
+				>
+			</File>
+			<File
 				RelativePath="putty\SETTINGS.C"
 				>
 				<FileConfiguration
@@ -721,6 +733,10 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\putty\SSHARCF.C"
+				>
 			</File>
 			<File
 				RelativePath="putty\SSHBLOWF.C"
@@ -1031,6 +1047,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\putty\SSHSH256.C"
+				>
+			</File>
+			<File
 				RelativePath="putty\SSHSH512.C"
 				>
 				<FileConfiguration
@@ -1277,6 +1297,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\putty\WINCFG.C"
+				>
+			</File>
+			<File
 				RelativePath="putty\wincons.c"
 				>
 				<FileConfiguration
@@ -1299,6 +1323,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\putty\WINCTRLS.C"
+				>
+			</File>
+			<File
 				RelativePath="putty\windefs.c"
 				>
 				<FileConfiguration
@@ -1319,6 +1347,18 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\putty\WINDLG.C"
+				>
+			</File>
+			<File
+				RelativePath=".\putty\WINHANDL.C"
+				>
+			</File>
+			<File
+				RelativePath=".\putty\WINHELP.C"
+				>
 			</File>
 			<File
 				RelativePath="putty\winmisc.c"
@@ -1453,6 +1493,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\putty\WINUCS.C"
+				>
+			</File>
+			<File
 				RelativePath="putty\WINUTILS.C"
 				>
 				<FileConfiguration
@@ -1578,6 +1622,10 @@
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 			>
+			<File
+				RelativePath=".\putty\PUTTY.RC"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath="ReadMe.txt"

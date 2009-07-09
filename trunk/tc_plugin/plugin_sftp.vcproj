@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="9,00"
 	Name="plugin_sftp"
 	ProjectGUID="{11EBE2EC-9FE8-45F9-B477-FA77EED8C930}"
+	RootNamespace="plugin_sftp"
 	Keyword="MFCProj"
+	TargetFrameworkVersion="0"
 	>
 	<Platforms>
 		<Platform
@@ -50,15 +52,18 @@
 				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
+				FavorSizeOrSpeed="2"
 				EnableFiberSafeOptimizations="true"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="..\PuttyLib,..\PuttyLib\putty,..\tc_plugin,..\shared"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PLUGIN_SFTP_EXPORTS"
 				StringPooling="false"
+				ExceptionHandling="0"
 				RuntimeLibrary="0"
+				BufferSecurityCheck="true"
 				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="2"
+				RuntimeTypeInfo="false"
 				PrecompiledHeaderFile=".\Release/plugin_sftp.pch"
 				AssemblerListingLocation=".\Release/"
 				ObjectFile=".\Release/"
@@ -91,6 +96,7 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
+				FixedBaseAddress="0"
 				ImportLibrary=".\Release/plugin_sftp.lib"
 				TargetMachine="1"
 			/>
@@ -113,9 +119,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -155,7 +158,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\PuttyLib,..\PuttyLib\putty,..\tc_plugin,..\shared"
+				AdditionalIncludeDirectories="..\PuttyLib;..\PuttyLib\putty;..\tc_plugin;..\shared;&quot;C:\develop\wxWidgets-2.8.10\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;PLUGIN_SFTP_EXPORTS"
 				MinimalRebuild="true"
 				RuntimeLibrary="1"
@@ -217,9 +220,6 @@
 				Name="VCAppVerifierTool"
 			/>
 			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -231,28 +231,6 @@
 			Name="Quellcodedateien"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
-			<File
-				RelativePath="..\shared\ConfigProperties.cpp"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-			</File>
 			<File
 				RelativePath="fsplugin.cpp"
 				>
@@ -280,52 +258,16 @@
 				>
 			</File>
 			<File
-				RelativePath="..\shared\ServerInfo.cpp"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\shared\sftp4tc_share.c"
+				RelativePath=".\puttyreg.cpp"
 				>
 			</File>
 			<File
-				RelativePath="sftpmap.cpp"
+				RelativePath=".\server.cpp"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\sftpmap.cpp"
+				>
 			</File>
 			<File
 				RelativePath="StdAfx.cpp"
@@ -359,19 +301,15 @@
 				>
 			</File>
 			<File
-				RelativePath="mgrserver.h"
-				>
-			</File>
-			<File
 				RelativePath="resource.h"
 				>
 			</File>
 			<File
-				RelativePath="..\shared\sftp4tc_share.h"
+				RelativePath=".\server.h"
 				>
 			</File>
 			<File
-				RelativePath="sftpmap.h"
+				RelativePath=".\sftpmap.h"
 				>
 			</File>
 			<File
@@ -384,7 +322,7 @@
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 			>
 			<File
-				RelativePath="icon_con.ico"
+				RelativePath=".\icon2.ico"
 				>
 			</File>
 			<File

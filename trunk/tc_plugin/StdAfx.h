@@ -17,8 +17,26 @@
 #include <windows.h>
 #include <stdlib.h>
 #include <shellapi.h>
+#include <stdio.h>
+#include <string>
 
 // TODO: reference additional headers your program requires here
+
+
+#ifdef _DEBUG
+static void __d(char * fmt, ...) {
+  char buff[255];
+  va_list args;
+  va_start(args, fmt);
+
+  _vsnprintf( buff, sizeof(buff), fmt, args);
+  OutputDebugString(buff);
+}
+#define DBGPRINT(a) __d a
+#else
+#define DBGPRINT(a)
+#endif
+
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.

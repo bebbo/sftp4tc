@@ -25,7 +25,7 @@ static int fxp_errtype;
 
 static void fxp_internal_error(char *msg);
 
-static int disconnected = 0;
+int disconnected = 1;
 
 /* ----------------------------------------------------------------------
  * SFTP packet construction functions.

@@ -443,6 +443,15 @@ void save_open_settings(void *sesskey, Config *cfg)
     write_setting_i(sesskey, "SerialStopHalfbits", cfg->serstopbits);
     write_setting_i(sesskey, "SerialParity", cfg->serparity);
     write_setting_i(sesskey, "SerialFlowControl", cfg->serflow);
+
+	// SFTP4TC
+	write_setting_i(sesskey, "SFTP4TC:cacheFolders", cfg->sftp4tc.cacheFolders);
+	write_setting_i(sesskey, "SFTP4TC:hideDotNames", cfg->sftp4tc.hideDotNames);
+	write_setting_s(sesskey, "SFTP4TC:defChMod", cfg->sftp4tc.defChMod);
+	write_setting_s(sesskey, "SFTP4TC:exeChMod", cfg->sftp4tc.exeChMod);
+	write_setting_s(sesskey, "SFTP4TC:exeExtensions", cfg->sftp4tc.exeExtensions);
+	write_setting_s(sesskey, "SFTP4TC:homeDir", cfg->sftp4tc.homeDir);
+
 }
 
 void load_settings(char *section, Config * cfg)
@@ -775,6 +784,15 @@ void load_open_settings(void *sesskey, Config *cfg)
     gppi(sesskey, "SerialStopHalfbits", 2, &cfg->serstopbits);
     gppi(sesskey, "SerialParity", SER_PAR_NONE, &cfg->serparity);
     gppi(sesskey, "SerialFlowControl", SER_FLOW_XONXOFF, &cfg->serflow);
+
+	// SFTP4TC
+	gppi(sesskey, "SFTP4TC:cacheFolders", 1, &cfg->sftp4tc.cacheFolders);
+	gppi(sesskey, "SFTP4TC:hideDotNames", 1, &cfg->sftp4tc.hideDotNames);
+	gpps(sesskey, "SFTP4TC:defChMod", "0600", cfg->sftp4tc.defChMod, sizeof(cfg->sftp4tc.defChMod));
+	gpps(sesskey, "SFTP4TC:exeChMod", "0500", cfg->sftp4tc.exeChMod, sizeof(cfg->sftp4tc.exeChMod));
+	gpps(sesskey, "SFTP4TC:exeExtensions", ".sh ", cfg->sftp4tc.exeExtensions, sizeof(cfg->sftp4tc.exeExtensions));
+	gpps(sesskey, "SFTP4TC:homeDir", "/home", cfg->sftp4tc.homeDir, sizeof(cfg->sftp4tc.homeDir));
+
 }
 
 void do_defaults(char *session, Config * cfg)

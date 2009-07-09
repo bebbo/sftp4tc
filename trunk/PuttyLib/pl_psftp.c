@@ -13,6 +13,9 @@ extern Config cfg;
 extern struct sftp_command *sftp_getcmd(FILE * fp, int mode,
                                         int modeflags);
 
+extern int disconnected;
+extern int loaded_session;
+
 /*extern*/ struct sftp_command {
   char **words;
   int nwords, wordssize;
@@ -35,22 +38,34 @@ static void init_winsock(void)
   }
 }
 
-int wcplg_open_sftp_session(char *userhost, char *user, char *pass,
+extern char * selectedSession;
+char * connectMsg;
+
+struct Sftp4tc * wcplg_open_sftp_session(char *userhost, char *user, char *pass,
                             int portnumber)
 {
   wcplg_set_last_error_msg(NULL);
+  connectMsg = userhost;
 
-  if (ProgressProc("", "", 0) == 1) {
+  if (ProgressProc("connecting", userhost, 0) == 1) {
     wcplg_set_last_error_msg("cancel by user");
     return RESULT_ERR;
   }
 
-  console_password = dupstr(pass);
-  flags = 0;                    //FLAG_STDERR | FLAG_INTERACTIVE;
-  cmdline_tooltype = TOOLTYPE_FILETRANSFER;
-  //ssh_get_line = &console_get_line;
+  if (!user && !pass && !portnumber) {
+	  do_defaults(userhost, &cfg);
+	  userhost = cfg.host;
+	  user = cfg.username;
+	  portnumber = cfg.port;
+	  loaded_session = 1;
+  } else {
+	  console_password = dupstr(pass);
+	  flags = 0;                    //FLAG_STDERR | FLAG_INTERACTIVE;
+	  cmdline_tooltype = TOOLTYPE_FILETRANSFER;
+	  //ssh_get_line = &console_get_line;
+	  do_defaults(NULL, &cfg);
+  }
 
-  do_defaults(NULL, &cfg);
 
 //  init_winsock();
   sk_init();
@@ -61,6 +76,9 @@ int wcplg_open_sftp_session(char *userhost, char *user, char *pass,
     if (psftp_connect(userhost, user, portnumber)) {
       return RESULT_ERR;
     }
+
+	if (1 == ProgressProc("connecting", connectMsg, 99))
+		return RESULT_ERR;
 
     if (do_sftp_init()) {
       return RESULT_ERR;
@@ -73,7 +91,11 @@ int wcplg_open_sftp_session(char *userhost, char *user, char *pass,
 
   ISinitT = 1;
 
-  return RESULT_OK;
+  disconnected = 0;
+
+  cfg.sftp4tc.selectedSession = selectedSession;
+	
+  return &cfg.sftp4tc;
 }
 
 int wcplg_close_sftp_session()
@@ -87,7 +109,7 @@ int wcplg_close_sftp_session()
     sftp_recvdata(&ch, 1);
   }
 
-  psftp_memory_hole__stopfen();
+  // psftp_memory_hole__stopfen();
   random_save_seed();
   return 1;
 }
@@ -149,13 +171,14 @@ struct my_fxp_names *wcplg_get_current_dir_struct()
   return &CurrentDirStruct;
 }
 
-int psftp_memory_hole__stopfen(void)
-{
-  int i = 0;
-  for (; i < names_to_freeing_num && i < MAX_DIR_FREE_NNAME_CACHE; i++) {
-    //fxp_free_name(names_to_freeing[i]);
-  }
-
-  names_to_freeing_num = 0;
-  return i;
+void wcplg_free_current_dir_struct()
+{	int i;
+	for(i = 0; i < CurrentDirStruct.nnames; ++i) {
+		struct fxp_name * fn = CurrentDirStruct.names[i];
+		free(fn->filename);
+		free(fn->longname);
+		free(fn);
+	}
+	CurrentDirStruct.nnames = 0;
 }
+
