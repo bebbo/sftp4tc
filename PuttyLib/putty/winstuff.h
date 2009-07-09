@@ -385,8 +385,9 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
  * Exports from windlg.c.
  */
 void defuse_showwindow(void);
-int do_config(void);
-int do_reconfig(HWND, int);
+struct Sftp4tc;
+struct Sftp4tc * do_config(HWND, int, int);
+//int do_reconfig(HWND, int);
 void showeventlog(HWND);
 void showabout(HWND);
 void force_normal(HWND hwnd);

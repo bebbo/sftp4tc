@@ -409,6 +409,8 @@ extern const int be_default_protocol;
  */
 extern const char *const appname;
 
+#include "sftp.h"
+
 /*
  * IMPORTANT POLICY POINT: everything in this structure which wants
  * to be treated like an integer must be an actual, honest-to-
@@ -598,6 +600,9 @@ struct config_tag {
     FontSpec widefont;
     FontSpec wideboldfont;
     int shadowboldoffset;
+
+	// SFTP4TC stuff
+	struct Sftp4tc sftp4tc;
 };
 
 /*

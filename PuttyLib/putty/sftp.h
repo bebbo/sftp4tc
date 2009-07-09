@@ -254,4 +254,17 @@ int xfer_done(struct fxp_xfer *xfer);
 void xfer_set_error(struct fxp_xfer *xfer);
 void xfer_cleanup(struct fxp_xfer *xfer);
 
+
+struct Sftp4tc {
+	// selected session
+	char * selectedSession;
+	// cfg values
+	int cacheFolders;
+	int hideDotNames;
+	char defChMod[32];
+	char exeChMod[32];
+	char exeExtensions[1024];
+	char homeDir[1024];
+};
+
 #endif // __SFTP_H__

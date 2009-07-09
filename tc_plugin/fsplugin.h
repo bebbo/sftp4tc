@@ -66,7 +66,7 @@ extern "C" {
 #define FS_STATUS_OP_EXEC 11
 #define FS_STATUS_OP_CALCSIZE 12
 
-  #define FS_ICONFLAG_SMALL 1
+#define FS_ICONFLAG_SMALL 1
 #define FS_ICONFLAG_BACKGROUND 2
 
 #define FS_ICON_USEDEFAULT 0
@@ -85,7 +85,7 @@ typedef int (__stdcall * ProgressProcType) (int PluginNr, char *SourceName,
                                          char *TargetName,
                                          int PercentDone);
 typedef void (__stdcall * LogProcType) (int PluginNr, int MsgType,
-                                     char *LogString);
+                                     char const *LogString);
 typedef BOOL(__stdcall * RequestProcType) (int PluginNr, int RequestType,
                                         char *CustomTitle,
                                         char *CustomText,
@@ -115,6 +115,11 @@ void __stdcall FsStatusInfo(char *RemoteDir, int InfoStartEnd,
                             int InfoOperation);
 void __stdcall FsGetDefRootName(char *DefRootName, int maxlen);
 int __stdcall FsExtractCustomIcon(char* RemoteName,int ExtractFlags,HICON* TheIcon);
+
+extern int gPluginNumber;
+extern ProgressProcType gProgressProc;
+extern LogProcType gLogProc;
+extern RequestProcType gRequestProc;
 
 #ifdef __cplusplus
 }

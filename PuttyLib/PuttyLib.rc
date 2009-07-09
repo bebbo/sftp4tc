@@ -27,8 +27,8 @@ LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,2,60,0
- PRODUCTVERSION 1,2,60,0
+ FILEVERSION 1,3,60,0
+ PRODUCTVERSION 1,3,60,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -45,11 +45,11 @@ BEGIN
         BEGIN
             VALUE "CompanyName", " "
             VALUE "FileDescription", "PuTTY's SFTP for TotalCommander's SFTP plugin"
-            VALUE "FileVersion", "1.2.60.0"
+            VALUE "FileVersion", "1.3.60.0"
             VALUE "InternalName", "psftp"
             VALUE "OriginalFilename", "psftp.dll"
             VALUE "ProductName", "psftp"
-            VALUE "ProductVersion", "1.2.60.0"
+            VALUE "ProductVersion", "1.3.60.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -65,18 +65,18 @@ END
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE 
+1 TEXTINCLUDE
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE 
+2 TEXTINCLUDE
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE 
+3 TEXTINCLUDE
 BEGIN
     "\r\n"
     "\0"
