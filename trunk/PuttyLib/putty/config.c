@@ -2262,9 +2262,9 @@ void setup_config_box(struct controlbox *b, int midsession,
 
 	    s = ctrl_getset(b, "SFTP4TC", "SFTP4TC", "SFTP4TC Options");
 	    ctrl_editbox(s, "home dir", 'h', 100,
-			 P("SFTP4TC:exeExtensions"),
+			 P("SFTP4TC:homeDir"),
 			 dlg_stdeditbox_handler, I(offsetof(Config,sftp4tc) + offsetof(struct Sftp4tc, homeDir)),
-			 I(sizeof(((Config *)0)->sftp4tc.exeExtensions)));
+			 I(sizeof(((Config *)0)->sftp4tc.homeDir)));
 	    ctrl_checkbox(s, "cache folders", 'f',
 			P("SFTP4TC:cacheFolders"),
 			  dlg_stdcheckbox_handler,I(offsetof(Config,sftp4tc) + offsetof(struct Sftp4tc, cacheFolders)));
@@ -2283,5 +2283,9 @@ void setup_config_box(struct controlbox *b, int midsession,
 			 P("SFTP4TC:exeExtensions"),
 			 dlg_stdeditbox_handler, I(offsetof(Config,sftp4tc) + offsetof(struct Sftp4tc, exeExtensions)),
 			 I(sizeof(((Config *)0)->sftp4tc.exeExtensions)));
+	    ctrl_editbox(s, "special sftp command", 's', 100,
+			 P("SFTP4TC:sftp-command"),
+			 dlg_stdeditbox_handler, I(offsetof(Config,sftp4tc) + offsetof(struct Sftp4tc, sftpCommand)),
+			 I(sizeof(((Config *)0)->sftp4tc.sftpCommand)));
 	}
 }

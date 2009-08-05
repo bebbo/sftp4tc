@@ -24,7 +24,7 @@
 
 
 #ifdef _DEBUG
-static void __d(char * fmt, ...) {
+#ifndef _WIN32_WCE
   char buff[255];
   va_list args;
   va_start(args, fmt);
@@ -33,6 +33,7 @@ static void __d(char * fmt, ...) {
   OutputDebugString(buff);
 }
 #define DBGPRINT(a) __d a
+#endif
 #else
 #define DBGPRINT(a)
 #endif

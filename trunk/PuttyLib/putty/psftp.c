@@ -2937,6 +2937,12 @@ int psftp_connect(char *userhost, char *user, int portnumber)
 	cfg.ssh_subsys = TRUE;
 	cfg.nopty = TRUE;
 
+	// use the specified command instead of the subsystem
+	if (strlen(cfg.sftp4tc.sftpCommand) > 0) {
+		strcpy(cfg.remote_cmd, cfg.sftp4tc.sftpCommand);
+		cfg.ssh_subsys = FALSE;
+	}
+
 	/*
 	* Set up fallback option, for SSH-1 servers or servers with the
 	* sftp subsystem not enabled but the server binary installed

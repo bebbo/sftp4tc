@@ -45,7 +45,7 @@ static HICON gConfigIcon;
 static HICON gServerIcon;
 
 static const DWORD S_IFLNK = 0x0A000;
-static char const * const EDIT_CONNECTIONS = "<edit connections>";
+static TCHAR const * const EDIT_CONNECTIONS = TEXT("<edit connections>");
 
 // used to force reloads
 static Server * lastServer;
@@ -149,9 +149,10 @@ bool UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
 
 //---------------------------------------------------------------------
 
-extern "C" BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID )
+extern "C" BOOL APIENTRY DllMain(HANDLE _hModule, DWORD ul_reason_for_call, LPVOID )
 {
 	static int gDllInitialised = 0;
+	HINSTANCE hModule = (HINSTANCE)_hModule;
 	ghThisDllModule = hModule;
 	switch (ul_reason_for_call) {
 case DLL_PROCESS_ATTACH:

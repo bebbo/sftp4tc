@@ -26,7 +26,7 @@ class Server
 
 	// initialized during CT
 	std::string name;
-	PsftpMapper mapper;
+	PsftpMapper * mapper;
 	bool disableMtime;
 
 	// init with default

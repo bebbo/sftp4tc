@@ -27,6 +27,11 @@ static void fxp_internal_error(char *msg);
 
 int disconnected = 1;
 
+void set_disconnected(void)
+{
+  disconnected = 1;
+}
+
 /* ----------------------------------------------------------------------
  * SFTP packet construction functions.
  */
@@ -416,7 +421,7 @@ static int fxp_got_status(struct sftp_packet *pktin)
     };
 
     if (pktin==NULL) {
-      disconnected = 1;
+      set_disconnected();
       fxp_error_message = messages[7];
       return -1;
     }
@@ -463,10 +468,6 @@ const int fxp_disconnected(void)
   return disconnected;
 }
 
-void set_disconnected(void)
-{
-  disconnected = 1;
-}
 
 int fxp_error_type(void)
 {
