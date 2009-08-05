@@ -265,6 +265,7 @@ struct Sftp4tc {
 	char exeChMod[32];
 	char exeExtensions[1024];
 	char homeDir[1024];
+	char sftpCommand[1024];
 };
 
 #endif // __SFTP_H__

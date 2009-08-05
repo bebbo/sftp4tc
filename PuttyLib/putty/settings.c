@@ -786,12 +786,13 @@ void load_open_settings(void *sesskey, Config *cfg)
     gppi(sesskey, "SerialFlowControl", SER_FLOW_XONXOFF, &cfg->serflow);
 
 	// SFTP4TC
-	gppi(sesskey, "SFTP4TC:cacheFolders", 1, &cfg->sftp4tc.cacheFolders);
-	gppi(sesskey, "SFTP4TC:hideDotNames", 1, &cfg->sftp4tc.hideDotNames);
-	gpps(sesskey, "SFTP4TC:defChMod", "0600", cfg->sftp4tc.defChMod, sizeof(cfg->sftp4tc.defChMod));
-	gpps(sesskey, "SFTP4TC:exeChMod", "0500", cfg->sftp4tc.exeChMod, sizeof(cfg->sftp4tc.exeChMod));
-	gpps(sesskey, "SFTP4TC:exeExtensions", ".sh ", cfg->sftp4tc.exeExtensions, sizeof(cfg->sftp4tc.exeExtensions));
-	gpps(sesskey, "SFTP4TC:homeDir", "/home", cfg->sftp4tc.homeDir, sizeof(cfg->sftp4tc.homeDir));
+	gppi(sesskey, "SFTP4TC:cacheFolders", 0, &cfg->sftp4tc.cacheFolders);
+	gppi(sesskey, "SFTP4TC:hideDotNames", 0, &cfg->sftp4tc.hideDotNames);
+	gpps(sesskey, "SFTP4TC:defChMod", "", cfg->sftp4tc.defChMod, sizeof(cfg->sftp4tc.defChMod));
+	gpps(sesskey, "SFTP4TC:exeChMod", "", cfg->sftp4tc.exeChMod, sizeof(cfg->sftp4tc.exeChMod));
+	gpps(sesskey, "SFTP4TC:exeExtensions", "", cfg->sftp4tc.exeExtensions, sizeof(cfg->sftp4tc.exeExtensions));
+	gpps(sesskey, "SFTP4TC:homeDir", "", cfg->sftp4tc.homeDir, sizeof(cfg->sftp4tc.homeDir));
+	gpps(sesskey, "SFTP4TC:sftp-command", "", cfg->sftp4tc.sftpCommand, sizeof(cfg->sftp4tc.sftpCommand));
 
 }
 

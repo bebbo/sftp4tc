@@ -1,7 +1,16 @@
+VERSION 1.3.60.1
+/CHANGED improved reconnect handling (no more restarts of TC?)
+/CHANGED the SFTP4TC properties are defaulting to unset values now.
+         if you want a template, configure a session (named template)
+         then always load that template session for further modifications
++ADDED   configuration for a special sftp-server command, e.g. to add "sudo sftp-server"
+         or whatever.
+         NOTE THAT THIS FEATURE IS NOT WELL TESTED!
+
 VERSION 1.3.60.0
 /CHANGED restructured and rewrote most parts of the plugin
 /CHANGED the PuTTY configuration dialog is now used to configure SFTP too
-+ADDED configurable default chmod flags and executable chmod flags with extension list to select executables
++ADDED default chmod flags and also an executable chmod flags plus extension list to select executables
 +FIXED ascii transfer mode is working again
 +FIXED added various null pointer checks
 -REMOVED own configuration dialog

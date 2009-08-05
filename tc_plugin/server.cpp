@@ -102,7 +102,7 @@ void Server::insertFile(std::string const & remotePath, FILETIME * ft, unsigned 
 // init with zeros
 Server::Server(std::string const & serverName)
 : name(serverName)
-, mapper(serverName) 
+, mapper(new PsftpMapper(serverName)) 
 , disableMtime(false)
 {
 }
@@ -133,9 +133,10 @@ static void freeMfn(my_fxp_names * dir) {
 // free all cached structures
 Server::~Server()
 {
-	if (mapper.hDll && !mapper.disconnected()) {
-		mapper.disconnect();
+	if (mapper->hDll && !mapper->disconnected()) {
+		mapper->disconnect();
 	}
+	delete mapper;
 
 	clearDirCache();
 }
@@ -211,15 +212,17 @@ char const * const Server::getServerName(size_t index) {
 //---------------------------------------------------------------------
 // execute a SFTP command
 bool Server::doCommand(std::string const & command, std::string & response) {
-	if (!mapper.hDll)
+	if (!mapper->hDll)
 		return false;
 
-	if (mapper.disconnected()) {
+	if (mapper->disconnected()) {
 		std::string msg = "CONNECT \\" + name;
 		gLogProc(gPluginNumber, MSGTYPE_CONNECT, msg.c_str());
-		Sftp4tc * cfg = mapper.connect(0, 0, name.c_str(), 0);
-		if (!cfg || mapper.disconnected()) {
+		Sftp4tc * cfg = mapper->connect(0, 0, name.c_str(), 0);
+		if (!cfg || mapper->disconnected()) {
 			gLogProc(gPluginNumber, MSGTYPE_DISCONNECT, "connection failed");
+			delete mapper;
+			mapper = new PsftpMapper(name);
 			return false;
 		}
 		gLogProc(gPluginNumber, MSGTYPE_CONNECTCOMPLETE, ("connected to " + name).c_str());
@@ -233,7 +236,7 @@ bool Server::doCommand(std::string const & command, std::string & response) {
 
 	char buffer[8192];
 	*buffer = 0;
-	int r = mapper.doSftp(command.c_str(), buffer);
+	int r = mapper->doSftp(command.c_str(), buffer);
 
 	if (*buffer) {
 		response = buffer;
@@ -253,7 +256,7 @@ my_fxp_names * Server::getDirContent(std::string const & _path)
 	if (i != dirCache.end())
 		return i->second;
 
-	if (!mapper.hDll)
+	if (!mapper->hDll)
 		return 0;
 
 	if (!this->cmdLs(path))
@@ -297,7 +300,7 @@ bool Server::remoteFileExists(std::string const & remotePath) {
 bool Server::cmdLs(std::string const & remotePath) {
 	std::string cmd = std::string("ls \"") + remotePath + "\"";
 
-	my_fxp_names * cds = mapper.getCurrentDirStruct();
+	my_fxp_names * cds = mapper->getCurrentDirStruct();
 	cds->nnames = 0;
 	cds->names = 0;
 
@@ -320,7 +323,7 @@ bool Server::cmdLs(std::string const & remotePath) {
 		fn->longname = strdup(cn->longname);
 	}
 	
-	mapper.freeCurrentDirStruct();
+	mapper->freeCurrentDirStruct();
 
 	updateDirCache(remotePath, ndir);
 
@@ -361,7 +364,7 @@ bool Server::cmdGet(std::string const & remotePath, std::string const & localNam
 		return false;
 
 	FILETIME ft;
-	fxp_attrs * attr = mapper.getLastAttr();
+	fxp_attrs * attr = mapper->getLastAttr();
 	if (UnixTimeToFileTime(attr->mtime, &ft)) {
 		HANDLE hf = CreateFile(localName.c_str(), GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
 		SetFileTime(hf, &ft, &ft, &ft);
@@ -510,27 +513,27 @@ bool Server::cmdMtime(std::string const & remotePath, FILETIME * ft) {
 
 //---------------------------------------------------------------------
 void Server::setTransferAscii(bool ta) {
-	if (!mapper.hDll)
+	if (!mapper->hDll)
 		return;
 
-	mapper.setTransferAscii(ta);
+	mapper->setTransferAscii(ta);
 }
 
 //---------------------------------------------------------------------
 // show the global config dialog
 Sftp4tc const * const Server::doConfig() {
-	if (!mapper.hDll)
+	if (!mapper->hDll)
 		return 0;
 
-	return mapper.doConfig(gMainWin, 0, 0);
+	return mapper->doConfig(gMainWin, 0, 0);
 }
 //---------------------------------------------------------------------
 // reconfigure current server
 Sftp4tc const * const  Server::doSelfConfig() {
-	if (!mapper.hDll)
+	if (!mapper->hDll)
 		return 0;
 
-	return mapper.doConfig(gMainWin, 1, 0);
+	return mapper->doConfig(gMainWin, 1, 0);
 }
 
 //---------------------------------------------------------------------
