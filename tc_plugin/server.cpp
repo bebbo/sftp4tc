@@ -526,14 +526,15 @@ bool Server::cmdChmod(std::string const & remotePath, int flags) {
 //---------------------------------------------------------------------
 // try to set the remote mtime
 bool Server::cmdMtime(std::string const & remotePath, FILETIME * ft) {
-	SYSTEMTIME st;
-	char buffer[32];
-
-	FileTimeToSystemTime(ft, &st);
-	_snprintf(buffer, 32, "%d%02d%02d%02d%02d.%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
-	std::string cmd = std::string("!touch -m -t ") + buffer + " " + remotePath;
-
-	return doCommand(cmd);
+	return 0;
+//	SYSTEMTIME st;
+//	char buffer[32];
+//
+//	FileTimeToSystemTime(ft, &st);
+//	_snprintf(buffer, 32, "%d%02d%02d%02d%02d.%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+//	std::string cmd = std::string("!touch -m -t ") + buffer + " " + remotePath;
+//
+//	return doCommand(cmd);
 }
 
 //---------------------------------------------------------------------
