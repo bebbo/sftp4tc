@@ -96,6 +96,26 @@ void Server::insertFile(std::string const & remotePath, FILETIME * ft, unsigned 
 	i->second = ndir;
 }
 
+//---------------------------------------------------------------------
+// update the file attributes
+void Server::updateFileAttr(std::string const & path, std::string const & file, std::string const & attrs)
+{
+	DirCache::iterator i = dirCache.find(path);
+	if (i == dirCache.end())
+		return;
+
+	my_fxp_names * dir = i->second;	
+	int count = dir->nnames;
+	for (int i = 0; i < count; ++i) {
+		fxp_name * fn = dir->names[i];
+		if (file == fn->filename) {
+			// got it
+			fn->attrs.permissions = strtol(attrs.c_str(), '\0', 8);
+			return;
+		}
+	}
+}
+
 
 //---------------------------------------------------------------------
 // CT
@@ -154,7 +174,7 @@ void Server::clearDirCache() {
 // on success the remote path is also set
 Server * Server::findServer(std::string & remotePath, char const * const fullPath)
 {
-	std::string serverName = fullPath + 1;
+	std::string serverName = *fullPath == '\\' ? fullPath + 1 : fullPath;
 	int slash = (int)serverName.find_first_of('\\');
 	if (slash > 0) {
 		remotePath = serverName.substr(slash);
@@ -231,6 +251,11 @@ bool Server::doCommand(std::string const & command, std::string & response) {
 		}
 	}
 
+	// establish connection and return home folder
+	if (command == "~") {
+		response = homeDir;
+		return true;
+	}
 
 	gLogProc(gPluginNumber, MSGTYPE_DETAILS, command.c_str());
 
@@ -540,6 +565,7 @@ Sftp4tc const * const  Server::doSelfConfig() {
 // apply the configuration
 void Server::configure(Sftp4tc const * const cfg)
 {
+	homeDir = cfg->homeDir;
 	cacheFolders = cfg->cacheFolders != 0;
 	if (!cacheFolders)
 		clearDirCache();

@@ -106,26 +106,7 @@ std::string splitPath(std::string & path, std::string const & filePath) {
 }
 
 //---------------------------------------------------------------------
-
-static int octal_permissions_2_tc_integral(unsigned long octal_val)
-{
-  //quick and dirty
-  char buf[16];                //should be enough [:-( not nice, dude!]
-  char cbuf[4];
-  size_t clen;
-  int int_val;
-  sprintf(buf, "%3o", octal_val);
-
-  clen = strlen(buf);
-  cbuf[0] = '0';
-  cbuf[1] = buf[clen - 3];
-  cbuf[2] = buf[clen - 2];
-  cbuf[3] = buf[clen - 1];
-  cbuf[4] = '\0';
-
-  int_val = strtol(cbuf, '\0', 0);
-  return int_val;
-}
+#define octal_permissions_2_tc_integral(octal_val) (octal_val & 0xfff)
 
 //---------------------------------------------------------------------
 unsigned long FileTimeToUnixTime(LPFILETIME ft)
@@ -192,7 +173,7 @@ static HANDLE fillLfWithServer(WIN32_FIND_DATA * FindData, LastFindStructType* l
 	lf->mCurrentIndex = n;
 	strcpy(FindData->cFileName, n ? Server::getServerName(n - 1) : EDIT_CONNECTIONS);
 
-	FindData->dwFileAttributes = n ? FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT | 0x80000000 : 0;
+	FindData->dwFileAttributes = n ? FILE_ATTRIBUTE_REPARSE_POINT | 0x80000000 : 0;
 	FindData->dwReserved0 |= S_IFLNK; // Wincmd uses only this one!
 	FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
 	FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
@@ -228,7 +209,7 @@ static HANDLE fillLfWithFile(WIN32_FIND_DATA * FindData, LastFindStructType * lf
 		FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY | 0x80000000;
 	} else if (FileTyp == 'l') {
 		FindData->dwFileAttributes =
-			FILE_ATTRIBUTE_REPARSE_POINT | 0x80000000;
+			FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_DIRECTORY |0x80000000;
 		FindData->dwReserved0 |= S_IFLNK; // Wincmd uses only this one!
 	} else {
 		FindData->dwFileAttributes = FILE_ATTRIBUTE_NORMAL | 0x80000000;
@@ -382,9 +363,32 @@ int __stdcall FsExecuteFile(HWND MainWin, char * fullRemoteName, char * verb)
 		return FS_EXEC_OK;
 	}
 
+	std::string remotePath;
 	if (cmd == "open") {
-		if (fullRemotePath != EDIT_CONNECTIONS)
+		size_t slash = fullRemotePath.find_first_of('\\');
+		if (slash != (size_t)-1)
 			return FS_EXEC_YOURSELF;
+
+		// it's a server name
+		if (fullRemotePath != EDIT_CONNECTIONS) {
+			// get or create the server
+			Server * server = Server::findServer(remotePath, fullRemotePath.c_str());
+			if (!server)
+				return FS_EXEC_ERROR;
+			
+			// connect and get the home folder
+			std::string response;
+			if (!server->doCommand("~", response))
+				return FS_EXEC_ERROR;
+
+			// return the full remote path and force reload of dir
+			fullRemoteName[0] = '/';
+			strcpy(fullRemoteName + 1, server->getName().c_str());
+			strcat(fullRemoteName, response.c_str());
+			toDos(fullRemoteName);
+
+			return FS_EXEC_SYMLINK;
+		}
 
 		Server server("");
 		Sftp4tc const * const session = server.doConfig();
@@ -399,18 +403,40 @@ int __stdcall FsExecuteFile(HWND MainWin, char * fullRemoteName, char * verb)
         return FS_EXEC_SYMLINK;
 	}
 
-	std::string remotePath;
+	
 	Server * server = Server::findServer(remotePath, fullRemoteName);
 	if (!server) {
 		return FS_EXEC_ERROR;
 	}
 
 	if (cmd == "properties") {
+		size_t slash = fullRemotePath.find_first_of('\\');
+		if (slash != (size_t)-1) {
+			// invoke da menu
+			::PostMessage(gMainWin, WM_COMMAND, 2, 0);
+			return FS_EXEC_OK;
+		}
+
 		Sftp4tc const * const session = server->doSelfConfig();
 		if (session) {
 			server->configure(session);
 		}
 		return FS_EXEC_OK;
+	}
+
+	if (cmd.length() >= 5 && cmd.substr(0,5) == "chmod") {
+		size_t last = remotePath.find_last_of('/') + 1;
+		std::string fileName = remotePath.substr(last);
+		std::string remoteDir = remotePath.substr(0, last);
+
+		std::string cd = std::string("cd \"") + remoteDir + "\"";
+		cmd = cmd + " " + fileName;
+		if (server->doCommand(cd) &&
+			server->doCommand(cmd)) {
+			server->updateFileAttr(remoteDir, fileName, cmd.substr(5));
+			return FS_EXEC_OK;
+		}
+		return FS_EXEC_ERROR;
 	}
 
 	if (cmd.length() >= 6 && cmd.substr(0, 6) == "quote ") {
@@ -428,7 +454,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char * fullRemoteName, char * verb)
 		std::string cd = std::string("cd \"") + remotePath + "\"";
 		if (server->doCommand(cd) &&
 			server->doCommand(cmd)) {
-			if (cmd.substr(0, 2) == "cd") {
+				if (cmd.length() > 2 && cmd.substr(0, 2) == "cd") {
 				std::string nd = remotePath;
 				if (server->doCommand("pwd", nd)) {
 					if (nd.size() == 0 || nd[nd.size() - 1] != '/')

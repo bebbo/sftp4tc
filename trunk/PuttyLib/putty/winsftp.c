@@ -708,6 +708,7 @@ char *ssh_sftp_get_cmdline(char *prompt, int no_fds_ok)
 /* ----------------------------------------------------------------------
 * Main program. Parse arguments etc.
 */
+#if 0
 int main(int argc, char *argv[])
 {
 	int ret;
@@ -716,3 +717,4 @@ int main(int argc, char *argv[])
 
 	return ret;
 }
+#endif

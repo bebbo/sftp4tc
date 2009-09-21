@@ -33,6 +33,7 @@ class Server
 	DirCache dirCache;
 
 	// config settings
+	std::string homeDir;
 	bool cacheFolders;
 	bool hideDotNames;
 	std::string defChMod;
@@ -86,6 +87,8 @@ public:
 
 	inline std::string const & getName() const { return name; }
 	inline bool isHideDotNames() const { return hideDotNames; }
+
+	void updateFileAttr(std::string const & path, std::string const & file, std::string const & attrs);
 private:
 
 
