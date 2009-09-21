@@ -678,6 +678,8 @@ struct Sftp4tc* do_config(HWND hwnd, int midsession, int protcfginfo)
     backup_cfg = cfg;		       /* structure copy */
 	selectedSession = 0;
 
+	load_settings(0, &cfg);
+
     ctrlbox = ctrl_new_box();
     setup_config_box(ctrlbox, midsession, cfg.protocol, protcfginfo);
     win_setup_config_box(ctrlbox, &dp.hwnd, has_help(), midsession,

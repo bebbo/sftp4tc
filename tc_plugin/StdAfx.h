@@ -25,6 +25,8 @@
 
 #ifdef _DEBUG
 #ifndef _WIN32_WCE
+static void __d(char * fmt, ...)
+{
   char buff[255];
   va_list args;
   va_start(args, fmt);

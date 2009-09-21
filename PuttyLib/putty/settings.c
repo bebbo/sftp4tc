@@ -451,7 +451,11 @@ void save_open_settings(void *sesskey, Config *cfg)
 	write_setting_s(sesskey, "SFTP4TC:exeChMod", cfg->sftp4tc.exeChMod);
 	write_setting_s(sesskey, "SFTP4TC:exeExtensions", cfg->sftp4tc.exeExtensions);
 	write_setting_s(sesskey, "SFTP4TC:homeDir", cfg->sftp4tc.homeDir);
+	write_setting_s(sesskey, "SFTP4TC:sftpCommand", cfg->sftp4tc.sftpCommand);
+}
 
+void do_defaults(char *section, Config * cfg) {
+	load_settings(section, cfg);
 }
 
 void load_settings(char *section, Config * cfg)
@@ -792,14 +796,9 @@ void load_open_settings(void *sesskey, Config *cfg)
 	gpps(sesskey, "SFTP4TC:exeChMod", "", cfg->sftp4tc.exeChMod, sizeof(cfg->sftp4tc.exeChMod));
 	gpps(sesskey, "SFTP4TC:exeExtensions", "", cfg->sftp4tc.exeExtensions, sizeof(cfg->sftp4tc.exeExtensions));
 	gpps(sesskey, "SFTP4TC:homeDir", "", cfg->sftp4tc.homeDir, sizeof(cfg->sftp4tc.homeDir));
-	gpps(sesskey, "SFTP4TC:sftp-command", "", cfg->sftp4tc.sftpCommand, sizeof(cfg->sftp4tc.sftpCommand));
-
+	gpps(sesskey, "SFTP4TC:sftpCommand", "", cfg->sftp4tc.sftpCommand, sizeof(cfg->sftp4tc.sftpCommand));
 }
 
-void do_defaults(char *session, Config * cfg)
-{
-    load_settings(session, cfg);
-}
 
 static int sessioncmp(const void *av, const void *bv)
 {
