@@ -5,11 +5,15 @@
 #include <vector>
 #include <string>
 
-#ifndef __SFTP_H__
-#include "sftp.h"
+#ifndef PUTTY_PUTTY_H
+#include <putty.h>
 #endif
 
-#include "sftpmap.h"
+#ifndef __SFTP_H__
+#include <sftp.h>
+#endif
+
+#include <sftpmap.h>
 
 struct ServerInfo {
 	std::string name;
@@ -46,14 +50,16 @@ public:
 	~Server();
 
 	// open global config panel
-	Sftp4tc const * const doConfig();
+	config_tag const * const doConfig();
 	// open config panel for running session
-	Sftp4tc const * const doSelfConfig();
+	config_tag const * const doSelfConfig();
 
 	// performs a server lookup by evaluating the remote path
 	// on success the remote path is also set
 	static Server * findServer(std::string & remotePath, char const * const fullPath);
 	static bool disconnectServer(char const * serverName);
+	// inject a quick connection
+    static void insertServer(std::string const & serverName, Server * server);
 
 	// set the transfer mode
 	void setTransferAscii(bool ta);
@@ -63,7 +69,7 @@ public:
 	// get the server name for the index 
 	static char const * const getServerName(size_t index);
 
-	void configure(Sftp4tc const * const sessionCfg);
+	void configure(config_tag const * const sessionCfg);
 
 	// used as ls - includes caching
 	my_fxp_names * getDirContent(std::string const & path);
@@ -84,6 +90,9 @@ public:
 
 	// central handler
 	bool doCommand(std::string const & command, std::string & response = std::string());
+
+	// lookup the home folder
+	bool getHomeDir(std::string & response);
 
 	inline std::string const & getName() const { return name; }
 	inline bool isHideDotNames() const { return hideDotNames; }

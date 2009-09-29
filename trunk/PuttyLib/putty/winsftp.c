@@ -470,7 +470,7 @@ int do_eventsel_loop(HANDLE other_event)
 	SOCKET *sklist;
 	int skcount;
 	long now = GETTICKCOUNT();
-	static int timeoutCount = 0;
+	// static int timeoutCount = 0;
 
 	if (sk_isClosed()) {
 		return -1;
@@ -483,7 +483,7 @@ int do_eventsel_loop(HANDLE other_event)
 		ticks = INFINITE;
 	}
 
-	if (ticks < 0 || ticks > 100) ticks = 100;
+	// if (ticks < 0 || ticks > 100) ticks = 100;
 
 	handles = handle_get_events(&nhandles);
 	handles = sresize(handles, nhandles+2, HANDLE);
@@ -499,14 +499,14 @@ int do_eventsel_loop(HANDLE other_event)
 		otherindex = -1;
 
 	n = WaitForMultipleObjects(nallhandles, handles, FALSE, ticks);
-
+/*
 	if (STATUS_TIMEOUT == n) {
 		sfree(handles);
 		++timeoutCount;
 		return timeoutCount > 50 ? -1 : 0;
 	}
 	timeoutCount = 0;
-
+*/
 	if ((unsigned)(n - WAIT_OBJECT_0) < (unsigned)nhandles) {
 		handle_got_event(handles[n - WAIT_OBJECT_0]);
 	} else if (netindex >= 0 && n == WAIT_OBJECT_0 + netindex) {

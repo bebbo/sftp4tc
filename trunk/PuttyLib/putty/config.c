@@ -16,6 +16,7 @@
 #define PORT_BOX_TITLE "Port"
 
 char * selectedSession;
+Config savedCfg;
 
 /*
 * Convenience function: determine whether this binary supports a
@@ -484,9 +485,12 @@ static void sessionsaver_handler(union control *ctrl, void *dlg,
 				* double-click on the list box _and_ that session
 				* contains a hostname.
 				*/
-				if (load_selected_session(ssd, savedsession, dlg, cfg, &mbl) &&
-					(mbl && ctrl == ssd->listbox && cfg_launchable(cfg))) {
+				if (load_selected_session(ssd, savedsession, dlg, cfg, &mbl)) {
+					cfg->sftp4tc.saved = 1;
+					savedCfg = *cfg; // make both equal					
+					if((mbl && ctrl == ssd->listbox && cfg_launchable(cfg))) {
 						dlg_end(dlg, 1);       /* it's all over, and succeeded */
+					}
 				}
 		} else if (ctrl == ssd->savebutton) {
 			int isdef = !strcmp(savedsession, "Default Settings");
@@ -511,6 +515,7 @@ static void sessionsaver_handler(union control *ctrl, void *dlg,
 					dlg_error_msg(dlg, errmsg);
 					sfree(errmsg);
 				}
+				savedCfg = *cfg;
 			}
 			get_sesslist(&ssd->sesslist, FALSE);
 			get_sesslist(&ssd->sesslist, TRUE);

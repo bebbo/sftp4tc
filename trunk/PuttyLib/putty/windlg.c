@@ -45,6 +45,7 @@ static char **events = NULL;
 static int nevents = 0, negsize = 0;
 
 extern Config cfg;		       /* defined in window.c */
+extern Config savedCfg;
 
 #define PRINTER_DISABLED_STRING "None (printing disabled)"
 
@@ -670,7 +671,7 @@ extern char * selectedSession;
 char theSelectedSession[SAVEDSESSION_LEN];
 
 
-struct Sftp4tc* do_config(HWND hwnd, int midsession, int protcfginfo)
+struct config_tag * do_config(HWND hwnd, int midsession, int protcfginfo)
 {
     Config backup_cfg;
     int ret;
@@ -709,8 +710,13 @@ struct Sftp4tc* do_config(HWND hwnd, int midsession, int protcfginfo)
 		return 0;
 	}
 		
+	// kill the saved flag avoid session usage
+	if (0 != memcmp(&cfg, &savedCfg, sizeof(Config)))
+		cfg.sftp4tc.saved=0;
+
 	cfg.sftp4tc.selectedSession = theSelectedSession;
-	return &cfg.sftp4tc;
+
+	return &cfg;
 }
 
 #if 0

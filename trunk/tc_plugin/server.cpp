@@ -199,6 +199,17 @@ Server * Server::findServer(std::string & remotePath, char const * const fullPat
 	return server;
 }
 
+void Server::insertServer(std::string const & serverName, Server * server) {
+	ServerMap::iterator i = serverMap.find(serverName);
+	server->name = serverName;
+	if (i != serverMap.end()) {
+		delete i->second;
+		i->second = server;
+	} else {
+		serverMap.insert(std::make_pair(serverName, server));
+	}
+}
+
 //---------------------------------------------------------------------
 // disconnects and performs a cleanup
 bool Server::disconnectServer(char const * serverName) {
@@ -230,6 +241,22 @@ char const * const Server::getServerName(size_t index) {
 }
 
 //---------------------------------------------------------------------
+// get the home folder
+bool Server::getHomeDir(std::string & response) {
+	if (!mapper->hDll)
+		return false;
+
+
+	Config cfg;
+	memset(&cfg, 0, sizeof(cfg));
+	mapper->loadConfig((char*)name.c_str(), &cfg);
+	response = cfg.sftp4tc.homeDir;
+
+	return true;
+}
+
+
+//---------------------------------------------------------------------
 // execute a SFTP command
 bool Server::doCommand(std::string const & command, std::string & response) {
 	if (!mapper->hDll)
@@ -238,23 +265,17 @@ bool Server::doCommand(std::string const & command, std::string & response) {
 	if (mapper->disconnected()) {
 		std::string msg = "CONNECT \\" + name;
 		gLogProc(gPluginNumber, MSGTYPE_CONNECT, msg.c_str());
-		Sftp4tc * cfg = mapper->connect(0, 0, name.c_str(), 0);
+		config_tag * cfg = mapper->connect(0, 0, name.c_str(), 0);
 		if (!cfg || mapper->disconnected()) {
 			gLogProc(gPluginNumber, MSGTYPE_DISCONNECT, "connection failed");
 			delete mapper;
-			mapper = new PsftpMapper(name);
+			mapper = new PsftpMapper(name, cfg);
 			return false;
 		}
 		gLogProc(gPluginNumber, MSGTYPE_CONNECTCOMPLETE, ("connected to " + name).c_str());
 		if (cfg) {
 			configure(cfg);
 		}
-	}
-
-	// establish connection and return home folder
-	if (command == "~") {
-		response = homeDir;
-		return true;
 	}
 
 	gLogProc(gPluginNumber, MSGTYPE_DETAILS, command.c_str());
@@ -547,7 +568,7 @@ void Server::setTransferAscii(bool ta) {
 
 //---------------------------------------------------------------------
 // show the global config dialog
-Sftp4tc const * const Server::doConfig() {
+config_tag const * const Server::doConfig() {
 	if (!mapper->hDll)
 		return 0;
 
@@ -555,7 +576,7 @@ Sftp4tc const * const Server::doConfig() {
 }
 //---------------------------------------------------------------------
 // reconfigure current server
-Sftp4tc const * const  Server::doSelfConfig() {
+config_tag const * const  Server::doSelfConfig() {
 	if (!mapper->hDll)
 		return 0;
 
@@ -564,8 +585,9 @@ Sftp4tc const * const  Server::doSelfConfig() {
 
 //---------------------------------------------------------------------
 // apply the configuration
-void Server::configure(Sftp4tc const * const cfg)
+void Server::configure(config_tag const * const cfg_)
 {
+	const Sftp4tc * cfg = &cfg_->sftp4tc;
 	homeDir = cfg->homeDir;
 	cacheFolders = cfg->cacheFolders != 0;
 	if (!cacheFolders)
