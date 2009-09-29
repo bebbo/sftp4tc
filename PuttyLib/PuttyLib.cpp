@@ -10,6 +10,7 @@
 #include <vector>
 
 extern "C" {
+#include <putty.h>
 #include "sftp4tc_share.h"
 #include "pl_misc.h"
 #include "pl_psftp.h"
@@ -32,7 +33,7 @@ extern HINSTANCE hinst;
 	}
 
 
-	Sftp4tc * __stdcall __map__wcplg_open_sftp_session(char *user, char *password,
+	config_tag * __stdcall __map__wcplg_open_sftp_session(char *user, char *password,
 		char *host, int port)
 	{
 		ISinitT = 0;
@@ -75,7 +76,7 @@ extern HINSTANCE hinst;
 		return init_Procs(AP_RequestProc, AP_ProgressProc, Awc_PluginNr);
 	}
 
-	struct Sftp4tc * __stdcall __map__do_config(HWND hwnd, int midsession, int protocol) {
+	struct config_tag * __stdcall __map__do_config(HWND hwnd, int midsession, int protocol) {
 		return do_config(hwnd, midsession, protocol);
 	}
 
@@ -89,5 +90,16 @@ extern HINSTANCE hinst;
 	void __stdcall __map__set_transfer_ascii(int ca) {
 		transferAscii = ca;
 	}
+
+	extern Config cfg;
+	void __stdcall __map__set_config(Config * oldCfg) {
+		if (oldCfg)
+			cfg = *oldCfg;
+	}
+
+	void __stdcall __map__load_config(char * name, Config * cfg) {
+		load_settings(name, cfg);
+	}
+
 }
 

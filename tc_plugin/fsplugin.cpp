@@ -25,6 +25,8 @@ HWND gMainWin;
 
 HINSTANCE ghThisDllModule;
 
+static int quickConnectionCount;
+
 //---------------------------------------------------------------------
 // local defines
 //---------------------------------------------------------------------
@@ -376,9 +378,10 @@ int __stdcall FsExecuteFile(HWND MainWin, char * fullRemoteName, char * verb)
 			if (!server)
 				return FS_EXEC_ERROR;
 			
+			// simply get the home folder and append. Otherwise the progress bar hides
 			// connect and get the home folder
 			std::string response;
-			if (!server->doCommand("~", response))
+			if (!server->getHomeDir(response))
 				return FS_EXEC_ERROR;
 
 			// return the full remote path and force reload of dir
@@ -390,16 +393,38 @@ int __stdcall FsExecuteFile(HWND MainWin, char * fullRemoteName, char * verb)
 			return FS_EXEC_SYMLINK;
 		}
 
-		Server server("");
-		Sftp4tc const * const session = server.doConfig();
-		// force reload
-		if (session && session->selectedSession) {
-			strcpy(fullRemoteName + 1, session->selectedSession);
-			strcat(fullRemoteName, session->homeDir);
-			toDos(fullRemoteName);
-		} else {
-			fullRemoteName[1] = '\0';
+		// It's edit connections. Create a temp server - maybe we keep it.
+		Server * server = new Server("");
+
+		// popup config dialog
+		config_tag const * const cfg = server->doConfig();
+		if (!cfg)
+			return FS_EXEC_ERROR;
+
+		Sftp4tc const * const session = &cfg->sftp4tc;
+
+		// is there a session?
+		std::string sessionName = session->selectedSession;
+		char buf[16];
+		if (sessionName.length() == 0) {
+			// no create a name from host
+			sessionName = "quick connection (";
+			sprintf(buf, "%d) ", ++quickConnectionCount);			
+			sessionName = sessionName + buf + cfg->host;
+			Server::insertServer(sessionName, server);
+			server = 0;
+		} else
+		if (!session->saved) {
+			sprintf(buf, "%d) ", ++quickConnectionCount);			
+			sessionName = "(*" + (buf + sessionName);
+			Server::insertServer(sessionName, server);
+			server = 0;
 		}
+		strcpy(fullRemoteName + 1, sessionName.c_str());
+		strcat(fullRemoteName, session->homeDir);
+		toDos(fullRemoteName);
+
+		if (server) delete server;
         return FS_EXEC_SYMLINK;
 	}
 
@@ -417,7 +442,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char * fullRemoteName, char * verb)
 			return FS_EXEC_OK;
 		}
 
-		Sftp4tc const * const session = server->doSelfConfig();
+		config_tag const * const session = server->doSelfConfig();
 		if (session) {
 			server->configure(session);
 		}

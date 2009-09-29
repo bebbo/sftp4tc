@@ -258,6 +258,7 @@ void xfer_cleanup(struct fxp_xfer *xfer);
 struct Sftp4tc {
 	// selected session
 	char * selectedSession;
+	int saved;
 	// cfg values
 	int cacheFolders;
 	int hideDotNames;

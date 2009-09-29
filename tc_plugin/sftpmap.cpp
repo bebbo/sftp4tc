@@ -104,7 +104,7 @@ void PsftpMapper::cleanup() {
 
 //---------------------------------------------------------------------
 // CT - create a new mapper
-PsftpMapper::PsftpMapper(std::string const & serverName)
+PsftpMapper::PsftpMapper(std::string const & serverName, config_tag * cfg)
 : hDll(0)
 {
 	char tempPathBuffer[MAX_CMD_BUFFER];
@@ -152,6 +152,8 @@ PsftpMapper::PsftpMapper(std::string const & serverName)
 	this->doConfig = (PsftpDoConfigType)GetProcAddress(hDll, "__map__do_config");
 	this->getLastAttr = (PsftpGetLastAttrType)GetProcAddress(hDll, "__map__get_last_attr");
 	this->setTransferAscii = (PsftpSetTransferAscii)GetProcAddress(hDll, "__map__set_transfer_ascii");
+	this->setConfig = (PsftpSetConfig)GetProcAddress(hDll, "__map__set_config");
+	this->loadConfig = (PsftpLoadConfig)GetProcAddress(hDll, "__map__load_config");
 
 	if (this->connect == NULL
 		|| this->disconnect == NULL
@@ -163,6 +165,7 @@ PsftpMapper::PsftpMapper(std::string const & serverName)
 		|| this->doConfig == NULL
 		|| this->getLastAttr == NULL
 		|| this->setTransferAscii == NULL
+		|| this->setConfig == NULL
 		) {
 			cleanup();
 	}
@@ -173,5 +176,6 @@ PsftpMapper::PsftpMapper(std::string const & serverName)
 	*/
 
 	this->initProcs(gRequestProc, myProgressProc, gPluginNumber);
+	if (cfg) this->setConfig(cfg);
 }
 

@@ -10,6 +10,7 @@
 extern char *console_password;
 extern char *server_output;
 extern Config cfg;
+extern Config savedCfg;
 extern struct sftp_command *sftp_getcmd(FILE * fp, int mode,
                                         int modeflags);
 
@@ -41,7 +42,7 @@ static void init_winsock(void)
 extern char * selectedSession;
 char * connectMsg;
 
-struct Sftp4tc * wcplg_open_sftp_session(char *userhost, char *user, char *pass,
+struct config_tag * wcplg_open_sftp_session(char *userhost, char *user, char *pass,
                             int portnumber)
 {
   wcplg_set_last_error_msg(NULL);
@@ -53,7 +54,8 @@ struct Sftp4tc * wcplg_open_sftp_session(char *userhost, char *user, char *pass,
   }
 
   if (!user && !pass && !portnumber) {
-	  do_defaults(userhost, &cfg);
+	  if (!cfg.host[0])
+		do_defaults(userhost, &cfg);
 	  userhost = cfg.host;
 	  user = cfg.username;
 	  portnumber = cfg.port;
@@ -95,7 +97,7 @@ struct Sftp4tc * wcplg_open_sftp_session(char *userhost, char *user, char *pass,
 
   cfg.sftp4tc.selectedSession = selectedSession;
 	
-  return &cfg.sftp4tc;
+  return &cfg;
 }
 
 int wcplg_close_sftp_session()
