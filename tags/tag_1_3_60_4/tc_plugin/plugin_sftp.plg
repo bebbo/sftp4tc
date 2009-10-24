@@ -1,0 +1,42 @@
+<html>
+<body>
+<pre>
+<h1>Erstellungsprotokoll</h1>
+<h3>
+--------------------Konfiguration: plugin_sftp - Win32 Release--------------------
+</h3>
+<h3>Befehlszeilen</h3>
+Erstellen der temporären Datei  "C:\Users\stefan\AppData\Local\Temp\RSP9ECE.tmp" mit Inhalten
+[
+/nologo /MT /W3 /GX /O2 /I "..\PuttyLib" /I "..\PuttyLib\putty" /I "..\tc_plugin" /I "..\shared" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_SFTP_EXPORTS" /FR"Release/" /Fp"Release/plugin_sftp.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c 
+"D:\prj\sftp\trunk\tc_plugin\sftpmap.cpp"
+]
+Creating command line "cl.exe @C:\Users\stefan\AppData\Local\Temp\RSP9ECE.tmp" 
+Erstellen der temporären Datei  "C:\Users\stefan\AppData\Local\Temp\RSP9EDF.tmp" mit Inhalten
+[
+kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib /nologo /dll /incremental:no /pdb:"Release/plugin_sftp.pdb" /machine:I386 /def:".\fsplugin.def" /out:"Release/plugin_sftp.wfx" /implib:"Release/plugin_sftp.lib" 
+.\Release\ConfigProperties.obj
+.\Release\fsplugin.obj
+.\Release\ServerInfo.obj
+.\Release\sftpmap.obj
+.\Release\share.obj
+.\Release\StdAfx.obj
+.\Release\sftp.res
+]
+Erstellen der Befehlzeile "link.exe @C:\Users\stefan\AppData\Local\Temp\RSP9EDF.tmp"
+<h3>Ausgabefenster</h3>
+Kompilierung läuft...
+sftpmap.cpp
+Linker-Vorgang läuft...
+   Bibliothek Release/plugin_sftp.lib und Objekt Release/plugin_sftp.exp wird erstellt
+Erstellen der Befehlzeile "bscmake.exe /nologo /o"Release/plugin_sftp.bsc"  .\Release\ConfigProperties.sbr .\Release\fsplugin.sbr .\Release\ServerInfo.sbr .\Release\sftpmap.sbr .\Release\share.sbr .\Release\StdAfx.sbr"
+Browse-Informationsdatei wird erstellt...
+<h3>Ausgabefenster</h3>
+
+
+
+<h3>Ergebnisse</h3>
+plugin_sftp.wfx - 0 Fehler, 0 Warnung(en)
+</pre>
+</body>
+</html>
