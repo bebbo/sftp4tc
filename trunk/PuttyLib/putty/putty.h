@@ -601,6 +601,10 @@ struct config_tag {
     FontSpec wideboldfont;
     int shadowboldoffset;
 
+	// ini handling
+	char iniPath[1024];
+	int  iniNo;
+	
 	// SFTP4TC stuff
 	struct Sftp4tc sftp4tc;
 };
@@ -782,8 +786,8 @@ void random_destroy_seed(void);
 /*
  * Exports from settings.c.
  */
-char *save_settings(char *section, Config * cfg);
-void save_open_settings(void *sesskey, Config *cfg);
+char * save_settings(char *section, Config * cfg);
+int save_open_settings(void *sesskey, Config *cfg);
 void load_settings(char *section, Config * cfg);
 void load_open_settings(void *sesskey, Config *cfg);
 void get_sesslist(struct sesslist *, int allocate);

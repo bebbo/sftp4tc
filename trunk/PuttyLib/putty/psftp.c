@@ -2986,6 +2986,8 @@ int psftp_connect(char *userhost, char *user, int portnumber)
 	{
 		double v = 0.9;
 		while (!back->sendok(backhandle)) {
+			if (!back->connected(backhandle))
+				return 1;
 			v *= 0.98;
 			if (1 == ProgressProc("connecting", connectMsg, 100 - (int)(v*100)))
 				return 1;

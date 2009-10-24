@@ -5,6 +5,8 @@
 
 RequestProcType gRequestProc = NULL;
 ProgressProcType gProgressProc = NULL;
+HWND gGlobalHwnd;
+
 int gTotalCommanderPluginNr = -1;
 char gTotalCommanderLastErrorMessage[1000];
 
@@ -37,10 +39,16 @@ void wcplg_set_last_error_msg(char *str_)
   }
 }
 
-
+static char * lastSrc;
+static char * lastTarget;
+static int lastPercent;
 int ProgressProc(char *SourceName, char *TargetName, int PercentDone)
 {
   int progress;
+  
+  lastSrc = SourceName;
+  lastTarget = TargetName;
+  lastPercent = PercentDone;
 
   if (gProgressProc != NULL && gTotalCommanderPluginNr != -1) {
     progress =
@@ -54,11 +62,16 @@ int ProgressProc(char *SourceName, char *TargetName, int PercentDone)
   return RESULT_ERR;
 }
 
-int init_Procs(RequestProcType prequestProc, ProgressProcType pprogressProc, int totalCommaderPluginNr)
+int LastProgressProc() {
+	return ProgressProc(lastSrc ? lastSrc : "", lastTarget ? lastTarget : "", lastPercent);
+}
+
+int init_Procs(RequestProcType prequestProc, ProgressProcType pprogressProc, int totalCommaderPluginNr, HWND hwnd)
 {
   gRequestProc = prequestProc;
   gProgressProc = pprogressProc;
   gTotalCommanderPluginNr = totalCommaderPluginNr;
+  gGlobalHwnd = hwnd;
   return 1;
 }
 

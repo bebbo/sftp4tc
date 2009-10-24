@@ -461,6 +461,8 @@ default:
 }
 extern int select_result(WPARAM, LPARAM);
 extern int sk_isClosed();
+extern int LastProgressProc();
+extern void set_disconnected(void);
 
 int do_eventsel_loop(HANDLE other_event)
 {
@@ -498,15 +500,34 @@ int do_eventsel_loop(HANDLE other_event)
 	else
 		otherindex = -1;
 
-	n = WaitForMultipleObjects(nallhandles, handles, FALSE, ticks);
-/*
-	if (STATUS_TIMEOUT == n) {
-		sfree(handles);
-		++timeoutCount;
-		return timeoutCount > 50 ? -1 : 0;
+	// wait only 500ms to check user aborts
+	for(;;) {
+	  int ticksNow;
+	  if (ticks > 500 || ticks == INFINITE)
+		  ticksNow = 500;
+	  else
+		  ticksNow = ticks;
+
+	  n = WaitForMultipleObjects(nallhandles, handles, FALSE, ticksNow);
+
+	  if (STATUS_TIMEOUT != n)
+		  break;
+
+	  // user abort?
+	  if (LastProgressProc()) {
+		  set_disconnected();
+		  n = STATUS_TIMEOUT;
+		  break;
+	  }
+	  
+      if (ticks == INFINITE)
+		continue;
+
+      ticks -= ticksNow;
+	  if (ticks <= 0)
+	    break;
 	}
-	timeoutCount = 0;
-*/
+
 	if ((unsigned)(n - WAIT_OBJECT_0) < (unsigned)nhandles) {
 		handle_got_event(handles[n - WAIT_OBJECT_0]);
 	} else if (netindex >= 0 && n == WAIT_OBJECT_0 + netindex) {

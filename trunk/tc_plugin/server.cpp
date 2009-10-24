@@ -5,9 +5,74 @@
 extern void import_putty_sessions(std::vector<ServerInfo> & serverInfos);
 extern bool UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft);
 extern unsigned long FileTimeToUnixTime(LPFILETIME ft);
-extern std::string splitPath(std::string & path, std::string const & filePath);
+extern bstring splitPath(bstring & path, bstring const & filePath);
 
 extern HWND gMainWin;
+
+/**
+ * This class ensures that the used mapper exists and is still connected.
+ * If necessary a new mapper is initialized.
+ * For temp mappers (configuration issues) or disconnected mappers
+ * the mapper is cleaned up at end
+ */
+class Guard {
+	PsftpMapper * intern;
+	Server * server;
+public:
+	PsftpMapper * & mapper;
+	Guard();
+	Guard(Server * server, config_tag * cfg = 0);
+    ~Guard();
+	bool isConnected();
+	bool isLoaded();
+};
+
+Guard::Guard() : mapper(intern), server(0) {
+	mapper = new PsftpMapper(TEXT("~"));
+}
+
+Guard::Guard(Server * server, config_tag * cfg) : intern(0), server(server), mapper(server->currentMapper)
+{
+}
+
+Guard::~Guard() {
+	if (intern) delete intern;
+}
+
+bool Guard::isLoaded() {
+	if (!mapper && server) mapper = new PsftpMapper(server->name, server->myCfg);
+	return mapper && mapper->hDll;
+}
+
+// checks existing connection and creates a new one if none exists.
+bool Guard::isConnected() {
+	if (!server)
+		return false;
+
+	if (!mapper || !mapper->hDll || mapper->disconnected()) {
+		if (mapper) {
+			gLogProc(gPluginNumber, MSGTYPE_DISCONNECT, (TEXT("connection to ") + server->name + TEXT(" IS BROKEN!")).c_str());
+			delete mapper;
+		}
+		mapper = new PsftpMapper(server->name, server->myCfg);
+
+		bstring msg = TEXT("CONNECT \\") + server->name;
+		gLogProc(gPluginNumber, MSGTYPE_CONNECT, msg.c_str());		
+		config_tag * cfg = mapper->connect(0, 0, server->name.c_str(), 0);
+		if (!cfg || mapper->disconnected()) {
+			gLogProc(gPluginNumber, MSGTYPE_CONNECTCOMPLETE, (TEXT("NOT connected to ") + server->name).c_str());
+			delete mapper;
+			mapper = 0;
+			return false;
+		}
+		gLogProc(gPluginNumber, MSGTYPE_CONNECTCOMPLETE, (TEXT("connected to ") + server->name).c_str());
+		if (cfg) {
+			server->configure(cfg);
+		}
+	}
+	return true;
+}
+
 
 //---------------------------------------------------------------------
 ServerMap Server::serverMap;
@@ -15,8 +80,8 @@ std::vector<ServerInfo> Server::serverInfos;
 
 //---------------------------------------------------------------------
 // remove a file of the dir content - if present
-fxp_name * Server::removeFile(std::string const & remotePath) {
-	std::string path, file;
+fxp_name * Server::removeFile(bstring const & remotePath) {
+	bstring path, file;
 	file = splitPath(path, remotePath);
 	DirCache::iterator i = dirCache.find(path);
 	if (i == dirCache.end())
@@ -27,7 +92,7 @@ fxp_name * Server::removeFile(std::string const & remotePath) {
 	int count = dir->nnames;
 	for (int i = 0; i < count; ++i) {
 		fxp_name * fn = dir->names[i];
-		if (file == fn->longname) {
+		if (file == fn->filename) {
 			// not last -> replace current with last
 			if (i + 1 < count) {
 				dir->names[i] = dir->names[count - 1];
@@ -44,8 +109,8 @@ fxp_name * Server::removeFile(std::string const & remotePath) {
 
 //---------------------------------------------------------------------
 // add a file to the dir content - if not already there
-void Server::insertFile(std::string const & remotePath, FILETIME * ft, unsigned long szLo, unsigned long szHi, char kind, std::string const & chmod) {
-	std::string path, file;
+void Server::insertFile(bstring const & remotePath, FILETIME * ft, unsigned long szLo, unsigned long szHi, char kind, bstring const & chmod) {
+	bstring path, file;
 	file = splitPath(path, remotePath);
 	DirCache::iterator i = dirCache.find(path);
 	if (i == dirCache.end())
@@ -79,10 +144,18 @@ void Server::insertFile(std::string const & remotePath, FILETIME * ft, unsigned 
 	}
 
 	char buffer[32];
-	_snprintf(buffer, 32, "%d ", szLo);
+	sprintf(buffer, "%d ", szLo);
+#ifdef UNICODE
+	char * chmod2;
+	BCONVERT(char, 32, chmod2, chmod.c_str());
+	char * file2;
+	BCONVERT(char, 256, file2, file.c_str());
+	std::string ln = kind + chmod2 + std::string(" 1 ? ? ") + buffer + " Jan  1 1990 " + file2; 
+#else
 	std::string ln = kind + chmod + std::string(" 1 ? ? ") + buffer + " Jan  1 1990 " + file; 
+#endif
 	n->longname = strdup(ln.c_str());
-	n->filename = strdup(file.c_str());
+	n->filename = bstrdup(file.c_str());
 
 	n->attrs.size.hi = szHi;
 	n->attrs.size.lo = szLo;	
@@ -98,7 +171,7 @@ void Server::insertFile(std::string const & remotePath, FILETIME * ft, unsigned 
 
 //---------------------------------------------------------------------
 // update the file attributes
-void Server::updateFileAttr(std::string const & path, std::string const & file, std::string const & attrs)
+void Server::updateFileAttr(bstring const & path, bstring const & file, bstring const & attrs)
 {
 	DirCache::iterator i = dirCache.find(path);
 	if (i == dirCache.end())
@@ -110,7 +183,7 @@ void Server::updateFileAttr(std::string const & path, std::string const & file, 
 		fxp_name * fn = dir->names[i];
 		if (file == fn->filename) {
 			// got it
-			fn->attrs.permissions = strtol(attrs.c_str(), '\0', 8);
+			fn->attrs.permissions = bstrtol(attrs.c_str(), '\0', 8);
 			return;
 		}
 	}
@@ -120,10 +193,11 @@ void Server::updateFileAttr(std::string const & path, std::string const & file, 
 //---------------------------------------------------------------------
 // CT
 // init with zeros
-Server::Server(std::string const & serverName)
+Server::Server(bstring const & serverName)
 : name(serverName)
-, mapper(new PsftpMapper(serverName)) 
+, currentMapper(0) 
 , disableMtime(false)
+, myCfg(0)
 {
 }
 
@@ -153,14 +227,24 @@ static void freeMfn(my_fxp_names * dir) {
 // free all cached structures
 Server::~Server()
 {
-	if (mapper->hDll && !mapper->disconnected()) {
-		mapper->disconnect();
+	if (currentMapper && currentMapper->hDll && !currentMapper->disconnected()) {
+		currentMapper->disconnect();
 	}
-	delete mapper;
+	delete currentMapper;
 
 	clearDirCache();
+
+	delete myCfg;
 }
 
+bool Server::connect() {
+//	Guard guard(this);
+//	return guard.isConnected();
+	return true;
+}
+
+//---------------------------------------------------------------------
+// clear the folder chache
 void Server::clearDirCache() {
 	for (DirCache::iterator i = dirCache.begin(); i != dirCache.end(); ++i) {
 		my_fxp_names * dir = i->second;
@@ -172,19 +256,19 @@ void Server::clearDirCache() {
 //---------------------------------------------------------------------
 // performs a server lookup by evaluating the remote path
 // on success the remote path is also set
-Server * Server::findServer(std::string & remotePath, char const * const fullPath)
+Server * Server::findServer(bstring & remotePath, bchar const * const fullPath)
 {
-	std::string serverName = *fullPath == '\\' ? fullPath + 1 : fullPath;
-	int slash = (int)serverName.find_first_of('\\');
+	bstring serverName = *fullPath == TEXT('\\') ? fullPath + 1 : fullPath;
+	int slash = (int)serverName.find_first_of(TEXT('\\'));
 	if (slash > 0) {
 		remotePath = serverName.substr(slash);
-		for (std::string::iterator i = remotePath.begin(); i != remotePath.end(); ++i)
+		for (bstring::iterator i = remotePath.begin(); i != remotePath.end(); ++i)
 		{
-			if (*i == '\\') *i = '/';
+			if (*i == TEXT('\\')) *i = '/';
 		}
 		serverName = serverName.substr(0, slash);
 	} else {
-		remotePath = "/";
+		remotePath = TEXT("/");
 	}
 
 	ServerMap::const_iterator i = serverMap.find(serverName);
@@ -199,7 +283,7 @@ Server * Server::findServer(std::string & remotePath, char const * const fullPat
 	return server;
 }
 
-void Server::insertServer(std::string const & serverName, Server * server) {
+void Server::insertServer(bstring const & serverName, Server * server) {
 	ServerMap::iterator i = serverMap.find(serverName);
 	server->name = serverName;
 	if (i != serverMap.end()) {
@@ -212,29 +296,37 @@ void Server::insertServer(std::string const & serverName, Server * server) {
 
 //---------------------------------------------------------------------
 // disconnects and performs a cleanup
-bool Server::disconnectServer(char const * serverName) {
+bool Server::removeServer(bchar const * serverName) {
 	ServerMap::const_iterator i = serverMap.find(serverName);
 	if (i == serverMap.end())
 		return false;
 	Server * server = i->second;
-	gLogProc(gPluginNumber, MSGTYPE_DISCONNECT, ("connection to " + server->name + " closed - bye bye!").c_str());
+	gLogProc(gPluginNumber, MSGTYPE_DISCONNECT, (TEXT("connection to ") + server->name + TEXT(" closed - bye bye!")).c_str());
 
-	serverMap.erase(i);
-	delete server;
+	//serverMap.erase(i);
+	//delete server;
+	if (server->currentMapper) {
+		delete server->currentMapper;
+		server->currentMapper = 0;
+	}
+
 	return true;
 }
 
 //---------------------------------------------------------------------
 // reload the config
 size_t Server::loadServers() {
-	serverInfos.clear();
-	import_putty_sessions(serverInfos);
+	Guard guard;
+	if (guard.isLoaded()) {
+		serverInfos.clear();
+		guard.mapper->import_putty_sessions(serverInfos);
+	}
 	return serverInfos.size();
 }
 
 //---------------------------------------------------------------------
 // get the server name for the index - use from FindFirst/Next
-char const * const Server::getServerName(size_t index) {
+bchar const * const Server::getServerName(size_t index) {
 	if (index < serverInfos.size())
 		return serverInfos[index].name.c_str();
 	return 0;
@@ -242,47 +334,33 @@ char const * const Server::getServerName(size_t index) {
 
 //---------------------------------------------------------------------
 // get the home folder
-bool Server::getHomeDir(std::string & response) {
-	if (!mapper->hDll)
-		return false;
-
+bool Server::getHomeDir(bstring & response) {
+	Guard guard(this);
+	if (!guard.isLoaded()) return false;
 
 	Config cfg;
 	memset(&cfg, 0, sizeof(cfg));
-	mapper->loadConfig((char*)name.c_str(), &cfg);
+	guard.mapper->loadConfig(name.c_str(), &cfg);
+#ifdef UNICODE
+	BCONVERT(wchar_t, 256, response, cfg.sftp4tc.homeDir);
+#else
 	response = cfg.sftp4tc.homeDir;
-
+#endif
 	return true;
 }
 
 
 //---------------------------------------------------------------------
 // execute a SFTP command
-bool Server::doCommand(std::string const & command, std::string & response) {
-	if (!mapper->hDll)
-		return false;
-
-	if (mapper->disconnected()) {
-		std::string msg = "CONNECT \\" + name;
-		gLogProc(gPluginNumber, MSGTYPE_CONNECT, msg.c_str());
-		config_tag * cfg = mapper->connect(0, 0, name.c_str(), 0);
-		if (!cfg || mapper->disconnected()) {
-			gLogProc(gPluginNumber, MSGTYPE_DISCONNECT, "connection failed");
-			delete mapper;
-			mapper = new PsftpMapper(name, cfg);
-			return false;
-		}
-		gLogProc(gPluginNumber, MSGTYPE_CONNECTCOMPLETE, ("connected to " + name).c_str());
-		if (cfg) {
-			configure(cfg);
-		}
-	}
+bool Server::doCommand(bstring const & command, bstring & response) {
+	Guard guard(this);
+	if (!guard.isConnected()) return false;
 
 	gLogProc(gPluginNumber, MSGTYPE_DETAILS, command.c_str());
 
-	char buffer[8192];
+	bchar buffer[8192];
 	*buffer = 0;
-	int r = mapper->doSftp(command.c_str(), buffer);
+	int r = guard.mapper->doSftp(command.c_str(), buffer);
 
 	if (*buffer) {
 		response = buffer;
@@ -293,17 +371,14 @@ bool Server::doCommand(std::string const & command, std::string & response) {
 
 //---------------------------------------------------------------------
 // get the directory for the given path
-my_fxp_names * Server::getDirContent(std::string const & _path)
+my_fxp_names * Server::getDirContent(bstring const & _path)
 {
-	std::string path = _path;
-	if (path.length() == 0 || path[path.length() -1] != '/')
-		path = path + '/';
+	bstring path = _path;
+	if (path.length() == 0 || path[path.length() -1] != TEXT('/'))
+		path = path + TEXT('/');
 	DirCache::iterator i = dirCache.find(path);
 	if (i != dirCache.end())
 		return i->second;
-
-	if (!mapper->hDll)
-		return 0;
 
 	if (!this->cmdLs(path))
 		return 0;
@@ -317,24 +392,24 @@ my_fxp_names * Server::getDirContent(std::string const & _path)
 
 //---------------------------------------------------------------------
 // remove a dir entry from the cache
-void Server::invalidateDirContent(std::string const & _path) {
-	std::string path = _path;
-	if (path.size() == 0 || path[path.size() - 1] != '/')
-		path = path + "/";
+void Server::invalidateDirContent(bstring const & _path) {
+	bstring path = _path;
+	if (path.size() == 0 || path[path.size() - 1] != TEXT('/'))
+		path = path + TEXT('/');
 	dirCache.erase(path);
 }
 
 //---------------------------------------------------------------------
 // checks existance of a remote file
-bool Server::remoteFileExists(std::string const & remotePath) {
-	std::string path;
-	std::string file = splitPath(path, remotePath);
+bool Server::remoteFileExists(bstring const & remotePath) {
+	bstring path;
+	bstring file = splitPath(path, remotePath);
 	my_fxp_names * dir = getDirContent(path);
 	if (!dir)
 		return true;
 
 	for (int i = 0; i < dir->nnames; ++i) {
-		char const * const name = dir->names[i]->filename;
+		bchar const * const name = dir->names[i]->filename;
 		if (file == name) {
 			return true;
 		}
@@ -343,10 +418,13 @@ bool Server::remoteFileExists(std::string const & remotePath) {
 }
 //---------------------------------------------------------------------
 // get remote content and store it into the dir cache
-bool Server::cmdLs(std::string const & remotePath) {
-	std::string cmd = std::string("ls \"") + remotePath + "\"";
+bool Server::cmdLs(bstring const & remotePath) {
+	Guard guard(this);
+	if (!guard.isConnected()) return false;
 
-	my_fxp_names * cds = mapper->getCurrentDirStruct();
+	bstring cmd = bstring(TEXT("ls \"")) + remotePath + TEXT('"');
+
+	my_fxp_names * cds = guard.mapper->getCurrentDirStruct();
 	cds->nnames = 0;
 	cds->names = 0;
 
@@ -365,11 +443,11 @@ bool Server::cmdLs(std::string const & remotePath) {
 		fxp_name * fn = ndir->names[j] = (fxp_name *)malloc(sizeof(fxp_name));
 		fxp_name * cn = cds->names[j];
 		fn->attrs = cn->attrs;
-		fn->filename = strdup(cn->filename);
+		fn->filename = bstrdup(cn->filename);
 		fn->longname = strdup(cn->longname);
 	}
 	
-	mapper->freeCurrentDirStruct();
+	guard.mapper->freeCurrentDirStruct();
 
 	updateDirCache(remotePath, ndir);
 
@@ -378,10 +456,10 @@ bool Server::cmdLs(std::string const & remotePath) {
 
 //---------------------------------------------------------------------
 // insert or replace an existing dir cache entry
-void Server::updateDirCache(std::string const & _path, my_fxp_names * dir) {
-	std::string path = _path;
-	if (path.length() == 0 || path[path.length() -1] != '/')
-		path = path + '/';
+void Server::updateDirCache(bstring const & _path, my_fxp_names * dir) {
+	bstring path = _path;
+	if (path.length() == 0 || path[path.length() -1] != TEXT('/'))
+		path = path + TEXT('/');
 
 	if (cacheFolders) {
 		// remove old dir listing
@@ -401,16 +479,16 @@ void Server::updateDirCache(std::string const & _path, my_fxp_names * dir) {
 
 //---------------------------------------------------------------------
 // get a remote file -> local
-bool Server::cmdGet(std::string const & remotePath, std::string const & localName, bool exists)
+bool Server::cmdGet(bstring const & remotePath, bstring const & localName, bool exists)
 {
 	DBGPRINT(("get '%s' '%s' %b\r\n", remotePath.c_str(), localName.c_str(), exists));
-	std::string cmd = std::string(exists ? "reget \"" : "get \"") + remotePath + "\" \"" + localName + "\"";
+	bstring cmd = bstring(exists ? TEXT("reget \"") : TEXT("get \"")) + remotePath + TEXT("\" \"") + localName + TEXT("\"");
 
 	if (!doCommand(cmd))
 		return false;
 
 	FILETIME ft;
-	fxp_attrs * attr = mapper->getLastAttr();
+	fxp_attrs * attr = currentMapper->getLastAttr();
 	if (UnixTimeToFileTime(attr->mtime, &ft)) {
 		HANDLE hf = CreateFile(localName.c_str(), GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
 		SetFileTime(hf, &ft, &ft, &ft);
@@ -421,10 +499,10 @@ bool Server::cmdGet(std::string const & remotePath, std::string const & localNam
 
 //---------------------------------------------------------------------
 // put a local file --> remote 
-bool Server::cmdPut(std::string const & localName, std::string const & remotePath, bool exists)
+bool Server::cmdPut(bstring const & localName, bstring const & remotePath, bool exists)
 {
 	DBGPRINT(("put '%s' '%s' %b\r\n", localName.c_str(), remotePath.c_str(), exists));
-	std::string cmd = std::string(exists ? "reput \"" : "put \"") + localName + "\" \"" + remotePath + "\"";
+	bstring cmd = bstring(exists ? TEXT("reput \"") : TEXT("put \"")) + localName + TEXT("\" \"") + remotePath + TEXT("\"");
 
 	if (!doCommand(cmd))
 		return false;
@@ -440,18 +518,18 @@ bool Server::cmdPut(std::string const & localName, std::string const & remotePat
 
 	CloseHandle(hFile);
 
-	std::string chmod = "---";
+	bstring chmod = TEXT("----");
 	if (defChMod.length() > 0 || exeChMod.length() > 0) {
 		chmod = defChMod;
 		size_t ldot = remotePath.find_last_of('.');
 		if (ldot != (size_t)-1) {
-			std::string x = remotePath.substr(ldot);
-			std::map<std::string, std::string>::iterator i = exeExtensions.find(x);
+			bstring x = remotePath.substr(ldot);
+			std::map<bstring, bstring>::iterator i = exeExtensions.find(x);
 			if (i != exeExtensions.end())
 				chmod = exeChMod;
 		}
 		if (chmod.length() > 0) {
-			cmd = std::string("chmod ") + chmod + " \"" + remotePath + "\"";
+			cmd = bstring(TEXT("chmod ")) + chmod + TEXT(" \"") + remotePath + TEXT("\"");
 			doCommand(cmd);
 		}
 	}
@@ -473,8 +551,8 @@ bool Server::cmdPut(std::string const & localName, std::string const & remotePat
 
 //---------------------------------------------------------------------
 // create a remote folder
-bool Server::cmdMkDir(std::string const & remotePath) {
-	std::string cmd = std::string("mkdir \"") + remotePath + "\"";
+bool Server::cmdMkDir(bstring const & remotePath) {
+	bstring cmd = bstring(TEXT("mkdir \"")) + remotePath + TEXT("\"");
 
 	if (!doCommand(cmd))
 		return false;
@@ -486,8 +564,8 @@ bool Server::cmdMkDir(std::string const & remotePath) {
 }
 //---------------------------------------------------------------------
 // move a remote file to a remote file
-bool Server::cmdMove(std::string const & oldRemotePath, std::string const & newRemotePath) {
-	std::string cmd = std::string("mv \"") + oldRemotePath + "\" \"" + newRemotePath + "\"";
+bool Server::cmdMove(bstring const & oldRemotePath, bstring const & newRemotePath) {
+	bstring cmd = bstring(TEXT("mv \"")) + oldRemotePath + TEXT("\" \"") + newRemotePath + TEXT("\"");
 
 	if (!doCommand(cmd))
 		return false;
@@ -499,7 +577,7 @@ bool Server::cmdMove(std::string const & oldRemotePath, std::string const & newR
 		insertFile(newRemotePath, &ft, fn->attrs.size.lo, fn->attrs.size.hi, fn->longname[0]);
 		freeFn(fn);
 	} else {
-		std::string path;
+		bstring path;
 		splitPath(path, newRemotePath);
 		invalidateDirContent(path);
 	}
@@ -509,12 +587,12 @@ bool Server::cmdMove(std::string const & oldRemotePath, std::string const & newR
 
 //---------------------------------------------------------------------
 // remove a remote file
-bool Server::cmdRm(std::string const & remotePath)
+bool Server::cmdRm(bstring const & remotePath)
 {
-	std::string path;
+	bstring path;
 	splitPath(path, remotePath);
 	invalidateDirContent(path);
-	std::string cmd = std::string("rm \"") + remotePath + "\"";
+	bstring cmd = bstring(TEXT("rm \"")) + remotePath + TEXT("\"");
 	if (!doCommand(cmd))
 		return false;
 
@@ -524,12 +602,12 @@ bool Server::cmdRm(std::string const & remotePath)
 
 //---------------------------------------------------------------------
 // remove a remote folder
-bool Server::cmdRmDir(std::string const & remotePath)
+bool Server::cmdRmDir(bstring const & remotePath)
 {
-	std::string path;
+	bstring path;
 	splitPath(path, remotePath);
 	invalidateDirContent(path);
-	std::string cmd = std::string("rmdir \"") + remotePath + "\"";
+	bstring cmd = bstring(TEXT("rmdir \"")) + remotePath + TEXT("\"");
 	if (!doCommand(cmd))
 		return false;
 
@@ -539,78 +617,96 @@ bool Server::cmdRmDir(std::string const & remotePath)
 
 //---------------------------------------------------------------------
 
-bool Server::cmdChmod(std::string const & remotePath, int flags) {
+bool Server::cmdChmod(bstring const & remotePath, int flags) {
 	//TODO - not needed yet
 	return 0;
 }
 
 //---------------------------------------------------------------------
 // try to set the remote mtime
-bool Server::cmdMtime(std::string const & remotePath, FILETIME * ft) {
+bool Server::cmdMtime(bstring const & remotePath, FILETIME * ft) {
 	return 0;
 //	SYSTEMTIME st;
 //	char buffer[32];
 //
 //	FileTimeToSystemTime(ft, &st);
 //	_snprintf(buffer, 32, "%d%02d%02d%02d%02d.%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
-//	std::string cmd = std::string("!touch -m -t ") + buffer + " " + remotePath;
+//	bstring cmd = bstring("!touch -m -t ") + buffer + " " + remotePath;
 //
 //	return doCommand(cmd);
 }
 
 //---------------------------------------------------------------------
 void Server::setTransferAscii(bool ta) {
-	if (!mapper->hDll)
-		return;
+	Guard guard(this);
+	if (!guard.isConnected()) return;
 
-	mapper->setTransferAscii(ta);
+	guard.mapper->setTransferAscii(ta);
 }
 
 //---------------------------------------------------------------------
 // show the global config dialog
 config_tag const * const Server::doConfig() {
-	if (!mapper->hDll)
-		return 0;
+	Guard guard(this);
+	if (!guard.isLoaded()) return 0;
 
-	return mapper->doConfig(gMainWin, 0, 0);
+	return guard.mapper->doConfig(gMainWin, 0, 0);
 }
 //---------------------------------------------------------------------
 // reconfigure current server
-config_tag const * const  Server::doSelfConfig() {
-	if (!mapper->hDll)
-		return 0;
+config_tag const * const Server::doSelfConfig() {
+	Guard guard(this);
+	if (!guard.isConnected()) return 0;
 
-	return mapper->doConfig(gMainWin, 1, 0);
+	return guard.mapper->doConfig(gMainWin, 1, 0);
 }
-
 //---------------------------------------------------------------------
 // apply the configuration
 void Server::configure(config_tag const * const cfg_)
 {
+	if (!myCfg) myCfg = new config_tag;
+	*myCfg = *cfg_;
+
 	const Sftp4tc * cfg = &cfg_->sftp4tc;
-	homeDir = cfg->homeDir;
+	bchar const * homeDir2;
+	bchar const * defChMod2;
+	bchar const * exeChMod2;
+	bchar const * exeExtensions2;
+
+#ifdef UNICODE
+	BCONVERT(wchar_t, 512, homeDir2, cfg->homeDir);
+	BCONVERT(wchar_t, 512, defChMod2, cfg->defChMod);
+	BCONVERT(wchar_t, 512, exeChMod2, cfg->exeChMod);
+	BCONVERT(wchar_t, 512, exeExtensions2, cfg->exeExtensions);
+#else
+	homeDir2 = cfg->homeDir;
+	defChMod2 = cfg->defChMod;
+	exeChMod2 = cfg->exeChMod;
+	exeExtensions2 = cfg->exeExtensions;
+#endif
+	homeDir = homeDir2;
 	cacheFolders = cfg->cacheFolders != 0;
 	if (!cacheFolders)
 		clearDirCache();
 	hideDotNames = cfg->hideDotNames != 0;
-	defChMod = cfg->defChMod;
-	exeChMod = cfg->exeChMod;
+	defChMod = defChMod2;
+	exeChMod = exeChMod2;
 	
-	std::string ext = cfg->exeExtensions;
+	bstring ext = exeExtensions2;
 	exeExtensions.clear();
 	size_t start = (size_t)-1;
 	for (size_t i = 0; i < ext.size(); ++i)
 	{
-		if (ext[i] == '.') start = i;
+		if (ext[i] == TEXT('.')) start = i;
 		else if (ext[i] <= 32) {
 			size_t len = i - start;
-			std::string x = ext.substr(start, len);
+			bstring x = ext.substr(start, len);
 			exeExtensions.insert(std::make_pair(x, x));
 			start = (size_t)-1;
 		}
 	}
 	if (start != (size_t)-1) {
-		std::string x = ext.substr(start);
+		bstring x = ext.substr(start);
 		exeExtensions.insert(std::make_pair(x, x));
 	}
 }

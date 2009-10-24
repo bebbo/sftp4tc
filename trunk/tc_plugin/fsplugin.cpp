@@ -4,7 +4,7 @@
 */
 
 //disabling that ugly warnings from vc++6.0 about cutting identifiers from 
-//template types, like std::map<std::string, fxp_names*>
+//template types, like std::map<bstring, fxp_names*>
 #pragma warning(disable:4786)
 
 #include <time.h>
@@ -27,12 +27,23 @@ HINSTANCE ghThisDllModule;
 
 static int quickConnectionCount;
 
+class WLock {
+	HWND hwnd;
+public:
+	inline WLock() : hwnd(gMainWin) {
+		if (hwnd) EnableWindow(hwnd, 0);
+	}
+	inline ~WLock() {
+		if (hwnd) EnableWindow(hwnd, 1);			
+	}
+};
+
 //---------------------------------------------------------------------
 // local defines
 //---------------------------------------------------------------------
 
 //Plugin's caption, shown in TC's list
-#define FSPLUGIN_CAPTION "Secure FTP Connections"
+#define FSPLUGIN_CAPTION TEXT("Secure FTP Connections")
 
 // modes for find first/next
 #define HANDLE__SHOW_SFTP_SERVER 1
@@ -51,10 +62,10 @@ static TCHAR const * const EDIT_CONNECTIONS = TEXT("<edit connections>");
 
 // used to force reloads
 static Server * lastServer;
-static std::string lastDir;
+static bstring lastDir;
 
 // transfer modes
-static std::map<std::string, std::string> modeExtensions;
+static std::map<bstring, bstring> modeExtensions;
 static bool transferAscii;
 
 
@@ -70,16 +81,38 @@ typedef struct {
 } LastFindStructType;
 
 //---------------------------------------------------------------------
-static void toDos(char * p) {
+static void toDos(bchar * p) {
 	while (*p) {
-		if (*p == '/') *p = '\\';
+		if (*p == TEXT('/')) *p = TEXT('\\');
 		++p;
 	}
 }
 
 //---------------------------------------------------------------------
+#ifdef UNICODE
+void qudConvert(wchar_t * dst, char const * src, unsigned int len) {
+	while (--len > 0) {
+		wchar_t c = 0xff & *src++;
+		if (!c)
+			break;
+		*dst++ = c;
+	}
+	*dst = 0;
+}
+void qudConvert(char * dst, wchar_t const * src, unsigned int len) {
+	while (--len > 0) {
+		char c = (char)*src++;
+		if (!c)
+			break;
+		*dst++ = c;
+	}
+	*dst = 0;
+}
+#endif
+//---------------------------------------------------------------------
 
-bool doTransferAscii(std::string const & filename) {
+bool doTransferAscii(bstring const & filename) {
+	WLock wlock;
 	if (transferAscii)
 		return true;
 	if (modeExtensions.size() == 0)
@@ -89,17 +122,17 @@ bool doTransferAscii(std::string const & filename) {
 	if (dot == (size_t)-1)
 		return false;
 
-	std::string ext = filename.substr(dot);
-	std::map<std::string, std::string>::iterator i = modeExtensions.find(ext);
+	bstring ext = filename.substr(dot);
+	std::map<bstring, bstring>::iterator i = modeExtensions.find(ext);
 	return i != modeExtensions.end();
 }
 
 //---------------------------------------------------------------------
 
-std::string splitPath(std::string & path, std::string const & filePath) {
+bstring splitPath(bstring & path, bstring const & filePath) {
 	size_t i = filePath.find_last_of('/');
 	if (i == (size_t)-1) {
-		path = "/";
+		path = TEXT("/");
 		return filePath;
 	}
 	++i;
@@ -173,7 +206,7 @@ int __stdcall FsInit(int PluginNr, ProgressProcType pProgressProc,
 static HANDLE fillLfWithServer(WIN32_FIND_DATA * FindData, LastFindStructType* lf, size_t n)
 {
 	lf->mCurrentIndex = n;
-	strcpy(FindData->cFileName, n ? Server::getServerName(n - 1) : EDIT_CONNECTIONS);
+	bstrcpy(FindData->cFileName, n ? Server::getServerName(n - 1) : EDIT_CONNECTIONS);
 
 	FindData->dwFileAttributes = n ? FILE_ATTRIBUTE_REPARSE_POINT | 0x80000000 : 0;
 	FindData->dwReserved0 |= S_IFLNK; // Wincmd uses only this one!
@@ -227,22 +260,22 @@ static HANDLE fillLfWithFile(WIN32_FIND_DATA * FindData, LastFindStructType * lf
 		(DWORD) name->attrs.size.hi;
 	FindData->nFileSizeLow = (FindData->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 0 :
 		(DWORD) name->attrs.size.lo;
-	strcpy(FindData->cFileName,
+	bstrcpy(FindData->cFileName,
 		name->filename);
 
 	return (HANDLE) lf;
 }
 
 //---------------------------------------------------------------------
-
-HANDLE __stdcall FsFindFirst(char * fullPath, WIN32_FIND_DATA * FindData)
+HANDLE __stdcall FsFindFirst(bchar * fullPath, WIN32_FIND_DATA * FindData)
 {
+	WLock wlock;
 	LastFindStructType * lf = (LastFindStructType*) malloc(sizeof(LastFindStructType));
 	lf->mCurrentDir = 0;
 
 	memset(FindData, 0, sizeof(WIN32_FIND_DATA));
 
-	if (strcmp(fullPath, "\\") == 0) {
+	if (bstrcmp(fullPath, TEXT("\\")) == 0) {
 		// list the connections - always scan PuTTy registry		
 		lf->mSearchMode = HANDLE__SHOW_SFTP_SERVER;
 		lf->mSumIndex = Server::loadServers() + 1;
@@ -253,7 +286,7 @@ HANDLE __stdcall FsFindFirst(char * fullPath, WIN32_FIND_DATA * FindData)
 	lf->mSearchMode = HANDLE__SHOW_SFTP_DIR;
 
 	// get the server instance
-	std::string remotePath;
+	bstring remotePath;
 	Server * server = Server::findServer(remotePath, fullPath);
 	if (server) {
 		if (server == lastServer && remotePath == lastDir) {
@@ -307,12 +340,13 @@ int __stdcall FsFindClose(HANDLE Hdl)
 }
 //---------------------------------------------------------------------
 
-BOOL __stdcall FsMkDir(char * fullPath)
+BOOL __stdcall FsMkDir(bchar * fullPath)
 {
+	WLock wlock;
 	// disable automatic reloads
 	lastServer = 0;
 
-	std::string remotePath;
+	bstring remotePath;
 	Server * server = Server::findServer(remotePath, fullPath);
 	if (!server)
 		return FS_EXEC_ERROR;
@@ -324,21 +358,22 @@ BOOL __stdcall FsMkDir(char * fullPath)
 /**
 * Invoked from Total Commander's command line - or by pressing enter.
 */ 
-int __stdcall FsExecuteFile(HWND MainWin, char * fullRemoteName, char * verb)
+int __stdcall FsExecuteFile(HWND MainWin, bchar * fullRemoteName, bchar * verb)
 {
 	gMainWin = MainWin;
+	WLock wlock;
 	if (!verb || !*verb)
 		return FS_EXEC_ERROR;
 
 	// disable automatic reloads
 	lastServer = 0;
 
-	std::string cmd = verb;
-	std::string fullRemotePath;
+	bstring cmd = verb;
+	bstring fullRemotePath;
 	if (fullRemoteName && *fullRemoteName) fullRemotePath = fullRemoteName + 1;
 
 	// set the global mode!? -- ignore, since SFTP does not support it.
-	if (cmd.length() > 5 && cmd.substr(0, 4) == "MODE") {
+	if (cmd.length() > 5 && cmd.substr(0, 4) == TEXT("MODE")) {
 		if (cmd[5] == 'A')
 			transferAscii = true;
 		else {
@@ -351,13 +386,13 @@ int __stdcall FsExecuteFile(HWND MainWin, char * fullRemoteName, char * verb)
 					if (cmd[i] == '.') start = i;
 					else if (cmd[i] <= 32) {
 						size_t len = i - start;
-						std::string x = cmd.substr(start, len);
+						bstring x = cmd.substr(start, len);
 						modeExtensions.insert(std::make_pair(x, x));
 						start = (size_t)-1;
 					}
 				}
 				if (start != (size_t)-1) {
-					std::string x = cmd.substr(start);
+					bstring x = cmd.substr(start);
 					modeExtensions.insert(std::make_pair(x, x));
 				}
 			}
@@ -365,8 +400,8 @@ int __stdcall FsExecuteFile(HWND MainWin, char * fullRemoteName, char * verb)
 		return FS_EXEC_OK;
 	}
 
-	std::string remotePath;
-	if (cmd == "open") {
+	bstring remotePath;
+	if (cmd == TEXT("open")) {
 		size_t slash = fullRemotePath.find_first_of('\\');
 		if (slash != (size_t)-1)
 			return FS_EXEC_YOURSELF;
@@ -377,54 +412,82 @@ int __stdcall FsExecuteFile(HWND MainWin, char * fullRemoteName, char * verb)
 			Server * server = Server::findServer(remotePath, fullRemotePath.c_str());
 			if (!server)
 				return FS_EXEC_ERROR;
-			
+
+			if (!server->connect()) {
+				Server::removeServer(server->getName().c_str());
+				return FS_EXEC_ERROR;
+			}
+							
 			// simply get the home folder and append. Otherwise the progress bar hides
 			// connect and get the home folder
-			std::string response;
+			bstring response;
 			if (!server->getHomeDir(response))
 				return FS_EXEC_ERROR;
 
 			// return the full remote path and force reload of dir
 			fullRemoteName[0] = '/';
-			strcpy(fullRemoteName + 1, server->getName().c_str());
-			strcat(fullRemoteName, response.c_str());
+			bstrcpy(fullRemoteName + 1, server->getName().c_str());
+			bstrcat(fullRemoteName, response.c_str());
 			toDos(fullRemoteName);
 
 			return FS_EXEC_SYMLINK;
 		}
 
 		// It's edit connections. Create a temp server - maybe we keep it.
-		Server * server = new Server("");
+		Server server(TEXT("~"));
 
 		// popup config dialog
-		config_tag const * const cfg = server->doConfig();
-		if (!cfg)
-			return FS_EXEC_ERROR;
+		config_tag const * const cfg = server.doConfig();
+		if (!cfg) {
+			fullRemoteName[1] = 0;
+			return FS_EXEC_SYMLINK;
+		}
 
 		Sftp4tc const * const session = &cfg->sftp4tc;
 
 		// is there a session?
-		std::string sessionName = session->selectedSession;
-		char buf[16];
+		bstring sessionName;
+#ifdef UNICODE
+		BCONVERT(wchar_t, 256, sessionName, session->selectedSession)
+#else
+		sessionName = session->selectedSession;
+#endif
+		bchar buf[16];
 		if (sessionName.length() == 0) {
 			// no create a name from host
-			sessionName = "quick connection (";
-			sprintf(buf, "%d) ", ++quickConnectionCount);			
-			sessionName = sessionName + buf + cfg->host;
-			Server::insertServer(sessionName, server);
-			server = 0;
+			sessionName = TEXT("quick connection (");
+			bsprintf(buf, TEXT("%d) "), ++quickConnectionCount);
+			bchar const * host;
+#ifdef UNICODE
+			BCONVERT(wchar_t, 256, host, cfg->host)
+#else
+			host = cfg->host;
+#endif
+			sessionName = sessionName + buf + host;
 		} else
 		if (!session->saved) {
-			sprintf(buf, "%d) ", ++quickConnectionCount);			
-			sessionName = "(*" + (buf + sessionName);
-			Server::insertServer(sessionName, server);
-			server = 0;
+			bsprintf(buf, TEXT("%d) "), ++quickConnectionCount);			
+			sessionName = TEXT("(") + (buf + sessionName);
 		}
-		strcpy(fullRemoteName + 1, sessionName.c_str());
-		strcat(fullRemoteName, session->homeDir);
+		bstrcpy(fullRemoteName + 1, sessionName.c_str());
+		bchar const * homeDir;
+#ifdef UNICODE
+		BCONVERT(wchar_t, 512, homeDir, session->homeDir)
+#else
+		homeDir = session->homeDir;
+#endif
+		bstrcat(fullRemoteName, homeDir);
 		toDos(fullRemoteName);
 
-		if (server) delete server;
+		Server * newServer = new Server(sessionName);
+		Server::insertServer(sessionName, newServer);
+		newServer->configure(cfg);
+
+		if (!newServer->connect()) {
+			Server::removeServer(sessionName.c_str());
+			return FS_EXEC_ERROR;
+		}
+
         return FS_EXEC_SYMLINK;
 	}
 
@@ -434,7 +497,7 @@ int __stdcall FsExecuteFile(HWND MainWin, char * fullRemoteName, char * verb)
 		return FS_EXEC_ERROR;
 	}
 
-	if (cmd == "properties") {
+	if (cmd == TEXT("properties")) {
 		size_t slash = fullRemotePath.find_first_of('\\');
 		if (slash != (size_t)-1) {
 			// invoke da menu
@@ -449,13 +512,13 @@ int __stdcall FsExecuteFile(HWND MainWin, char * fullRemoteName, char * verb)
 		return FS_EXEC_OK;
 	}
 
-	if (cmd.length() >= 5 && cmd.substr(0,5) == "chmod") {
+	if (cmd.length() >= 5 && cmd.substr(0,5) == TEXT("chmod")) {
 		size_t last = remotePath.find_last_of('/') + 1;
-		std::string fileName = remotePath.substr(last);
-		std::string remoteDir = remotePath.substr(0, last);
+		bstring fileName = remotePath.substr(last);
+		bstring remoteDir = remotePath.substr(0, last);
 
-		std::string cd = std::string("cd \"") + remoteDir + "\"";
-		cmd = cmd + " " + fileName;
+		bstring cd = bstring(TEXT("cd \"")) + remoteDir + TEXT("\"");
+		cmd = cmd + TEXT(" ") + fileName;
 		if (server->doCommand(cd) &&
 			server->doCommand(cmd)) {
 			server->updateFileAttr(remoteDir, fileName, cmd.substr(5));
@@ -464,29 +527,29 @@ int __stdcall FsExecuteFile(HWND MainWin, char * fullRemoteName, char * verb)
 		return FS_EXEC_ERROR;
 	}
 
-	if (cmd.length() >= 6 && cmd.substr(0, 6) == "quote ") {
+	if (cmd.length() >= 6 && cmd.substr(0, 6) == TEXT("quote ")) {
 		cmd = cmd.substr(6);
 
 		// set transfer mode for commands
-		if ((cmd.length() > 4 && (cmd.substr(4) == "get "
-			|| cmd.substr(4) == "put "))
-			|| (cmd.length() > 6 && (cmd.substr(6) == "reget "
-			|| cmd.substr(6) == "reput "))) {
+		if ((cmd.length() > 4 && (cmd.substr(4) == TEXT("get ")
+			|| cmd.substr(4) == TEXT("put ")))
+			|| (cmd.length() > 6 && (cmd.substr(6) == TEXT("reget ")
+			|| cmd.substr(6) == TEXT("reput ")))) {
 				server->setTransferAscii(doTransferAscii(cmd));
 		}
 		
 		// change current dir and execute command
-		std::string cd = std::string("cd \"") + remotePath + "\"";
+		bstring cd = bstring(TEXT("cd \"")) + remotePath + TEXT("\"");
 		if (server->doCommand(cd) &&
 			server->doCommand(cmd)) {
-				if (cmd.length() > 2 && cmd.substr(0, 2) == "cd") {
-				std::string nd = remotePath;
-				if (server->doCommand("pwd", nd)) {
-					if (nd.size() == 0 || nd[nd.size() - 1] != '/')
-						nd += '/';
+				if (cmd.length() > 2 && cmd.substr(0, 2) == TEXT("cd")) {
+				bstring nd = remotePath;
+				if (server->doCommand(TEXT("pwd"), nd)) {
+					if (nd.size() == 0 || nd[nd.size() - 1] != TEXT('/'))
+						nd += TEXT('/');
 					if (remotePath != nd) {
-						std::string toDir = "/" + server->getName() + nd;
-						strcpy(fullRemoteName, toDir.c_str());
+						bstring toDir = TEXT("/") + server->getName() + nd;
+						bstrcpy(fullRemoteName, toDir.c_str());
 						toDos(fullRemoteName);
 						return FS_EXEC_SYMLINK;
 					}
@@ -505,15 +568,16 @@ int __stdcall FsExecuteFile(HWND MainWin, char * fullRemoteName, char * verb)
 extern bool firstHalf;
 extern bool secondHalf;
 
-int __stdcall FsRenMovFile(char *fullOldName, char *fullNewName, BOOL move,
+int __stdcall FsRenMovFile(bchar *fullOldName, bchar *fullNewName, BOOL move,
 						   BOOL overWrite, RemoteInfoStruct * ri)
 {
+	WLock wlock;
 	// disable automatic reloads
 	lastServer = 0;
 
-	std::string oldRemotePath;
+	bstring oldRemotePath;
 	Server * oldServer = Server::findServer(oldRemotePath, fullOldName);
-	std::string newRemotePath;
+	bstring newRemotePath;
 	Server * newServer = Server::findServer(newRemotePath, fullNewName);
 
 	DBGPRINT(("renmove %s -> %s\r\n", fullOldName, fullNewName));
@@ -533,10 +597,10 @@ int __stdcall FsRenMovFile(char *fullOldName, char *fullNewName, BOOL move,
 	}
 
 	// slow way
-	char td[512];
+	bchar td[512];
 	GetTempPath(512, td);
-	char tf[512];
-	GetTempFileName(td, "sftp4tc", 0, tf);
+	bchar tf[512];
+	GetTempFileName(td, TEXT("sftp4tc"), 0, tf);
 
 	firstHalf = true;
 	int flags = (move ? FS_COPYFLAGS_MOVE : 0) | (overWrite ? FS_COPYFLAGS_OVERWRITE : 0);
@@ -547,17 +611,16 @@ int __stdcall FsRenMovFile(char *fullOldName, char *fullNewName, BOOL move,
 	}
 	firstHalf = secondHalf = false;
 
-	OFSTRUCT ofs;
-	OpenFile(tf, &ofs, OF_DELETE);
-
+	DeleteFile(tf);
 	return ret;
 }
 
 //---------------------------------------------------------------------
 
-int __stdcall FsGetFile(char *fullRemoteName, char *LocalName, int CopyFlags,
+int __stdcall FsGetFile(bchar *fullRemoteName, bchar *LocalName, int CopyFlags,
 						RemoteInfoStruct * ri)
 {
+	WLock wlock;
 	// disable automatic reloads
 	lastServer = 0;
 
@@ -567,22 +630,21 @@ int __stdcall FsGetFile(char *fullRemoteName, char *LocalName, int CopyFlags,
 	bool move = 0 != (CopyFlags & FS_COPYFLAGS_MOVE);
 
 	// check file existance
-	OFSTRUCT ofs;
-	HFILE hf = OpenFile(LocalName, &ofs, OF_EXIST);
-	bool exists = hf != HFILE_ERROR;
-	if (exists) _lclose(hf);
+	HANDLE hf = CreateFile(LocalName, 0, 0, 0, OPEN_EXISTING, 0, 0);
+	bool exists = hf != INVALID_HANDLE_VALUE;
+	if (exists) CloseHandle(hf);
 
 	// no action but signal resume is allowed
 	if (exists && !overwrite && !resume)
 		return FS_FILE_EXISTSRESUMEALLOWED;
 
-	std::string remotePath;
+	bstring remotePath;
 	Server * server = Server::findServer(remotePath, fullRemoteName);
 	if (!server) return FS_FILE_NOTFOUND;
 
 	// remove the file if overwrite is set
 	if (exists && overwrite) {
-		OpenFile(LocalName, &ofs, OF_DELETE);
+		DeleteFile(LocalName);
 		exists = false;
 	}
 	
@@ -602,8 +664,9 @@ int __stdcall FsGetFile(char *fullRemoteName, char *LocalName, int CopyFlags,
 }
 //---------------------------------------------------------------------
 
-int __stdcall FsPutFile(char * localName, char *fullRemoteName, int CopyFlags)
+int __stdcall FsPutFile(bchar * localName, bchar *fullRemoteName, int CopyFlags)
 {
+	WLock wlock;
 	// disable automatic reloads
 	lastServer = 0;
 
@@ -611,7 +674,7 @@ int __stdcall FsPutFile(char * localName, char *fullRemoteName, int CopyFlags)
 	bool resume = 0 != (CopyFlags & FS_COPYFLAGS_RESUME);
 	bool move = 0 != (CopyFlags & FS_COPYFLAGS_MOVE);
 
-	std::string remotePath;
+	bstring remotePath;
 	Server * server = Server::findServer(remotePath, fullRemoteName);
 	if (!server) return FS_FILE_NOTFOUND;
 
@@ -630,8 +693,7 @@ int __stdcall FsPutFile(char * localName, char *fullRemoteName, int CopyFlags)
 	if (!move)
 		return FS_FILE_OK;
 
-	OFSTRUCT ofs;
-	HFILE hf = OpenFile(localName, &ofs, OF_DELETE);
+	HFILE hf = DeleteFile(localName);
 	if (hf != HFILE_ERROR) _lclose(hf);
 
 	return FS_FILE_OK;
@@ -640,17 +702,18 @@ int __stdcall FsPutFile(char * localName, char *fullRemoteName, int CopyFlags)
 
 //---------------------------------------------------------------------
 
-BOOL __stdcall FsDeleteFile(char *fullRemoteName)
+BOOL __stdcall FsDeleteFile(bchar *fullRemoteName)
 {
+	WLock wlock;
 	// disable automatic reloads
 	lastServer = 0;
 
-	std::string remotePath;
+	bstring remotePath;
 	Server * server = Server::findServer(remotePath, fullRemoteName);
 	if (!server)
 		return FS_FILE_NOTFOUND;
 
-	if (remotePath == "/")
+	if (remotePath == TEXT("/"))
 		return FS_FILE_NOTSUPPORTED;
 
 	return server->cmdRm(remotePath);
@@ -658,17 +721,18 @@ BOOL __stdcall FsDeleteFile(char *fullRemoteName)
 
 //---------------------------------------------------------------------
 
-BOOL __stdcall FsRemoveDir(char *fullRemoteName)
+BOOL __stdcall FsRemoveDir(bchar *fullRemoteName)
 {
+	WLock wlock;
 	// disable automatic reloads
 	lastServer = 0;
 
-	std::string remotePath;
+	bstring remotePath;
 	Server * server = Server::findServer(remotePath, fullRemoteName);
 	if (!server)
 		return FS_FILE_NOTFOUND;
 
-	if (remotePath == "/")
+	if (remotePath == TEXT("/"))
 		return FS_FILE_NOTSUPPORTED;
 
 	return server->cmdRmDir(remotePath);
@@ -676,14 +740,15 @@ BOOL __stdcall FsRemoveDir(char *fullRemoteName)
 
 //---------------------------------------------------------------------
 
-BOOL __stdcall FsDisconnect(char * disconnectRoot)
+BOOL __stdcall FsDisconnect(bchar * disconnectRoot)
 {
-	if (*disconnectRoot == '\\') ++disconnectRoot;
-	if (Server::disconnectServer(disconnectRoot)) {
+	WLock wlock;
+	if (*disconnectRoot == TEXT('\\')) ++disconnectRoot;
+	if (Server::removeServer(disconnectRoot)) {
 		return true;
 	}
 
-	std::string err = std::string("no connection to disconnect: '") + disconnectRoot + "'";
+	bstring err = bstring(TEXT("no connection to disconnect: '")) + disconnectRoot + TEXT("'");
 	gLogProc(gPluginNumber, MSGTYPE_DISCONNECT, err.c_str());
 
 	return false;
@@ -691,17 +756,17 @@ BOOL __stdcall FsDisconnect(char * disconnectRoot)
 
 //---------------------------------------------------------------------
 
-void __stdcall FsGetDefRootName(char * defRootName, int maxlen)
+void __stdcall FsGetDefRootName(bchar * defRootName, int maxlen)
 {
 	if (--maxlen >= 0) {
-		lstrcpyn(defRootName, FSPLUGIN_CAPTION, maxlen);
+		bstrcpyn(defRootName, FSPLUGIN_CAPTION, maxlen);
 		defRootName[maxlen] = 0;
 	}
 }
 
 //---------------------------------------------------------------------
 
-void __stdcall FsStatusInfo(char *RemoteDir, int InfoStartEnd,
+void __stdcall FsStatusInfo(bchar *RemoteDir, int InfoStartEnd,
 							int InfoOperation)
 {
 	switch (InfoOperation) {
@@ -727,9 +792,9 @@ void __stdcall FsStatusInfo(char *RemoteDir, int InfoStartEnd,
 
 //---------------------------------------------------------------------
 
-int __stdcall FsExtractCustomIcon(char * fullRemoteName, int extractFlags, HICON* theIcon)
+int __stdcall FsExtractCustomIcon(bchar * fullRemoteName, int extractFlags, HICON* theIcon)
 {
-	std::string remoteName = fullRemoteName + 1;
+	bstring remoteName = fullRemoteName + 1;
 	if (remoteName.length() == 0) {
 		*theIcon = gConnectionIcon;
 		return FS_ICON_EXTRACTED;
@@ -738,9 +803,9 @@ int __stdcall FsExtractCustomIcon(char * fullRemoteName, int extractFlags, HICON
 		*theIcon = gConfigIcon;
 		return FS_ICON_EXTRACTED;
 	}
-	if (remoteName == "..\\")
+	if (remoteName == TEXT("..\\"))
 		return FS_ICON_USEDEFAULT;
-	if (remoteName.find('\\') == remoteName.length() - 1) {
+	if (remoteName.find(TEXT('\\')) == remoteName.length() - 1) {
 		*theIcon = gServerIcon;
 		return FS_ICON_EXTRACTED;
 	}

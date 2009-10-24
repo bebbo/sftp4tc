@@ -48,7 +48,7 @@ struct config_tag * wcplg_open_sftp_session(char *userhost, char *user, char *pa
   wcplg_set_last_error_msg(NULL);
   connectMsg = userhost;
 
-  if (ProgressProc("connecting", userhost, 0) == 1) {
+  if (ProgressProc("connecting", connectMsg, 0) == 1) {
     wcplg_set_last_error_msg("cancel by user");
     return RESULT_ERR;
   }

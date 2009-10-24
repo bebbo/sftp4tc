@@ -1,20 +1,24 @@
 #include "stdafx.h"
 #include "server.h"
 
+#ifndef __BSTRING_H__
+#include <bstring.h>
+#endif
+
 //Registry keys for PuTTY - Session importing
-#define PUTTY_REG_POS "Software\\SimonTatham\\PuTTY"
-#define PUTTY_REG_PARENT "Software\\SimonTatham"
-#define PUTTY_REG_PARENT_CHILD "PuTTY"
-#define PUTTY_REG_GPARENT "Software"
-#define PUTTY_REG_GPARENT_CHILD "SimonTatham"
-static const char *const puttystr = PUTTY_REG_POS "\\Sessions";
+//#define PUTTY_REG_POS TEXT("Software\\SimonTatham\\PuTTY")
+//#define PUTTY_REG_PARENT TEXT("Software\\SimonTatham")
+//#define PUTTY_REG_PARENT_CHILD TEXT("PuTTY")
+//#define PUTTY_REG_GPARENT TEXT("Software")
+//#define PUTTY_REG_GPARENT_CHILD TEXT("SimonTatham")
+static bchar const *const puttystr = PUTTY_REG_POS TEXT("\\Sessions");
 
 struct EnumSettingsType {
 	HKEY mKey;
 	int i;
 };
 
-static void unmungestr(char *in, char *out, int outlen)
+static void unmungestr(bchar *in, bchar *out, int outlen)
 {
 	while (*in) {
 		if (*in == '%' && in[1] && in[2]) {
@@ -58,15 +62,15 @@ static EnumSettingsType * enum_settings_start(void)
 }
 //---------------------------------------------------------------------
 
-static char *enum_settings_next(void *handle, char *buffer, int buflen)
+static bchar *enum_settings_next(void *handle, bchar *buffer, int buflen)
 {
 	struct EnumSettingsType *e = (struct EnumSettingsType *) handle;
-	char *otherbuf;
+	bchar *otherbuf;
 
-	otherbuf = (char *) malloc(3 * buflen);
+	otherbuf = (bchar *) malloc(3 * buflen * sizeof(bchar));
 	if (otherbuf
 		&& RegEnumKey(e->mKey, e->i++, otherbuf,
-		3 * buflen) == ERROR_SUCCESS) {
+		3 * buflen * sizeof(bchar)) == ERROR_SUCCESS) {
 			unmungestr(otherbuf, buffer, buflen);
 	} else {
 		buffer = 0;
@@ -140,7 +144,7 @@ static int import_one_putty_session(ServerInfo * serverInfo, char *PuttySectionN
 #endif
 
 //replace / and \ with _ (in title)
-static void force_valid_server_title(char *title)
+static void force_valid_server_title(bchar *title)
 {
 	if (!title)
 		return;                     
@@ -158,8 +162,8 @@ static void force_valid_server_title(char *title)
 // Session importing
 void import_putty_sessions(std::vector<ServerInfo> & serverInfos)
 {
-	static char otherbuf[2048];
-	char *ret;
+	static bchar otherbuf[2048];
+	bchar *ret;
 	void *handle;
 
 	if ((handle = enum_settings_start())) {

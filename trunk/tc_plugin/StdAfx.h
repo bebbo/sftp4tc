@@ -32,7 +32,7 @@ static void __d(char * fmt, ...)
   va_start(args, fmt);
 
   _vsnprintf( buff, sizeof(buff), fmt, args);
-  OutputDebugString(buff);
+  OutputDebugStringA(buff);
 }
 #define DBGPRINT(a) __d a
 #endif
