@@ -370,6 +370,38 @@ case FORCE_ON:  dlg_listbox_select(ctrl, dlg, 2); break;
 	}
 }
 
+
+extern char * get_initpath_by_index(int index);
+static void inipath_handler(union control *ctrl, void *dlg,
+							 void *data, int event)
+{
+	Config *cfg = (Config *)data;
+	if (event == EVENT_REFRESH) {
+		int i, sel;
+		char * p;
+		dlg_update_start(ctrl, dlg);
+		dlg_listbox_clear(ctrl, dlg);
+		dlg_listbox_addwithid(ctrl, dlg, "<registry>", -1);
+		sel = 0;
+		for(i = 0;; ++i) {
+			p = get_initpath_by_index(i);
+			if (!p) break;
+			dlg_listbox_addwithid(ctrl, dlg, p, i);
+			if (0 == strcmp(p, cfg->iniPath))
+				sel = i + 1;
+		}
+		dlg_listbox_select(ctrl, dlg, sel); 		
+		dlg_update_done(ctrl, dlg);
+	} else if (event == EVENT_SELCHANGE) {
+		int i = dlg_listbox_index(ctrl, dlg);
+		if (i <= 0)
+			cfg->iniPath[0] = 0;
+		else
+			strcpy(cfg->iniPath, get_initpath_by_index(i - 1));
+	}
+}
+
+
 #define SAVEDSESSION_LEN 2048
 
 struct sessionsaver_data {
@@ -527,7 +559,7 @@ static void sessionsaver_handler(union control *ctrl, void *dlg,
 				if (i <= 0) {
 					dlg_beep(dlg);
 				} else {
-					del_settings(ssd->sesslist.sessions[i]);
+					del_settings(ssd->sesslist.sessions[i], cfg);
 					get_sesslist(&ssd->sesslist, FALSE);
 					get_sesslist(&ssd->sesslist, TRUE);
 					dlg_refresh(ssd->listbox, dlg);
@@ -1217,7 +1249,8 @@ void setup_config_box(struct controlbox *b, int midsession,
 		HELPCTX(session_saved),
 		sessionsaver_handler, P(ssd));
 	ssd->listbox->generic.column = 0;
-	ssd->listbox->listbox.height = 7;
+	ssd->listbox->listbox.height = 6;
+
 	if (!midsession) {
 		ssd->loadbutton = ctrl_pushbutton(s, "Load", 'l',
 			HELPCTX(session_saved),
@@ -1245,6 +1278,11 @@ void setup_config_box(struct controlbox *b, int midsession,
 		ssd->delbutton = NULL;
 	}
 	ctrl_columns(s, 1, 100);
+
+	c = ctrl_droplist(s, "registry/ini-file", 'f', 100,
+			      P("ini-path"),
+			      inipath_handler, I(offsetof(Config,iniNo)));
+//	c->generic.column = 0;
 
 	s = ctrl_getset(b, "Session", "otheropts", NULL);
 	c = ctrl_radiobuttons(s, "Close window on exit:", 'w', 4,

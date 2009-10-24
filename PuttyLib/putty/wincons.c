@@ -11,6 +11,8 @@
 #include "storage.h"
 #include "ssh.h"
 
+extern HWND gGlobalHwnd;
+
 int console_batch_mode = FALSE;
 
 static void *console_logctx = NULL;
@@ -56,11 +58,11 @@ void timer_change_notify(long next)
 int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
                         char *keystr, char *fingerprint,
                         void (*callback)(void *ctx, int result), void *ctx)
-{
+{	
     int ret;
+#ifndef __SFTP4TC__	
     HANDLE hin;
     DWORD savemode, i;
-	
     static const char absentmsg_batch[] =
 		"The server's host key is not cached in the registry. You\n"
 		"have no guarantee that the server is the computer you\n"
@@ -68,6 +70,8 @@ int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
 		"The server's %s key fingerprint is:\n"
 		"%s\n"
 		"Connection abandoned.\n";
+    char line[32];
+#endif
     static const char absentmsg[] =
 		"The server's host key is not cached in the registry. You\n"
 		"have no guarantee that the server is the computer you\n"
@@ -78,10 +82,10 @@ int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
 		"PuTTY's cache and carry on connecting.\n"
 		"If you want to carry on connecting just once, without\n"
 		"adding the key to the cache, enter \"n\".\n"
-		"If you do not trust this host, press Return to abandon the\n"
+		"If you do not trust this host, press cancel to abandon the\n"
 		"connection.\n"
-		"Store key in cache? (y/n) ";
-	
+		"Store key in cache?";
+#ifndef __SFTP4TC__	
     static const char wrongmsg_batch[] =
 		"WARNING - POTENTIAL SECURITY BREACH!\n"
 		"The server's host key does not match the one PuTTY has\n"
@@ -92,6 +96,7 @@ int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
 		"The new %s key fingerprint is:\n"
 		"%s\n"
 		"Connection abandoned.\n";
+#endif
     static const char wrongmsg[] =
 		"WARNING - POTENTIAL SECURITY BREACH!\n"
 		"The server's host key does not match the one PuTTY has\n"
@@ -106,14 +111,15 @@ int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
 		"If you want to carry on connecting but without updating\n"
 		"the cache, enter \"n\".\n"
 		"If you want to abandon the connection completely, press\n"
-		"Return to cancel. Pressing Return is the ONLY guaranteed\n"
+		" cancel. Pressing cancel is the ONLY guaranteed\n"
 		"safe choice.\n"
-		"Update cached key? (y/n, Return cancels connection) ";
+		"Update cached key?";
 	
     static const char abandoned[] = "Connection abandoned.\n";
 	
-    char line[32];
-	
+#ifdef __SFTP4TC__
+	char buffer[2000];
+#endif	
     /*
 	* Verify the key against the registry.
 	*/
@@ -121,7 +127,26 @@ int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
 	
     if (ret == 0)		       /* success - key matched OK */
 		return 1;
-	
+
+#ifdef __SFTP4TC__
+	if (ret == 2) {
+		sprintf(buffer, wrongmsg, keytype, fingerprint);
+	} else
+	if (ret == 1) {
+		sprintf(buffer, absentmsg, keytype, fingerprint);
+	}
+	ret = MessageBox(gGlobalHwnd, buffer, "SFTP4TC", MB_YESNOCANCEL);
+
+	if (ret == IDCANCEL)
+		return 0;
+
+	if (ret == IDYES)
+		store_host_key(host, port, keytype, keystr);
+
+	return 1;
+
+#else
+
     if (ret == 2) {		       /* key was different */
 		if (console_batch_mode) {
 			fprintf(stderr, wrongmsg_batch, keytype, fingerprint);
@@ -138,7 +163,7 @@ int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
 		fprintf(stderr, absentmsg, keytype, fingerprint);
 		fflush(stderr);
     }
-	
+
     hin = GetStdHandle(STD_INPUT_HANDLE);
     GetConsoleMode(hin, &savemode);
     SetConsoleMode(hin, (savemode | ENABLE_ECHO_INPUT |
@@ -154,7 +179,8 @@ int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
 		fprintf(stderr, abandoned);
         return 0;
     }
-						}
+#endif
+}
 						
 void update_specials_menu(void *frontend)
 {

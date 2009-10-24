@@ -17,6 +17,28 @@
 #define CSIDL_LOCAL_APPDATA 0x001c
 #endif
 
+/**
+ * to keep track of a registry entry or an ini section.
+ */
+struct KeyOrIni {
+	void * key;
+	char * ini;
+	char * section;
+};
+
+/**
+ * These ini paths define the search order for ini files.
+ * Registry is always searched first.
+ * newer found locations overwrite older locations (%home% wins always).
+ * The patterns are expanded to real paths.
+ */
+static char * iniPaths[] = {
+	"%windows%",
+	"%app%",
+	"%home%",
+	0
+};
+
 static const char *const puttystr = PUTTY_REG_POS "\\Sessions";
 
 static const char hex[16] = "0123456789ABCDEF";
@@ -72,111 +94,265 @@ static void unmungestr(const char *in, char *out, int outlen)
 	return;
 }
 
-void *open_settings_w(const char *sessionname, char **errmsg)
+void *open_settings_w(const char *sessionname, Config * cfg, char **errmsg)
 {
-	HKEY subkey1, sesskey;
+	HKEY subkey1;
 	int ret;
 	char *p;
+	struct KeyOrIni * keyOrIni;
+
+	keyOrIni = (struct KeyOrIni *)smalloc(sizeof(struct KeyOrIni));
+	if (!keyOrIni)
+		return 0;
+
+	keyOrIni->key = 0;
+	keyOrIni->ini = cfg->iniPath;
 
 	*errmsg = NULL;
 
 	if (!sessionname || !*sessionname)
 		sessionname = "Default Settings";
 
-	p = snewn(3 * strlen(sessionname) + 1, char);
+	keyOrIni->section = p = snewn(3 * strlen(sessionname) + 1, char);
 	mungestr(sessionname, p);
 
-	ret = RegCreateKey(HKEY_CURRENT_USER, puttystr, &subkey1);
-	if (ret != ERROR_SUCCESS) {
-		sfree(p);
+	if (keyOrIni->ini[0] == 0) {
+  	  ret = RegCreateKey(HKEY_CURRENT_USER, puttystr, &subkey1);
+	  if (ret != ERROR_SUCCESS) {
 		*errmsg = dupprintf("Unable to create registry key\n"
 			"HKEY_CURRENT_USER\\%s", puttystr);
+		close_settings_w(keyOrIni);
 		return NULL;
-	}
-	ret = RegCreateKey(subkey1, p, &sesskey);
-	RegCloseKey(subkey1);
-	if (ret != ERROR_SUCCESS) {
+	  }
+	  ret = RegCreateKey(subkey1, p, &(HKEY)keyOrIni->key);
+	  RegCloseKey(subkey1);
+	  if (ret != ERROR_SUCCESS) {
 		*errmsg = dupprintf("Unable to create registry key\n"
 			"HKEY_CURRENT_USER\\%s\\%s", puttystr, p);
-		sfree(p);
 		return NULL;
+	  }
 	}
-	sfree(p);
-	return (void *) sesskey;
+	return keyOrIni;
 }
 
-void write_setting_s(void *handle, const char *key, const char *value)
+int write_setting_s(struct KeyOrIni *handle, const char *key, const char *value)
 {
-	if (handle)
-		RegSetValueEx((HKEY) handle, key, 0, REG_SZ, value,
-		1 + strlen(value));
+	if (!handle)
+		return 0;
+
+	if (handle->key) {
+		return ERROR_SUCCESS == RegSetValueEx((HKEY) handle->key, key, 0, REG_SZ, value, 1 + strlen(value));
+	}
+	
+	// whoops
+	if (!handle->ini || !handle->section)
+		return 0;
+
+	return WritePrivateProfileString(handle->section, key, value, handle->ini) > 0;
 }
 
-void write_setting_i(void *handle, const char *key, int value)
+int write_setting_i(struct KeyOrIni *handle, const char *key, int value)
 {
-	if (handle)
-		RegSetValueEx((HKEY) handle, key, 0, REG_DWORD,
-		(CONST BYTE *) &value, sizeof(value));
+	if (!handle)
+		return 0;
+
+	if (handle->key) {
+		return ERROR_SUCCESS == RegSetValueEx((HKEY) handle->key, key, 0, REG_DWORD,
+		    (CONST BYTE *) &value, sizeof(value));
+	}
+	// whoops
+	if (!handle->ini || !handle->section)
+		return 0;
+
+	{
+		char txt[32];
+		sprintf(txt, "%d", value);
+		return WritePrivateProfileString(handle->section, key, txt, handle->ini) > 0;
+	}
 }
 
-void close_settings_w(void *handle)
+void close_settings_w(struct KeyOrIni *handle)
 {
-	RegCloseKey((HKEY) handle);
+	if (!handle)
+		return;
+
+	if (handle->key)
+		RegCloseKey((HKEY) handle->key);
+	if (handle->section)
+		sfree(handle->section);
+
+	sfree(handle);
 }
 
-void *open_settings_r(const char *sessionname)
+char * get_initpath_by_index(int index) {
+	char * path;
+	if (index >= sizeof(iniPaths)/sizeof(iniPaths[0]))
+		return 0;
+
+	path = iniPaths[index];
+	if (!path) return 0;
+
+	if (*path != '%') return path;
+
+	// expand the path
+
+	if (0 == strcmp("%app%", path)) {
+		static char appPath[1024];
+		int sz = GetModuleFileName(0, appPath, 1024);
+		if (sz > 1012)
+			return 0;
+		// remove the file name
+		while (sz > 0 && appPath[sz-1] != '\\') {
+			--sz;
+			appPath[sz] = 0;
+		}
+		if (sz > 0 && appPath[sz-1] == '\\')
+			appPath[sz - 1] = 0;
+		path = appPath;
+	} else
+	if (0 == strcmp("%windows%", path)) {
+		static char windowsPath[1024];
+		int sz = GetWindowsDirectory(windowsPath, 1024);
+		if (sz > 1012)
+			return 0;
+		path = windowsPath;
+	} else
+	if (0 == strcmp("%home%", path)) {
+		static char homePath[1024];
+		int sz = GetEnvironmentVariable("HOMEDRIVE", homePath, 1024);
+		sz += GetEnvironmentVariable("HOMEPATH", homePath + sz, 1024 - sz);
+		if (sz > 1012)
+			return 0;
+		path = homePath;
+	} else {
+		return 0;
+	}
+
+	strcat(path, "\\putty.ini");
+	iniPaths[index] = path;
+	return path;
+}
+
+/**
+ * Get a handle for a session name.
+ * Also update the cfg with the ini path, if an ini is used.
+ */
+void * open_settings_r(const char *sessionname, Config * cfg)
 {
-	HKEY subkey1, sesskey;
+	HKEY subkey1;
 	char *p;
+	struct KeyOrIni * keyOrIni;
+
+	// kill last ini path
+	cfg->iniPath[0] = 0;
+
+	keyOrIni = (struct KeyOrIni *)smalloc(sizeof(struct KeyOrIni));
+	if (!keyOrIni)
+		return 0;
+
+	keyOrIni->key = 0;
+	keyOrIni->ini = 0;
 
 	if (!sessionname || !*sessionname)
 		sessionname = "Default Settings";
 
-	p = snewn(3 * strlen(sessionname) + 1, char);
+	keyOrIni->section =	p = snewn(3 * strlen(sessionname) + 1, char);
 	mungestr(sessionname, p);
 
+	// search registry first
 	if (RegOpenKey(HKEY_CURRENT_USER, puttystr, &subkey1) != ERROR_SUCCESS) {
-		sesskey = NULL;
+		keyOrIni->key = NULL;
 	} else {
-		if (RegOpenKey(subkey1, p, &sesskey) != ERROR_SUCCESS) {
-			sesskey = NULL;
+		if (RegOpenKey(subkey1, p, &(HKEY)keyOrIni->key) != ERROR_SUCCESS) {
+			keyOrIni->key = NULL;
 		}
 		RegCloseKey(subkey1);
 	}
 
-	sfree(p);
+	// now search all ini files
+	{
+		int i, len;
+		char buff[256];
+		for (i = 0; i < sizeof(iniPaths)/sizeof(iniPaths[0]); ++i) {
+			p = get_initpath_by_index(i);
 
-	return (void *) sesskey;
+			// skip invalid paths
+			if (!p)
+				continue;
+
+			len = GetPrivateProfileString(keyOrIni->section, 0, 0, buff, 256, p);
+			if (len > 0) {
+				if (keyOrIni->key) {
+					RegCloseKey((HKEY)keyOrIni->key);
+					keyOrIni->key = 0;
+				}
+				keyOrIni->ini = p;
+			}
+		}
+	}
+	
+	// update cfg
+	if (keyOrIni->ini)
+		strcpy(cfg->iniPath, keyOrIni->ini);
+
+	return keyOrIni;
 }
 
-char *read_setting_s(void *handle, const char *key, char *buffer, int buflen)
+/**
+ * Read the string value either from registry or from the specified section inside the ini file.
+ */
+char *read_setting_s(struct KeyOrIni *handle, const char *key, char *buffer, int buflen)
 {
 	DWORD type, size;
 	size = buflen;
 
-	if (!handle ||
-		RegQueryValueEx((HKEY) handle, key, 0,
-		&type, buffer, &size) != ERROR_SUCCESS ||
-		type != REG_SZ) return NULL;
-	else
+	if (!handle) return 0;
+
+	// use the registry key if present
+	if (handle->key) {
+		if (RegQueryValueEx((HKEY) handle->key, key, 0, &type, buffer, &size) != ERROR_SUCCESS ||
+		        type != REG_SZ)
+			return NULL;
 		return buffer;
+	}
+
+	// whoops - nothing set
+	if (!handle->ini || !handle->section)
+		return 0;
+
+	// use the specified ini
+	size = GetPrivateProfileString(handle->section, key, 0, buffer, buflen, handle->ini);
+	if (size == 0 || size == buflen - 1)
+		return 0;
+	return buffer;
 }
 
-int read_setting_i(void *handle, const char *key, int defvalue)
+/**
+ * Read the int value either from registry or from the specified section inside the ini file.
+ */
+int read_setting_i(struct KeyOrIni *handle, const char *key, int defvalue)
 {
 	DWORD type, val, size;
 	size = sizeof(val);
 
-	if (!handle ||
-		RegQueryValueEx((HKEY) handle, key, 0, &type,
-		(BYTE *) &val, &size) != ERROR_SUCCESS ||
-		size != sizeof(val) || type != REG_DWORD)
-		return defvalue;
-	else
+	if (!handle) return defvalue;
+
+	if (handle->key) {
+		if (RegQueryValueEx((HKEY) handle->key, key, 0, &type, (BYTE *) &val, &size) != ERROR_SUCCESS ||
+		        size != sizeof(val) || type != REG_DWORD)
+		    return defvalue;
 		return val;
+	}
+
+	// whoops - nothing set
+	if (!handle->ini || !handle->section)
+		return defvalue;
+
+	// use the specified ini
+	return GetPrivateProfileInt(handle->section, key, defvalue, handle->ini);
 }
 
-int read_setting_fontspec(void *handle, const char *name, FontSpec *result)
+int read_setting_fontspec(struct KeyOrIni *handle, const char *name, FontSpec *result)
 {
 	char *settingname;
 	FontSpec ret;
@@ -199,56 +375,71 @@ int read_setting_fontspec(void *handle, const char *name, FontSpec *result)
 	return 1;
 }
 
-void write_setting_fontspec(void *handle, const char *name, FontSpec font)
+int write_setting_fontspec(struct KeyOrIni *handle, const char *name, FontSpec font)
 {
+	int ret;
 	char *settingname;
 
-	write_setting_s(handle, name, font.name);
+	ret = write_setting_s(handle, name, font.name);
 	settingname = dupcat(name, "IsBold", NULL);
-	write_setting_i(handle, settingname, font.isbold);
+	ret &= write_setting_i(handle, settingname, font.isbold);
 	sfree(settingname);
 	settingname = dupcat(name, "CharSet", NULL);
-	write_setting_i(handle, settingname, font.charset);
+	ret &= write_setting_i(handle, settingname, font.charset);
 	sfree(settingname);
 	settingname = dupcat(name, "Height", NULL);
-	write_setting_i(handle, settingname, font.height);
+	ret &= write_setting_i(handle, settingname, font.height);
 	sfree(settingname);
+
+	return ret;
 }
 
-int read_setting_filename(void *handle, const char *name, Filename *result)
+int read_setting_filename(struct KeyOrIni *handle, const char *name, Filename *result)
 {
 	return !!read_setting_s(handle, name, result->path, sizeof(result->path));
 }
 
-void write_setting_filename(void *handle, const char *name, Filename result)
+int write_setting_filename(struct KeyOrIni *handle, const char *name, Filename result)
 {
-	write_setting_s(handle, name, result.path);
+	return write_setting_s(handle, name, result.path);
 }
 
-void close_settings_r(void *handle)
+void close_settings_r(struct KeyOrIni *handle)
 {
-	RegCloseKey((HKEY) handle);
+	close_settings_w(handle);
 }
 
-void del_settings(const char *sessionname)
+int del_settings(const char *sessionname, Config * cfg)
 {
-	HKEY subkey1;
-	char *p;
-
-	if (RegOpenKey(HKEY_CURRENT_USER, puttystr, &subkey1) != ERROR_SUCCESS)
-		return;
-
-	p = snewn(3 * strlen(sessionname) + 1, char);
+	int ret = 0;
+ 	char *p = snewn(3 * strlen(sessionname) + 1, char);
 	mungestr(sessionname, p);
-	RegDeleteKey(subkey1, p);
-	sfree(p);
+	if (cfg->iniPath[0] == 0) {
+		// delete from registry
+		HKEY subkey1;
+		if (RegOpenKey(HKEY_CURRENT_USER, puttystr, &subkey1) == ERROR_SUCCESS) {
+			ret = RegDeleteKey(subkey1, p) == ERROR_SUCCESS;
+			RegCloseKey(subkey1);
+		}
+	} else {
+		// or from ini file
+		ret = WritePrivateProfileString(p, 0, 0, cfg->iniPath) > 0;
+	}
 
-	RegCloseKey(subkey1);
+	sfree(p);
+	return ret;
 }
+
+struct sList {
+	struct sList * next;
+	char * string;
+};
 
 struct enumsettings {
 	HKEY key;
 	int i;
+	char * iniPath;
+	struct sList * first;
 };
 
 void *enum_settings_start(void)
@@ -263,6 +454,8 @@ void *enum_settings_start(void)
 	if (ret) {
 		ret->key = key;
 		ret->i = 0;
+		ret->iniPath = 0;
+		ret->first = 0;
 	}
 
 	return ret;
@@ -271,22 +464,103 @@ void *enum_settings_start(void)
 char *enum_settings_next(void *handle, char *buffer, int buflen)
 {
 	struct enumsettings *e = (struct enumsettings *) handle;
+	struct sList * node;
 	char *otherbuf;
 	otherbuf = snewn(3 * buflen, char);
-	if (RegEnumKey(e->key, e->i++, otherbuf, 3 * buflen) == ERROR_SUCCESS) {
-		unmungestr(otherbuf, buffer, buflen);
-		sfree(otherbuf);
-		return buffer;
-	} else {
-		sfree(otherbuf);
-		return NULL;
+
+	// read registry
+	if (!e->iniPath) {
+		if (RegEnumKey(e->key, e->i, otherbuf, 3 * buflen) == ERROR_SUCCESS) {
+			++e->i;
+			unmungestr(otherbuf, buffer, buflen);
+
+			node = snew(struct sList);
+			node->next = e->first;
+			e->first = node;
+			node->string = strdup(buffer);
+
+			sfree(otherbuf);
+			return buffer;
+		}		
 	}
+	sfree(otherbuf);
+
+	// end of registry reached;
+	if (e->key) {
+		RegCloseKey(e->key);
+		e->key = 0;
+		e->i = 0;
+	}
+
+	while(e->i < sizeof(iniPaths)/sizeof(iniPaths[0])) {
+		struct sList * n;
+		int len;
+		char * p, * sections;
+
+		e->iniPath = get_initpath_by_index(e->i);
+		if (!e->iniPath) {
+			++e->i;
+			continue;
+		}
+
+		// get all sections - and search the list to avoid duplicates
+		len = 4096;
+		sections = snewn(len, char);
+		for(;;) {
+			int read = GetPrivateProfileString(0, 0, 0, sections, len, e->iniPath);
+			if (read < len - 1)
+				break;
+			sfree(sections);
+			len += len;
+			sections = snewn(len, char);
+		}
+
+		// search all sections
+		p = sections;
+		while(*p) {
+			len = strlen(p);
+			otherbuf = snewn(len + 1, char);
+			unmungestr(p, otherbuf, len + 1);
+
+			// does section exist?
+			for (n = e->first; n ; n = n->next) {
+				if (0 == strcmp(n->string, otherbuf))
+					break;
+			}
+			// new section
+			if (!n) {
+				node = snew(struct sList);
+				node->next = e->first;
+				e->first = node;
+				node->string = strdup(otherbuf);
+				strncpy(buffer, otherbuf, buflen - 1);
+				buffer[buflen - 1] = 0;
+
+				sfree(otherbuf);
+				return node->string;
+			}
+			sfree(otherbuf);
+			p += len + 1;
+		}
+		++ e->i;
+	}
+	return 0;
 }
 
 void enum_settings_finish(void *handle)
 {
 	struct enumsettings *e = (struct enumsettings *) handle;
-	RegCloseKey(e->key);
+	struct sList * n;
+	if (e->key)
+		RegCloseKey(e->key);
+
+	for (n = e->first; n;) {
+		 struct sList * m = n->next;
+		 sfree(n->string);
+		 sfree(n);
+		 n = m;
+	}
+
 	sfree(e);
 }
 

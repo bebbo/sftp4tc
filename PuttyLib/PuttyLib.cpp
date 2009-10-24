@@ -14,6 +14,8 @@ extern "C" {
 #include "sftp4tc_share.h"
 #include "pl_misc.h"
 #include "pl_psftp.h"
+#include "resource.h"
+#include "puttyver.h"
 
 extern HINSTANCE hinst;
 
@@ -71,9 +73,9 @@ extern HINSTANCE hinst;
 	}
 
 	int __stdcall __map__init_Procs(tRequestProcType AP_RequestProc, tProgressProc AP_ProgressProc,
-		int Awc_PluginNr)
+		int Awc_PluginNr, HWND hwnd)
 	{
-		return init_Procs(AP_RequestProc, AP_ProgressProc, Awc_PluginNr);
+		return init_Procs(AP_RequestProc, AP_ProgressProc, Awc_PluginNr, hwnd);
 	}
 
 	struct config_tag * __stdcall __map__do_config(HWND hwnd, int midsession, int protocol) {
@@ -101,5 +103,23 @@ extern HINSTANCE hinst;
 		load_settings(name, cfg);
 	}
 
+	extern void *enum_settings_start(void);
+	void * __stdcall __map__enum_settings_start(void) {
+		return enum_settings_start();
+	}
+
+	extern char *enum_settings_next(void *handle, char *buffer, int buflen);
+	bchar * __stdcall __map__enum_settings_next(void * handle, bchar *buffer, int buflen) {
+		return enum_settings_next(handle, buffer, buflen);
+	}
+
+	extern void enum_settings_finish(void *handle);
+	void __stdcall __map__enum_settings_close(void * handle) {
+		enum_settings_finish(handle);
+	}
+
+	char * __stdcall __map__get_version() {
+		return PUTTY_VERSION_STRING;
+	}
 }
 

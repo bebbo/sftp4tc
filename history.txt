@@ -1,9 +1,12 @@
+VERSION 1.3.60.5
++ADDED There is some kind of ini file support, with 3 supported locations (for now) and enough manipulation to move configurations around.
++FIXED hanging connection if user name input was cancelled.
++FIXED host key check is back again.
++FIXED some race conditions which could cause an exception.
 VERSION 1.3.60.4
 +FIXED quick connections are working again
-       real quick connections are named "quick connection (<n>) to <host>"
-       modified sessions are marked as "(*<n>)<sessionName>"
-       where n is some number.
-+FIXED re-added the progress bar if selecting an existing connection
+       real quick connections are named "quick connection to <host>"
+       modified sessions are marked as "*<sessionName>"
 
 VERSION 1.3.60.3
 +FIXED removed the cmd line popup on first copy

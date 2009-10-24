@@ -1,6 +1,10 @@
 #ifndef fsplugin_h
 #define fsplugin_h
 
+#ifndef __BSTRING_H__
+#include <bstring.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -81,40 +85,40 @@ typedef struct {
 } RemoteInfoStruct;
 
 // callback functions
-typedef int (__stdcall * ProgressProcType) (int PluginNr, char *SourceName,
-                                         char *TargetName,
+typedef int (__stdcall * ProgressProcType) (int PluginNr, bchar *SourceName,
+                                         bchar *TargetName,
                                          int PercentDone);
 typedef void (__stdcall * LogProcType) (int PluginNr, int MsgType,
-                                     char const *LogString);
+                                     bchar const *LogString);
 typedef BOOL(__stdcall * RequestProcType) (int PluginNr, int RequestType,
-                                        char *CustomTitle,
-                                        char *CustomText,
-                                        char *ReturnedText, int maxlen);
+                                        bchar *CustomTitle,
+                                        bchar *CustomText,
+                                        bchar *ReturnedText, int maxlen);
 
 // Function prototypes
 int __stdcall FsInit(int PluginNr, ProgressProcType pProgressProc,
                      LogProcType pLogProc, RequestProcType pRequestProc);
-HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA * FindData);
+HANDLE __stdcall FsFindFirst(bchar *Path, WIN32_FIND_DATA * FindData);
 BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA * FindData);
 int __stdcall FsFindClose(HANDLE Hdl);
-BOOL __stdcall FsMkDir(char *Path);
-int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb);
-int __stdcall FsRenMovFile(char *OldName, char *NewName, BOOL Move,
+BOOL __stdcall FsMkDir(bchar *Path);
+int __stdcall FsExecuteFile(HWND MainWin, bchar *RemoteName, bchar *Verb);
+int __stdcall FsRenMovFile(bchar *OldName, bchar *NewName, BOOL Move,
                            BOOL OverWrite, RemoteInfoStruct * ri);
-int __stdcall FsGetFile(char *RemoteName, char *LocalName, int CopyFlags,
+int __stdcall FsGetFile(bchar *RemoteName, bchar *LocalName, int CopyFlags,
                         RemoteInfoStruct * ri);
-int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags);
-BOOL __stdcall FsDeleteFile(char *RemoteName);
-BOOL __stdcall FsRemoveDir(char *RemoteName);
-BOOL __stdcall FsDisconnect(char *DisconnectRoot);
-BOOL __stdcall FsSetAttr(char *RemoteName, int NewAttr);
-BOOL __stdcall FsSetTime(char *RemoteName, FILETIME * CreationTime,
+int __stdcall FsPutFile(bchar *LocalName, bchar *RemoteName, int CopyFlags);
+BOOL __stdcall FsDeleteFile(bchar *RemoteName);
+BOOL __stdcall FsRemoveDir(bchar *RemoteName);
+BOOL __stdcall FsDisconnect(bchar *DisconnectRoot);
+BOOL __stdcall FsSetAttr(bchar *RemoteName, int NewAttr);
+BOOL __stdcall FsSetTime(bchar *RemoteName, FILETIME * CreationTime,
                          FILETIME * LastAccessTime,
                          FILETIME * LastWriteTime);
-void __stdcall FsStatusInfo(char *RemoteDir, int InfoStartEnd,
+void __stdcall FsStatusInfo(bchar *RemoteDir, int InfoStartEnd,
                             int InfoOperation);
-void __stdcall FsGetDefRootName(char *DefRootName, int maxlen);
-int __stdcall FsExtractCustomIcon(char* RemoteName,int ExtractFlags,HICON* TheIcon);
+void __stdcall FsGetDefRootName(bchar *DefRootName, int maxlen);
+int __stdcall FsExtractCustomIcon(bchar* RemoteName,int ExtractFlags,HICON* TheIcon);
 
 extern int gPluginNumber;
 extern ProgressProcType gProgressProc;

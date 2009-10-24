@@ -91,11 +91,11 @@ typedef struct backend_tag Backend;
 typedef struct terminal_tag Terminal;
 #endif
 
-#define PUTTY_REG_POS "Software\\SimonTatham\\PuTTY"
-#define PUTTY_REG_PARENT "Software\\SimonTatham"
-#define PUTTY_REG_PARENT_CHILD "PuTTY"
-#define PUTTY_REG_GPARENT "Software"
-#define PUTTY_REG_GPARENT_CHILD "SimonTatham"
+#define PUTTY_REG_POS TEXT("Software\\SimonTatham\\PuTTY")
+#define PUTTY_REG_PARENT TEXT("Software\\SimonTatham")
+#define PUTTY_REG_PARENT_CHILD TEXT("PuTTY")
+#define PUTTY_REG_GPARENT TEXT("Software")
+#define PUTTY_REG_GPARENT_CHILD TEXT("SimonTatham")
 
 #define PUTTY_HELP_FILE "putty.hlp"
 #define PUTTY_CHM_FILE "putty.chm"

@@ -90,7 +90,12 @@ struct fxp_handle {
 };
 
 struct fxp_name {
-    char *filename, *longname;
+#ifdef __UNICODE__
+    wchar_t *filename;
+#else
+	char * filename;
+#endif
+	char *longname;
     struct fxp_attrs attrs;
 };
 

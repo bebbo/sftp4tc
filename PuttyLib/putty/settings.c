@@ -51,7 +51,7 @@ const char *const ttymodes[] = {
     "CS8",	"PARENB",   "PARODD",	NULL
 };
 
-static void gpps(void *handle, const char *name, const char *def,
+static void gpps(struct KeyOrIni * handle, const char *name, const char *def,
 		 char *val, int len)
 {
     if (!read_setting_s(handle, name, val, len)) {
@@ -74,18 +74,18 @@ static void gpps(void *handle, const char *name, const char *def,
  * format of a Filename or Font is platform-dependent. So the
  * platform-dependent functions MUST return some sort of value.
  */
-static void gppfont(void *handle, const char *name, FontSpec *result)
+static void gppfont(struct KeyOrIni * handle, const char *name, FontSpec *result)
 {
     if (!read_setting_fontspec(handle, name, result))
 	*result = platform_default_fontspec(name);
 }
-static void gppfile(void *handle, const char *name, Filename *result)
+static void gppfile(struct KeyOrIni *handle, const char *name, Filename *result)
 {
     if (!read_setting_filename(handle, name, result))
 	*result = platform_default_filename(name);
 }
 
-static void gppi(void *handle, char *name, int def, int *i)
+static void gppi(struct KeyOrIni *handle, char *name, int def, int *i)
 {
     def = platform_default_i(name, def);
     *i = read_setting_i(handle, name, def);
@@ -97,7 +97,7 @@ static void gppi(void *handle, char *name, int def, int *i)
  *   NAME=VALUE,NAME=VALUE, in storage
  * `def' is in the storage format.
  */
-static void gppmap(void *handle, char *name, char *def, char *val, int len)
+static void gppmap(struct KeyOrIni *handle, char *name, char *def, char *val, int len)
 {
     char *buf = snewn(2*len, char), *p, *q;
     gpps(handle, name, def, buf, 2*len);
@@ -123,7 +123,7 @@ static void gppmap(void *handle, char *name, char *def, char *val, int len)
 /*
  * Write a set of name/value pairs in the above format.
  */
-static void wmap(void *handle, char const *key, char const *value, int len)
+static void wmap(struct KeyOrIni *handle, char const *key, char const *value, int len)
 {
     char *buf = snewn(2*len, char), *p;
     const char *q;
@@ -168,7 +168,7 @@ static const char *val2key(const struct keyval *mapping, int nmaps, int val)
  * to the end and duplicates are weeded.
  * XXX: assumes vals in 'mapping' are small +ve integers
  */
-static void gprefs(void *sesskey, char *name, char *def,
+static void gprefs(struct KeyOrIni *sesskey, char *name, char *def,
 		   const struct keyval *mapping, int nvals,
 		   int *array)
 {
@@ -209,7 +209,7 @@ static void gprefs(void *sesskey, char *name, char *def,
 /* 
  * Write out a preference list.
  */
-static void wprefs(void *sesskey, char *name,
+static void wprefs(struct KeyOrIni *sesskey, char *name,
 		   const struct keyval *mapping, int nvals,
 		   int *array)
 {
@@ -231,25 +231,32 @@ static void wprefs(void *sesskey, char *name,
     write_setting_s(sesskey, name, buf);
 }
 
-char *save_settings(char *section, Config * cfg)
+char * save_settings(char *section, Config * cfg)
 {
-    void *sesskey;
+    struct KeyOrIni *sesskey;
     char *errmsg;
 
-    sesskey = open_settings_w(section, &errmsg);
+    sesskey = open_settings_w(section, cfg, &errmsg);
     if (!sesskey)
-	return errmsg;
-    save_open_settings(sesskey, cfg);
+	  return errmsg;
+	if (!save_open_settings(sesskey, cfg)) {
+		char buff[512];
+		sprintf(buff, "can't write to %s", cfg->iniNo >= 0 ? cfg->iniPath : "<registry>");
+	    close_settings_w(sesskey);
+		return strdup(buff);
+	}
     close_settings_w(sesskey);
     return NULL;
 }
 
-void save_open_settings(void *sesskey, Config *cfg)
+int save_open_settings(struct KeyOrIni *sesskey, Config *cfg)
 {
     int i;
     char *p;
 
-    write_setting_i(sesskey, "Present", 1);
+    if (!write_setting_i(sesskey, "Present", 1))
+		return 0;
+
     write_setting_s(sesskey, "HostName", cfg->host);
     write_setting_filename(sesskey, "LogFileName", cfg->logfilename);
     write_setting_i(sesskey, "LogType", cfg->logtype);
@@ -452,6 +459,7 @@ void save_open_settings(void *sesskey, Config *cfg)
 	write_setting_s(sesskey, "SFTP4TC:exeExtensions", cfg->sftp4tc.exeExtensions);
 	write_setting_s(sesskey, "SFTP4TC:homeDir", cfg->sftp4tc.homeDir);
 	write_setting_s(sesskey, "SFTP4TC:sftpCommand", cfg->sftp4tc.sftpCommand);
+	return 1;
 }
 
 void do_defaults(char *section, Config * cfg) {
@@ -460,14 +468,14 @@ void do_defaults(char *section, Config * cfg) {
 
 void load_settings(char *section, Config * cfg)
 {
-    void *sesskey;
+    struct KeyOrIni *sesskey;
 
-    sesskey = open_settings_r(section);
+    sesskey = open_settings_r(section, cfg);
     load_open_settings(sesskey, cfg);
     close_settings_r(sesskey);
 }
 
-void load_open_settings(void *sesskey, Config *cfg)
+void load_open_settings(struct KeyOrIni *sesskey, Config *cfg)
 {
     int i;
     char prot[10];
@@ -820,6 +828,12 @@ static int sessioncmp(const void *av, const void *bv)
     return strcmp(a, b);	       /* otherwise, compare normally */
 }
 
+/**
+ * This method either allocates a session list or frees the structure.
+ * (this should be changed into two separate functions!)
+ * @param list the structure to fill or free
+ * @param allocate if zero: free else: allocate and fill
+ */
 void get_sesslist(struct sesslist *list, int allocate)
 {
     char otherbuf[2048];

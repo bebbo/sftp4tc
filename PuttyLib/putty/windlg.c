@@ -695,7 +695,7 @@ struct config_tag * do_config(HWND hwnd, int midsession, int protcfginfo)
     dp.data = &cfg;
     dp.shortcuts['g'] = TRUE;	       /* the treeview: `Cate&gory' */
 
-    ret = SaneDialogBox(hinst, MAKEINTRESOURCE(IDD_MAINBOX), NULL,
+    ret = SaneDialogBox(hinst, MAKEINTRESOURCE(IDD_MAINBOX), hwnd,
 		  GenericMainDlgProc);
 
 	if (selectedSession) strncpy(theSelectedSession, selectedSession, SAVEDSESSION_LEN - 1);
