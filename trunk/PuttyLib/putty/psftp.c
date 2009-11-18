@@ -2989,7 +2989,8 @@ int psftp_connect(char *userhost, char *user, int portnumber)
 			if (!back->connected(backhandle))
 				return 1;
 			v *= 0.98;
-			if (1 == ProgressProc("connecting", connectMsg, 100 - (int)(v*100)))
+			connectPercent = 100 - (int)(v*100);
+			if (1 == ProgressProc("connecting", connectMsg, connectPercent))
 				return 1;
 
 			if (ssh_sftp_loop_iteration() < 0) {

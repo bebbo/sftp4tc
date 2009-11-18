@@ -176,5 +176,6 @@ int create_directory(char *name);
 char *dir_file_cat(char *dir, char *file);
 
 extern char * connectMsg;
+extern int connectPercent;
 
 #endif /* PUTTY_PSFTP_H */

@@ -3,7 +3,7 @@
     <table cellpadding="10" cellspacing="0" width="100%" align="left">
       <tr>
         <td valign="top">
-	<h1>General configuration</h1>
+	<h1>General configuration of version 1.2<br>this does not apply to version 1.3!</h1>
 	<table cellspacing="1" border="1">
 	<tr>
 	<td><b>NAME</b></td><td><b>DESCRIPTION</b></td>
