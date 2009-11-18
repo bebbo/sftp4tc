@@ -1,0 +1,19 @@
+//  -*- MPC -*-
+// plugin_sftp.mpc
+
+project(properties_dlg) {
+  sharedname   = wfx_sftp_cfg
+  includes += ../PuttyLib ../PuttyLib/putty ../tc_plugin ../shared
+
+  Source_Files {
+    properties_dlg.cpp
+    PreferencesDialog.cpp
+    ../shared/ConfigProperties.cpp
+    ../shared/ServerInfo.cpp
+  }
+
+  Resource_Files {
+    properties_dlg.rc
+  }
+ 
+}

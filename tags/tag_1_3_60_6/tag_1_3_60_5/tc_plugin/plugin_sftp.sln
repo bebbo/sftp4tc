@@ -1,0 +1,37 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plugin_sftp", "plugin_sftp.vcproj", "{2363E6B6-562D-4DFB-8E4E-918E9A9FF521}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PuttyLib", "..\PuttyLib\PuttyLib.vcproj", "{70A22D42-4E60-4621-976D-2DE636004187}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "properties_dlg", "..\properties_dlg\properties_dlg.vcproj", "{981E5E6B-4463-456B-8576-123D74714806}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{2363E6B6-562D-4DFB-8E4E-918E9A9FF521}.Debug.ActiveCfg = Debug|Win32
+		{2363E6B6-562D-4DFB-8E4E-918E9A9FF521}.Debug.Build.0 = Debug|Win32
+		{2363E6B6-562D-4DFB-8E4E-918E9A9FF521}.Release.ActiveCfg = Release|Win32
+		{2363E6B6-562D-4DFB-8E4E-918E9A9FF521}.Release.Build.0 = Release|Win32
+		{70A22D42-4E60-4621-976D-2DE636004187}.Debug.ActiveCfg = Debug|Win32
+		{70A22D42-4E60-4621-976D-2DE636004187}.Debug.Build.0 = Debug|Win32
+		{70A22D42-4E60-4621-976D-2DE636004187}.Release.ActiveCfg = Release|Win32
+		{70A22D42-4E60-4621-976D-2DE636004187}.Release.Build.0 = Release|Win32
+		{981E5E6B-4463-456B-8576-123D74714806}.Debug.ActiveCfg = Debug|Win32
+		{981E5E6B-4463-456B-8576-123D74714806}.Debug.Build.0 = Debug|Win32
+		{981E5E6B-4463-456B-8576-123D74714806}.Release.ActiveCfg = Release|Win32
+		{981E5E6B-4463-456B-8576-123D74714806}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
