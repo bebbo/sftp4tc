@@ -1,3 +1,5 @@
+VERSION 1.3.60.6
++FIXED Fixed the messages in the reconnect dialog.
 VERSION 1.3.60.5
 +ADDED There is some kind of ini file support, with 3 supported locations (for now) and enough manipulation to move configurations around.
 +FIXED hanging connection if user name input was cancelled.
