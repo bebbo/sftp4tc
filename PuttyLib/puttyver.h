@@ -1,2 +1,0 @@
-#define PUTTY_VERSION 1,3,60,6
-#define PUTTY_VERSION_STRING "1.3.60.6"

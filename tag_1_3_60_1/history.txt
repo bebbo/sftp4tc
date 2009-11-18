@@ -1,0 +1,224 @@
+VERSION 1.3.60.1
+/CHANGED improved reconnect handling (no more restarts of TC?)
+/CHANGED the SFTP4TC properties are defaulting to unset values now.
+         if you want a template, configure a session (named template)
+         then always load that template session for further modifications
++ADDED   configuration for a special sftp-server command, e.g. to add "sudo sftp-server"
+         or whatever.
+         NOTE THAT THIS FEATURE IS NOT WELL TESTED!
+
+VERSION 1.3.60.0
+/CHANGED restructured and rewrote most parts of the plugin
+/CHANGED the PuTTY configuration dialog is now used to configure SFTP too
++ADDED default chmod flags and also an executable chmod flags plus extension list to select executables
++FIXED ascii transfer mode is working again
++FIXED added various null pointer checks
+-REMOVED own configuration dialog
+-REMOVED password crypter - use key file and pagent instead!
+
+VERSION 1.2.60.1
++ FIXED broken progress bars
+
+VERSION 1.2.60.0
+/UPDATED to PuTTY 0.60
++FIXED hang on key authentication if key is missing -> added password prompt
++FIXED crash on exit if no connection is established
+
+VERSION 1.2.58.1a
++FIXED configuration dialog didn't saved connections
++FIXED connection list was empty, after setting import sessions back to "no" from one of the other options
+
+VERSION 1.2.58.1
+*ADDED FR #954: hide the unix hidden files
+*ADDED FR #505: access to parent directories
++FIXED Bug #3669: Shifted file date
++FIXED Bug #4054: ASCII Transfer
+/CHANGED Patching sources to version Putty's version 0.58 (-> preliminary IPv6 support)
+
+VERSION 1.2.57.2
++FIXED connection to FreeBSD 5.3 works now
++FIXED connection dialog doesn't cause Exception on exit, when parenthandle unknown
++FIXED "import putty sessions" didn't work correctly in connection dialog
+*ADDED simple implementation of automatic transfer mode (don't try anything more complicated than "*.xml *.html", like "this*wouldnot?.work")
+
+VERSION 1.2.57.1
++FIXED access denied didn't stopped the directory change
++FIXED empty directories were shown as "Access denied"
+*ADDED Caching of directories was added (must be explicitly activated by "cache_fs=1" in "config" section)
++FIXED configuration editor: fixing proxy type restoration
++FIXED some more checks for broken connections
+/CHANGED Patching Putty's source to version 0.57
+
+VERSION 1.2.56.2
+[11.1.2005]
++FIXED Connection editor's few bugs
+/CHANGED Crypter Master Password dialogs corrected
++FIXED Installer tries to remove everything installed
++FIXED Some disconnection fixes
+
+VERSION 1.2.56.1
+[23.12.2004]
++FIXED Aborting file move was deleting the source file
+[18.11.2004]
+*ADDED Password crypting support
+/CHANGED Using InnoSetup instead of NSIS for installation
+[8.11.2004]
++FIXED missing ini file is created before starting notepad to edit it
+[3.11.2004]
+*ADDED set "last modified time(mtime)" after put (default on)
+
+VERSION 1.1.56.1
+[27.10.2004]
+*ADDED properties dialog connection
++FIXED Text Transfer Mode (1 character on a line was skipped)
+/UPDATED to PuTTY 0.56 (first beta)
+
+VERSION 1.1.55.3
+[19.10.2004]
+?TODO  Translate german comments to english ones
+/UPDATED using GNU's indent for source files now. (-lp -nut -ci2 -i2 -ts2 -kr) Not
+       for all PuTTY files, but for some of them, too.
+*ADDED Dumb transfer mode. If one set "Text mode" he should be sure, that it's the best choice
+       for him. There's no check for host's default mode. Assuming *nix.
+*ADDED CHMOD after PUT/MKDIR
+
+VERSION 1.1.55.2
+[21.9. 2004]
++FIXED copying DLL without admin rights
+
+VERSION 1.1.55.1
+[2.9. 2004]
+/UPDATED TO PuTTY 0.55 (first beta)
+
+VERSION 1.09	[24. Jan 2004]
++FIXED "quote cd" (Leszek Skorczynski <skorczyl@wp.pl>)
+*ADDED Version number (MK)
+
+VERSION 1.08b   [10.Mar.2003]
++FIXED sftp cd & sftp ls & "quote root"
+*ADDED some New Connection Dlgs
+
+VERSION 1.08a	[28.Feb.2003]
++FIXED Connect/Disconnect design is a little bit wrong, so now happen no troubles anymore, but it's not the best solution
++FIXED permission denied/remote disconnect(idle,...) problem solved
+
+VERSION 1.08	[21.Feb.2003]
+?TODO ask Christian about MSGTYPEs and DISCONNECTION - something wrong there...
+?TODO ask him about ability to force other path after connection
+?TODO maybe it doesn't work under w98, maybe it just misses some libraries
+*ADDED quote root <directory>
+*ADDED reconnection ability
+
+VERSION 1.07d  [19.Feb.2003]
+/CHANGED UnixTimeToLocalTime to M$ compatible mode
+
+VERSION 1.07b  [07.Feb.2003]
+?TODO check FsExecuteFile
+?TODO check Import-routines for Key-Auth import
+?TODO check the Plugin-start (only performance fixed)
++FIXED FsInit performance
+*ADDED Support for OPENSSH (and possibly for sshcom) private keys.
+*ADDED support for SOCKS-PROXY v5
+/CHANGED cleaned Code
+
+VERSION 1.06   [17.Jan.2003]
+*ADDED ini parameter "keyfilename" to override defaults for the host  (putty session framework), tested just with a key without passphrase and in putty format (.PPK)
++FIXED plugin shows the whole directory list now
++FIXED it should work with SSH 2.0(OpenSSH 3.4p1)   -   checked on FreeBSD 4.7
+/CHANGED shared.h and shared.c moved to a separate shared folder "shared" - now ther's just one copy of that file (and the Server struct)!!!
+/CHANGED Ported to latest PuttySource (0.53b)
+
+VERSION 1.05
++FIXED Y2K Problem in UnixTimeToLocalTime() changed 		if (st.wYear<30  || (st.wYear<200 && st.wYear>=100)) to if ((st.wYear>=30 && st.wYear<=99) || (st.wYear<200 && st.wYear>=100))
++FIXED root commando works good now
+*ADDED import session from putty && ssh.com (optional)
+*ADDED Host Key Warnigs
+*ADDED custom ini path
++Small cosmetics
+
+VERSION 1.04   [12.Nov.2002]
+*ADDED - optional: use_key_auth and dont_ask4_username as config flags in wcx_sftp.ini, possible values are 0 or 1,  default = 0
+
+VERSION 1.03   [11.Nov.2002]
+/CHANGED - MAX_Server=500 (preview was 100 only)
+
+VERSION 1.02
++FIXED Server Title can not contain / and \     will replaced with _
+?TODO wcplg_sftp_disconnect wenn connect nicht success "verbindung trennen" noch da
+
+VERSION 1.01
++FIXED *.dll 2 *.wfx
+
+VERSION 1.00   [09.10.2002 Berlin - Hans]
+?TODO RequestProc mit RT_MsgYesNo Funzt nicht, gibt immer FALSE zurück
+*ADDED Add Connection (Port syntax Host[:Port])
+
+
+*************************************************************************************************
+OLD LOG:
+*************************************************************************************************
+
+31.8.2002 Christian Ghisler
+FIXED - make work with plugin interface changes
+FIXED - cleanup code
+ADDED - FsGetDefRootName
+ADDED - pseudo-file to open ini for editing
+ADDED - handle 'quote' command for command line, currently only for 'cd' command to set new root, e.g.  cd /
+
+26.03.2002 Berlin, Hans <hans.petrich@tronic-media.com>
+TODO's
+FIXED - time atri wrong
+FIXED - dir size wrong
+ - escaping in cmd string for " \ * and like this
+FIXED - handle symbolic links on sftp server ?
+FIXED - Correct Error handling
+FIXED - disconnect while an open sftp session handling
+FIXED  - double window in wc makes problem i.e left side is plugin and right side too
+FIXED - progresbar ?!?!?!
+FIXED  - fileoverwrite file del etc. ask or not ?? what to do ???
+FIXED - rmdir error "!"
+ - ask username and password, HOW, how 2 store password ???
+ - form dialog for edit wcx_sftp.ini
+FIXED  - where i am *.dll ?!?!
+FIXED  - change file atri
+FIXED  - what todo when 0 servers in *.ini
+ - title in allServers: no duplicates
+ - psftp are slow ?? it's not cpu and not network traffic
+FIXED  - psftp have memory leak, have to fix this perhaps in psftp.c or sftp.c
+ - creating README & INSTALL
+FIXED  - How 2 disconnect a sftp session
+FIXED  - other place for wcx_sftp.ini & psftp.dll ???
+ - parse the cmd 4 unsecure chars !!!!
+ - crypt password in wcx_sftp.ini.ini ?!?!? or disable password storing
+FIXED  - add quick connection like ftp quick connection
+NONE - scp support ?!?!
+ - background download support via psftp.exe or scp (via createProcess or system() or like this) batchfile
+FIXED - Private Key Authentikaction support ??? psftp doesn't support it realy, FIX ME anytime
+BOGUS - define pluginroot in wcx_sftp.ini ???
+ - socks support, anytime ?!??!?
+ - connection timeout ?!? what 2do ?
+FIXED - does psftp support compressing ???
+FIXED  - tmp file in wcplg_sftp_do_commando, FIX ME P-L-E-A-S-E
+ - cleaning the code !!!
+FIXED - hostkey abfrage, TESTEN !!!
+ - cmd box API function ???
+FIXED  - Folder permission check bevor chdir FIX ME PLZ
+FIXED  - in psftp.dll stdout umleiten zu char *logBuf und dann an LogProc() weiterleiten
+ - if psftp.dll connect 2 an open NON ssh [22] port, psftp hangs forever
+ - get_sftpServer_ID_by_Path(): title nach sonderzeichen parsen und rausschneiden, doppelte title einträge vermeiden!
+FIXED - "Bookmark" funst ned, müsste aba an WC selbst geändert werden, have 2 talk with Ghisler
+ - WC merkt sich nicht die "aktuelle Position" wenn man z.B.: von plugion nach C: und dann wieda zu Plugin geht, have 2 talk with Ghisler
+ - ftp <-> plugin filetransfer funst ned, API!, have 2 talk with Ghisler
+FIXED - !!!alle delete aktionen  deaktivieren wenn der user nicht in seinem ensprechendem sftp dir drinn ist!!!
+ - wie komm ich an das windowscommander tmp $wc ran ???
+FIXED - progressbar noch abstimmen
+ - fsrenmv(): fehler abfangen wenn user im serverRoot folder moven oder renamen will
+FIXED  - Verbinfungsleiste "oben ", geht manchmal ned wech obwohl disconnect gedrückt) API error ?  have 2 talk with Ghisler
+FIXED  - Manchmal Segfault error wenn in dir wechseln will wo keine berechtigung
+FIXED  - SetLastError(ERROR_ACCESS_DENIED) in fsFindFirst !!! wechselt nach C zurück ?!?!?
+FIXED  - Nach chmod: dir refresh zeigt aktuelle werte nicht an obwohl auf server gesetzt, cached by WC ?!
+FIXED - DWORD    dwFileAttributes=FILE_ATTRIBUTE_REPARSE_POINT; wc sollte link als symbol auch anzeigen
+FIXED - API fehler, wenn man die Filelisten sortiert und dann fasfifirst called
+FIXED - Drag & Drop funst irgendwie ned
+FIXED - API Bug FsPutFile() gibt als LocalFile noch ''' hinzu ?!?!?
+- Testing

@@ -1,0 +1,66 @@
+//-*- MPC -*-
+// plugin_sftp.mpc
+
+project(PuttyLib) {
+  sharedname = PuttyLib
+  includes += ../PuttyLib ../PuttyLib/putty ../tc_plugin ../shared
+
+  Source_Files {
+	putty\BE_ALL.C
+	putty\CMDLINE.C
+	putty\CONSOLE.C
+	putty\IMPORT.C
+	putty\INT64.C
+	putty\LOGGING.C
+	putty\MISC.C
+	putty\NOISE.C
+	putty\PAGEANTC.C
+	pl_misc.c
+	pl_psftp.c
+	putty\PORTFWD.C
+	putty\pproxy.c
+	putty\PROXY.C
+	putty\CPROXY.C
+	putty\PSFTP.C
+	PuttyLib.cpp
+	putty\RAW.C
+	putty\RLOGIN.C
+	putty\SETTINGS.C
+	putty\SFTP.C
+	..\shared\share.c
+	putty\SSH.C
+	putty\SSHAES.C
+	putty\SSHBLOWF.C
+	putty\SSHBN.C
+	putty\SSHCRC.C
+	putty\SSHCRCDA.C
+	putty\SSHDES.C
+	putty\SSHDH.C
+	putty\SSHDSS.C
+	putty\SSHDSSG.C
+	putty\SSHMD5.C
+	putty\SSHPRIME.C
+	putty\SSHPUBK.C
+	putty\SSHRAND.C
+	putty\SSHRSA.C
+	putty\SSHRSAG.C
+	putty\SSHSH512.C
+	putty\SSHSHA.C
+	putty\SSHZLIB.C
+	StdAfx.cpp
+	putty\TELNET.C
+	putty\TREE234.C
+	putty\UNICODE.C
+	putty\VERSION.C
+	putty\WCWIDTH.C
+	putty\WILDCARD.C
+	putty\windefs.c
+	putty\winmisc.c
+	putty\WINNET.C
+	putty\winsftp_cutdown.c
+	putty\WINSTORE.C
+	putty\WINUTILS.C
+	putty\X11FWD.C
+  }
+ 
+}

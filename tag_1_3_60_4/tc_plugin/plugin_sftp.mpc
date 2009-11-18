@@ -1,0 +1,15 @@
+//  -*- MPC -*-
+// plugin_sftp.mpc
+
+project(plugin_sftp) {
+  sharedname   = plugin_sftp
+  includes += ../PuttyLib ../PuttyLib/putty ../tc_plugin ../shared
+
+  Source_Files {
+    fsplugin.cpp
+    sftpmap.cpp
+    StdAfx.cpp
+    ../shared/share.c
+  }
+ 
+}
