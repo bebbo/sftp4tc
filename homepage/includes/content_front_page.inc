@@ -49,10 +49,12 @@
             <li>The configuration <b>is</b> the <a href="http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html" target="_blank">PuTTY</a> configuration, new connections are also available in <a href="http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html" target="_blank">PuTTY</a>.</li>  
             <li>Use a key pair and <a href="http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html" target="_blank">Pageant</a> instead of passwords.</li>
           </ul>
-          <li>added support for automatic transfer mode</li>          
+          <li>added support for automatic transfer mode</li>
+          <li>supports a new INI file format - compatible to PuTTY</li>
+          <li>installable via TCMD plugin installation</li>
         </ul>
 	      <p>
-	      New features in version 1.2 are:
+	      Features in the previous version 1.2 are:
 	      </p>
 	      <ul>
 	      <li>encrypting passwords (but you should use keys every time you can)</li>
@@ -65,7 +67,8 @@
           After installing an File-System plugin, you have to select "Network neighborhood". Here you can find "Secure FTP Connections". 
           </p>
 
-          <h1>Encrypting passwords</h1>
+        <h1>Features of version 1.2</h1>
+          <h2>Encrypting passwords</h2>
           <p>
 	  If you installed Password-Crypter you have to enter master password, which will be used to encrypt all passwords for your connections.
 	  If you use keys or just don't save password, or you just don't care about plain password - just don't install password crypter or remove the line

@@ -41,6 +41,7 @@ static void init_winsock(void)
 
 extern char * selectedSession;
 char * connectMsg;
+int connectPercent;
 
 struct config_tag * wcplg_open_sftp_session(char *userhost, char *user, char *pass,
                             int portnumber)

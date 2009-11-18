@@ -7,6 +7,7 @@
 #include "putty.h"
 #include "psftp.h"
 #include "int64.h"
+#include "pl_misc.h"
 
 char *get_ttymode(void *frontend, const char *mode) { return NULL; }
 
@@ -461,8 +462,10 @@ default:
 }
 extern int select_result(WPARAM, LPARAM);
 extern int sk_isClosed();
-extern int LastProgressProc();
 extern void set_disconnected(void);
+
+extern char * connectMsg;
+extern int connectPercent;
 
 int do_eventsel_loop(HANDLE other_event)
 {
@@ -514,7 +517,7 @@ int do_eventsel_loop(HANDLE other_event)
 		  break;
 
 	  // user abort?
-	  if (LastProgressProc()) {
+	  if (ProgressProc("connecting", connectMsg, connectPercent)) {
 		  set_disconnected();
 		  n = STATUS_TIMEOUT;
 		  break;

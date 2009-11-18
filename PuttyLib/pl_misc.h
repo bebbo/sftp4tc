@@ -16,7 +16,6 @@ typedef int (__stdcall * tRequestProcType) (int PluginNr, int RequestType,
 
 
 int ProgressProc(char *SourceName, char *TargetName, int PercentDone);
-int LastProgressProc();
 int init_Procs(tRequestProcType AP_RequestProc, tProgressProc AP_ProgressProc, int Awc_PluginNr, HWND hwnd);
 int psftp_memory_hole__stopfen(void);
 
