@@ -158,7 +158,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\PuttyLib;..\PuttyLib\putty;..\tc_plugin;..\shared;&quot;C:\develop\wxWidgets-2.8.10\include&quot;"
+				AdditionalIncludeDirectories="..\PuttyLib;..\PuttyLib\putty;..\PuttyLib\putty\windows;..\tc_plugin;..\shared;&quot;C:\develop\wxWidgets-2.8.10\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;PLUGIN_SFTP_EXPORTS"
 				MinimalRebuild="true"
 				RuntimeLibrary="1"
@@ -183,6 +183,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
 				Culture="1033"
+				AdditionalIncludeDirectories="..\PuttyLib"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -191,7 +192,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib"
 				OutputFile="Debug/plugin_sftp.wfx"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				ModuleDefinitionFile=".\fsplugin.def"
 				GenerateDebugInformation="true"
@@ -258,10 +259,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\puttyreg.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\server.cpp"
 				>
 			</File>
@@ -298,6 +295,10 @@
 			>
 			<File
 				RelativePath="fsplugin.h"
+				>
+			</File>
+			<File
+				RelativePath="..\PuttyLib\puttyver.h"
 				>
 			</File>
 			<File
