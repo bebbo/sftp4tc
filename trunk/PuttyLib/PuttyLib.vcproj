@@ -154,7 +154,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\PuttyLib,..\PuttyLib\putty,..\tc_plugin,..\shared"
+				AdditionalIncludeDirectories="..\PuttyLib;..\PuttyLib\putty;..\PuttyLib\putty\windows;..\tc_plugin;..\shared"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;PUTTYLIB_EXPORTS;NO_WS2"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -177,6 +177,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
 				Culture="1033"
+				AdditionalIncludeDirectories="..\PuttyLib\putty;..\PuttyLib\putty\windows"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -186,7 +187,7 @@
 				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib odbc32.lib odbccp32.lib comdlg32.lib comctl32.lib"
 				OutputFile="../tc_plugin/Debug/psftp.dll"
 				Version="1.0"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				ModuleDefinitionFile=".\PuttyLib.def"
 				GenerateDebugInformation="true"
@@ -1297,226 +1298,64 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\putty\WINCFG.C"
+				RelativePath=".\putty\windows\wincfg.c"
 				>
 			</File>
 			<File
-				RelativePath="putty\wincons.c"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\putty\WINCTRLS.C"
+				RelativePath=".\putty\windows\wincons.c"
 				>
 			</File>
 			<File
-				RelativePath="putty\windefs.c"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\putty\WINDLG.C"
+				RelativePath=".\putty\windows\winctrls.c"
 				>
 			</File>
 			<File
-				RelativePath=".\putty\WINHANDL.C"
+				RelativePath=".\putty\windows\windefs.c"
 				>
 			</File>
 			<File
-				RelativePath=".\putty\WINHELP.C"
+				RelativePath=".\putty\windows\windlg.c"
 				>
 			</File>
 			<File
-				RelativePath="putty\winmisc.c"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="putty\WINNET.C"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="putty\winnoise.c"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="putty\winpgntc.c"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="putty\winsftp.c"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="putty\WINSTORE.C"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\putty\WINUCS.C"
+				RelativePath=".\putty\windows\WINHANDL.C"
 				>
 			</File>
 			<File
-				RelativePath="putty\WINUTILS.C"
+				RelativePath=".\putty\windows\WINHELP.C"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\putty\windows\winmisc.c"
+				>
+			</File>
+			<File
+				RelativePath=".\putty\windows\winnet.c"
+				>
+			</File>
+			<File
+				RelativePath=".\putty\windows\winnoise.c"
+				>
+			</File>
+			<File
+				RelativePath=".\putty\windows\winpgntc.c"
+				>
+			</File>
+			<File
+				RelativePath=".\putty\windows\winsftp.c"
+				>
+			</File>
+			<File
+				RelativePath=".\putty\windows\winstore.c"
+				>
+			</File>
+			<File
+				RelativePath=".\putty\windows\WINUCS.C"
+				>
+			</File>
+			<File
+				RelativePath=".\putty\windows\winutils.c"
+				>
 			</File>
 			<File
 				RelativePath="putty\X11FWD.C"
@@ -1582,6 +1421,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\putty\puttyps.h"
+				>
+			</File>
+			<File
 				RelativePath="putty\RESOURCE.H"
 				>
 			</File>
@@ -1610,11 +1453,15 @@
 				>
 			</File>
 			<File
-				RelativePath="putty\WIN_RES.H"
+				RelativePath=".\putty\windows\win_res.h"
 				>
 			</File>
 			<File
-				RelativePath="putty\WINSTUFF.H"
+				RelativePath=".\putty\windows\winhelp.h"
+				>
+			</File>
+			<File
+				RelativePath=".\putty\windows\winstuff.h"
 				>
 			</File>
 		</Filter>
@@ -1623,7 +1470,7 @@
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 			>
 			<File
-				RelativePath=".\putty\PUTTY.RC"
+				RelativePath=".\putty\windows\PUTTY.RC"
 				>
 			</File>
 		</Filter>

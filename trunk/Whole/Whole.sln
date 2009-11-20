@@ -1,13 +1,9 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual C++ Express 2005
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PuttyLib", "..\PuttyLib\PuttyLib.vcproj", "{2B495F1C-1249-4F24-A8CD-105D9C2A21C0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "password_crypter", "..\..\password_crypter\src\password_crypter.vcproj", "{A1DF72EA-EE44-4D99-A514-D8F0926E9577}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plugin_sftp", "..\tc_plugin\plugin_sftp.vcproj", "{11EBE2EC-9FE8-45F9-B477-FA77EED8C930}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "properties_dlg", "..\properties_dlg\properties_dlg.vcproj", "{EF7E7081-4313-45EA-9EBB-4EE604E833C1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,24 +18,12 @@ Global
 		{2B495F1C-1249-4F24-A8CD-105D9C2A21C0}.Release|Win32.Build.0 = Release|Win32
 		{2B495F1C-1249-4F24-A8CD-105D9C2A21C0}.Static Release|Win32.ActiveCfg = Release|Win32
 		{2B495F1C-1249-4F24-A8CD-105D9C2A21C0}.Static Release|Win32.Build.0 = Release|Win32
-		{A1DF72EA-EE44-4D99-A514-D8F0926E9577}.Debug|Win32.ActiveCfg = Debug|Win32
-		{A1DF72EA-EE44-4D99-A514-D8F0926E9577}.Debug|Win32.Build.0 = Debug|Win32
-		{A1DF72EA-EE44-4D99-A514-D8F0926E9577}.Release|Win32.ActiveCfg = Release|Win32
-		{A1DF72EA-EE44-4D99-A514-D8F0926E9577}.Release|Win32.Build.0 = Release|Win32
-		{A1DF72EA-EE44-4D99-A514-D8F0926E9577}.Static Release|Win32.ActiveCfg = Release|Win32
-		{A1DF72EA-EE44-4D99-A514-D8F0926E9577}.Static Release|Win32.Build.0 = Release|Win32
 		{11EBE2EC-9FE8-45F9-B477-FA77EED8C930}.Debug|Win32.ActiveCfg = Debug|Win32
 		{11EBE2EC-9FE8-45F9-B477-FA77EED8C930}.Debug|Win32.Build.0 = Debug|Win32
 		{11EBE2EC-9FE8-45F9-B477-FA77EED8C930}.Release|Win32.ActiveCfg = Release|Win32
 		{11EBE2EC-9FE8-45F9-B477-FA77EED8C930}.Release|Win32.Build.0 = Release|Win32
 		{11EBE2EC-9FE8-45F9-B477-FA77EED8C930}.Static Release|Win32.ActiveCfg = Release|Win32
 		{11EBE2EC-9FE8-45F9-B477-FA77EED8C930}.Static Release|Win32.Build.0 = Release|Win32
-		{EF7E7081-4313-45EA-9EBB-4EE604E833C1}.Debug|Win32.ActiveCfg = Debug|Win32
-		{EF7E7081-4313-45EA-9EBB-4EE604E833C1}.Debug|Win32.Build.0 = Debug|Win32
-		{EF7E7081-4313-45EA-9EBB-4EE604E833C1}.Release|Win32.ActiveCfg = Release|Win32
-		{EF7E7081-4313-45EA-9EBB-4EE604E833C1}.Release|Win32.Build.0 = Release|Win32
-		{EF7E7081-4313-45EA-9EBB-4EE604E833C1}.Static Release|Win32.ActiveCfg = Static Release|Win32
-		{EF7E7081-4313-45EA-9EBB-4EE604E833C1}.Static Release|Win32.Build.0 = Static Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
