@@ -24,6 +24,7 @@ typedef struct FontSpec FontSpec;
 unsigned long parse_blocksize(const char *bs);
 char ctrlparse(char *s, char **next);
 
+wchar_t *dupwstr(const wchar_t *s);
 char *dupstr(const char *s);
 char *dupcat(const char *s1, ...);
 char *dupprintf(const char *fmt, ...);
@@ -36,7 +37,7 @@ void base64_encode_atom(unsigned char *data, int n, char *out);
 struct bufchain_granule;
 typedef struct bufchain_tag {
     struct bufchain_granule *head, *tail;
-    int buffersize;		       /* current amount of buffered data */
+    int buffersize; /* current amount of buffered data */
 } bufchain;
 
 void bufchain_init(bufchain *ch);

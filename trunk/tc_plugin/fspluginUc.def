@@ -1,0 +1,18 @@
+EXPORTS
+	FsInitW=FsInit
+	FsFindFirstW=FsFindFirst
+	FsFindNextW=FsFindNext
+	FsMkDirW=FsMkDir
+	FsExecuteFileW=FsExecuteFile
+	FsRenMovFileW=FsRenMovFile
+	FsGetFileW=FsGetFile
+	FsPutFileW=FsPutFile
+	FsDeleteFileW=FsDeleteFile
+	FsRemoveDirW=FsRemoveDir
+	FsDisconnectW=FsDisconnect
+	FsStatusInfoW=FsStatusInfo
+	FsExtractCustomIconW=FsExtractCustomIcon
+	
+	FsFindClose
+    FsGetDefRootName
+	
