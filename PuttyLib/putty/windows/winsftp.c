@@ -9,6 +9,22 @@
 #include "int64.h"
 #include "pl_misc.h"
 
+extern struct config_tag cfg;
+
+static HANDLE myCreateFile(char * name, DWORD a, DWORD b, LPSECURITY_ATTRIBUTES p, DWORD d, DWORD e, HANDLE f) {
+	if (cfg.sftp4tc.isUnicode) {
+		wchar_t buff[1024] = {0};
+		int cp = cfg.sftp4tc.codePage;
+		if (!MultiByteToWideChar(cp, 0, name, -1, buff, 1024)) {
+			cp = CP_ACP;
+			MultiByteToWideChar(cp, 0, name, -1, buff, 1024);
+		}
+
+		return CreateFileW(buff, a, b, p, d, e, f);
+	} 
+	return CreateFileA(name, a, b, p, d, e, f);
+}
+
 char *get_ttymode(void *frontend, const char *mode) { return NULL; }
 
 int get_userpass_input(prompts_t *p, unsigned char *in, int inlen)
@@ -78,8 +94,8 @@ RFile *open_existing_file(char *name, uint64 *size,
 	HANDLE h;
 	RFile *ret;
 
-	h = CreateFile(name, GENERIC_READ, FILE_SHARE_READ, NULL,
-		OPEN_EXISTING, 0, 0);
+	h = myCreateFile(name, GENERIC_READ, FILE_SHARE_READ, NULL,
+			OPEN_EXISTING, 0, 0);
 	if (h == INVALID_HANDLE_VALUE)
 		return NULL;
 
@@ -126,7 +142,7 @@ WFile *open_new_file(char *name)
 	HANDLE h;
 	WFile *ret;
 
-	h = CreateFile(name, GENERIC_WRITE, 0, NULL,
+	h = myCreateFile(name, GENERIC_WRITE, 0, NULL,
 		CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 	if (h == INVALID_HANDLE_VALUE)
 		return NULL;
@@ -142,7 +158,7 @@ WFile *open_existing_wfile(char *name, uint64 *size)
 	HANDLE h;
 	WFile *ret;
 
-	h = CreateFile(name, GENERIC_WRITE, FILE_SHARE_READ, NULL,
+	h = myCreateFile(name, GENERIC_WRITE, FILE_SHARE_READ, NULL,
 		OPEN_EXISTING, 0, 0);
 	if (h == INVALID_HANDLE_VALUE)
 		return NULL;

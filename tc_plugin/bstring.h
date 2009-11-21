@@ -10,7 +10,7 @@ typedef wchar_t bchar;
 #define bstrcpyn wcsncpy
 #define bstrtol wcstol
 #define bstrdup wcsdup
-#define bstrrchr wcschr
+#define bstrrchr wcsrchr
 
 extern void qudConvert(wchar_t * dst, char const * src, unsigned int len);
 extern void qudConvert(char * dst, wchar_t const * src, unsigned int len);

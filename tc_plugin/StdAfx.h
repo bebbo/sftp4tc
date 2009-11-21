@@ -10,15 +10,14 @@
 #pragma once
 #endif                          // _MSC_VER > 1000
 
-
 // Insert your headers here
 #define WIN32_LEAN_AND_MEAN     // Exclude rarely-used stuff from Windows headers
-
 #include <windows.h>
 #include <stdlib.h>
 #include <shellapi.h>
 #include <stdio.h>
 #include <string>
+#include <bstring.h>
 
 // TODO: reference additional headers your program requires here
 
@@ -39,7 +38,6 @@ static void __d(char * fmt, ...)
 #else
 #define DBGPRINT(a)
 #endif
-
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.

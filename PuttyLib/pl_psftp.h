@@ -7,8 +7,7 @@
 extern int psftp_connect(char *userhost, char *user, int portnumber);
 extern int do_sftp_init(void);
 struct config_tag;
-struct config_tag * wcplg_open_sftp_session(char *userhost, char *user, char *pass,
-                            int portnumber);
+struct config_tag * wcplg_open_sftp_session(char *userhost, char *user, char *pass, int portnumber);
 int wcplg_close_sftp_session(void);
 int wcplg_do_sftp(char *_cmd, char *_server_output);
 char *wcplg_get_last_error_msg();
@@ -20,8 +19,8 @@ extern Backend *back;
 extern void *backhandle;
 
 /*
-moved from old custom psftp.h
-*/
+ moved from old custom psftp.h
+ */
 int ISinitT;
 char *pwd, *homedir;
 

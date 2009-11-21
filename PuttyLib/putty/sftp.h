@@ -60,10 +60,10 @@
 /*
  * External references. The sftp client module sftp.c expects to be
  * able to get at these functions.
- * 
+ *
  * sftp_recvdata must never return less than len. It either blocks
  * until len is available, or it returns failure.
- * 
+ *
  * Both functions return 1 on success, 0 on failure.
  */
 int sftp_senddata(char *data, int len);
@@ -90,13 +90,11 @@ struct fxp_handle {
 };
 
 struct fxp_name {
-#ifdef __UNICODE__
-    wchar_t *filename;
-#else
-	char * filename;
-#endif
-	char *longname;
+    char * filename;
+    char *longname;
     struct fxp_attrs attrs;
+    // added to provide unicode support
+    wchar_t * ucFilename;
 };
 
 struct fxp_names {
@@ -131,15 +129,13 @@ char *fxp_realpath_recv(struct sftp_packet *pktin, struct sftp_request *req);
  * Open a file.
  */
 struct sftp_request *fxp_open_send(char *path, int type);
-struct fxp_handle *fxp_open_recv(struct sftp_packet *pktin,
-				 struct sftp_request *req);
+struct fxp_handle *fxp_open_recv(struct sftp_packet *pktin, struct sftp_request *req);
 
 /*
  * Open a directory.
  */
 struct sftp_request *fxp_opendir_send(char *path);
-struct fxp_handle *fxp_opendir_recv(struct sftp_packet *pktin,
-				    struct sftp_request *req);
+struct fxp_handle *fxp_opendir_recv(struct sftp_packet *pktin, struct sftp_request *req);
 
 /*
  * Close a file/dir.
@@ -175,42 +171,35 @@ int fxp_rename_recv(struct sftp_packet *pktin, struct sftp_request *req);
  * Return file attributes.
  */
 struct sftp_request *fxp_stat_send(char *fname);
-int fxp_stat_recv(struct sftp_packet *pktin, struct sftp_request *req,
-		  struct fxp_attrs *attrs);
+int fxp_stat_recv(struct sftp_packet *pktin, struct sftp_request *req, struct fxp_attrs *attrs);
 struct sftp_request *fxp_fstat_send(struct fxp_handle *handle);
-int fxp_fstat_recv(struct sftp_packet *pktin, struct sftp_request *req,
-		   struct fxp_attrs *attrs);
+int fxp_fstat_recv(struct sftp_packet *pktin, struct sftp_request *req, struct fxp_attrs *attrs);
 
 /*
  * Set file attributes.
  */
 struct sftp_request *fxp_setstat_send(char *fname, struct fxp_attrs attrs);
 int fxp_setstat_recv(struct sftp_packet *pktin, struct sftp_request *req);
-struct sftp_request *fxp_fsetstat_send(struct fxp_handle *handle,
-				       struct fxp_attrs attrs);
+struct sftp_request *fxp_fsetstat_send(struct fxp_handle *handle, struct fxp_attrs attrs);
 int fxp_fsetstat_recv(struct sftp_packet *pktin, struct sftp_request *req);
 
 /*
  * Read from a file.
  */
-struct sftp_request *fxp_read_send(struct fxp_handle *handle,
-				   uint64 offset, int len);
-int fxp_read_recv(struct sftp_packet *pktin, struct sftp_request *req,
-		  char *buffer, int len);
+struct sftp_request *fxp_read_send(struct fxp_handle *handle, uint64 offset, int len);
+int fxp_read_recv(struct sftp_packet *pktin, struct sftp_request *req, char *buffer, int len);
 
 /*
  * Write to a file. Returns 0 on error, 1 on OK.
  */
-struct sftp_request *fxp_write_send(struct fxp_handle *handle,
-				    char *buffer, uint64 offset, int len);
+struct sftp_request *fxp_write_send(struct fxp_handle *handle, char *buffer, uint64 offset, int len);
 int fxp_write_recv(struct sftp_packet *pktin, struct sftp_request *req);
 
 /*
  * Read from a directory.
  */
 struct sftp_request *fxp_readdir_send(struct fxp_handle *handle);
-struct fxp_names *fxp_readdir_recv(struct sftp_packet *pktin,
-				   struct sftp_request *req);
+struct fxp_names *fxp_readdir_recv(struct sftp_packet *pktin, struct sftp_request *req);
 
 /*
  * Free up an fxp_names structure.
@@ -259,19 +248,20 @@ int xfer_done(struct fxp_xfer *xfer);
 void xfer_set_error(struct fxp_xfer *xfer);
 void xfer_cleanup(struct fxp_xfer *xfer);
 
-
 struct Sftp4tc {
-	// selected session
-	char * selectedSession;
-	int saved;
-	// cfg values
-	int cacheFolders;
-	int hideDotNames;
-	char defChMod[32];
-	char exeChMod[32];
-	char exeExtensions[1024];
-	char homeDir[1024];
-	char sftpCommand[1024];
+    // selected session
+    char * selectedSession;
+    int saved;
+    int isUnicode;
+    int codePage;
+    // cfg values
+    int cacheFolders;
+    int hideDotNames;
+    char defChMod[32];
+    char exeChMod[32];
+    char exeExtensions[1024];
+    char homeDir[1024];
+    char sftpCommand[1024];
 };
 
 #endif // __SFTP_H__
