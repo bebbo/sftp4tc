@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PuttyLib", "..\PuttyLib\PuttyLib.vcproj", "{2B495F1C-1249-4F24-A8CD-105D9C2A21C0}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plugin_sftp", "..\tc_plugin\plugin_sftp.vcproj", "{11EBE2EC-9FE8-45F9-B477-FA77EED8C930}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+		URelease|Win32 = URelease|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2B495F1C-1249-4F24-A8CD-105D9C2A21C0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2B495F1C-1249-4F24-A8CD-105D9C2A21C0}.Debug|Win32.Build.0 = Debug|Win32
+		{2B495F1C-1249-4F24-A8CD-105D9C2A21C0}.Release|Win32.ActiveCfg = Release|Win32
+		{2B495F1C-1249-4F24-A8CD-105D9C2A21C0}.Release|Win32.Build.0 = Release|Win32
+		{2B495F1C-1249-4F24-A8CD-105D9C2A21C0}.URelease|Win32.ActiveCfg = Release|Win32
+		{2B495F1C-1249-4F24-A8CD-105D9C2A21C0}.URelease|Win32.Build.0 = Release|Win32
+		{11EBE2EC-9FE8-45F9-B477-FA77EED8C930}.Debug|Win32.ActiveCfg = Debug|Win32
+		{11EBE2EC-9FE8-45F9-B477-FA77EED8C930}.Release|Win32.ActiveCfg = Release|Win32
+		{11EBE2EC-9FE8-45F9-B477-FA77EED8C930}.URelease|Win32.ActiveCfg = Release|Win32
+		{11EBE2EC-9FE8-45F9-B477-FA77EED8C930}.URelease|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,19 @@
+EXPORTS
+	
+	__map__wcplg_open_sftp_session
+	__map__wcplg_close_sftp_session
+	__map__wcplg_do_sftp
+	__map__wcplg_get_current_dir_struct
+	__map__wcplg_free_current_dir_struct
+	__map__wcplg_get_last_error_msg
+	__map__init_Procs
+	__map__disconnected
+	__map__do_config
+	__map__get_last_attr
+	__map__set_transfer_ascii
+	__map__set_config
+	__map__load_config
+	__map__enum_settings_start
+	__map__enum_settings_next
+	__map__enum_settings_close
+	__map__get_version
