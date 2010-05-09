@@ -463,7 +463,7 @@ int sftp_get_file(char *fname, char *outfname, int recurse, int restart)
 	* FIXME: we can use FXP_FSTAT here to get the file size, and
 	* thus put up a progress bar.
 	*/
-	ret = 1;
+	result = ret = 1;
 	xfer = xfer_download_init(fh, offset);
 	MKINT64(written, offset);
 	MKINT64(total, attrs.size);
@@ -480,7 +480,7 @@ int sftp_get_file(char *fname, char *outfname, int recurse, int restart)
 
 		if (ProgressProc(fname, outfname, (int) pcb) == 1) {
 			wcplg_set_last_error_msg("cancel by user");
-			ret = 0;
+			result = ret = 0;
 			xfer_set_error(xfer);
 		} 
 
@@ -498,7 +498,7 @@ int sftp_get_file(char *fname, char *outfname, int recurse, int restart)
 			ret = 0;
 		}
 
-		while (ret && xfer_download_data(xfer, &vbuf, &len)) {
+		while (xfer_download_data(xfer, &vbuf, &len)) {
 			unsigned char *buf = (unsigned char *)vbuf;
 			int addLen = len;
 			if (transferAscii) {
@@ -511,9 +511,9 @@ int sftp_get_file(char *fname, char *outfname, int recurse, int restart)
 				}
 
 				{  // convert
-					char * p = buf;
+					unsigned char * p = buf;
 					char * q = xbuf;
-					char * end = buf + len;
+					unsigned char * end = buf + len;
 					while (p < end) {
 						if (*p == 10)
 							*q++ = 13;
@@ -557,7 +557,7 @@ int sftp_get_file(char *fname, char *outfname, int recurse, int restart)
 		assert(rreq == req);
 		fxp_close_recv(pktin, rreq);
 	}
-	return ret;
+	return ret && result;
 }
 
 int sftp_put_file(char *fname, char *outfname, int recurse, int restart)
@@ -865,7 +865,7 @@ int sftp_put_file(char *fname, char *outfname, int recurse, int restart)
 	}
 	close_rfile(file);
 
-	return ret;
+	return ret && !err;
 }
 
 /* ----------------------------------------------------------------------

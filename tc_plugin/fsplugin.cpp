@@ -27,17 +27,15 @@ HINSTANCE ghThisDllModule;
 
 static int quickConnectionCount;
 
+static HANDLE mutex = CreateMutex(0, 0, 0);
+
 class WLock {
-    HWND hwnd;
   public:
-    inline WLock() :
-      hwnd(gMainWin) {
-      if (hwnd)
-        EnableWindow(hwnd, 0);
+    inline WLock() {
+		WaitForSingleObject(mutex, 0xffffffff);
     }
     inline ~WLock() {
-      if (hwnd)
-        EnableWindow(hwnd, 1);
+		ReleaseMutex(mutex);
     }
 };
 
@@ -46,7 +44,7 @@ class WLock {
 //---------------------------------------------------------------------
 
 //Plugin's caption, shown in TC's list
-#define FSPLUGIN_CAPTION TEXT("Secure FTP Connections")
+#define FSPLUGIN_CAPTION "Secure FTP Connections"
 
 // modes for find first/next
 #define HANDLE__SHOW_SFTP_SERVER 1
@@ -239,7 +237,7 @@ static HANDLE fillLfWithFile(WIN32_FIND_DATA * FindData, LastFindStructType * lf
   if (FileTyp == 'd') {
     FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY | 0x80000000;
   } else if (FileTyp == 'l') {
-    FindData->dwFileAttributes = FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_DIRECTORY | 0x80000000;
+    FindData->dwFileAttributes = FILE_ATTRIBUTE_REPARSE_POINT | 0x80000000;
     FindData->dwReserved0 |= S_IFLNK; // Wincmd uses only this one!
   } else {
     FindData->dwFileAttributes = FILE_ATTRIBUTE_NORMAL | 0x80000000;
@@ -394,8 +392,32 @@ int __stdcall FsExecuteFile(HWND MainWin, bchar * fullRemoteName, bchar * verb) 
   bstring remotePath;
   if (cmd == TEXT("open")) {
     size_t slash = fullRemotePath.find_first_of('\\');
-    if (slash != (size_t) -1)
-      return FS_EXEC_YOURSELF;
+    if (slash != (size_t) -1) {
+      // get or create the server
+      Server * server = Server::findServer(remotePath, fullRemotePath.c_str());
+      if (!server)
+        return FS_EXEC_ERROR;
+      // distinguish between link and something else?
+      size_t last = remotePath.find_last_of('/') + 1;
+      bstring fileName = remotePath.substr(last);
+      bstring remoteDir = remotePath.substr(0, last);
+      my_fxp_names * dir = server->getDirContent(remoteDir);
+      if (!dir)
+        return FS_EXEC_SYMLINK;
+      for (int i = 0; i < dir->nnames; ++i) {
+        fxp_name * file = dir->names[i];
+#ifdef UNICODE
+        if (fileName == file->ucFilename) {
+#else
+        if (fileName == file->filename) {
+#endif
+          if (file->longname[0] == 'l')
+            return FS_EXEC_SYMLINK;
+          return FS_EXEC_YOURSELF;
+        }
+      }
+      return FS_EXEC_SYMLINK;
+    }
 
     // it's a server name
     if (fullRemotePath != EDIT_CONNECTIONS) {
@@ -636,7 +658,7 @@ int __stdcall FsGetFile(bchar *fullRemoteName, bchar *LocalName, int CopyFlags, 
 
   // get it
   if (!server->cmdGet(remotePath, LocalName, resume && exists))
-    return FS_FILE_READERROR;
+	  return FS_FILE_USERABORT;
 
   if (!move)
     return FS_FILE_OK;
@@ -739,9 +761,9 @@ BOOL __stdcall FsDisconnect(bchar * disconnectRoot) {
 
 //---------------------------------------------------------------------
 
-void __stdcall FsGetDefRootName(bchar * defRootName, int maxlen) {
+void __stdcall FsGetDefRootName(char * defRootName, int maxlen) {
   if (--maxlen >= 0) {
-    bstrcpyn(defRootName, FSPLUGIN_CAPTION, maxlen);
+    strncpy(defRootName, FSPLUGIN_CAPTION, maxlen);
     defRootName[maxlen] = 0;
   }
 }

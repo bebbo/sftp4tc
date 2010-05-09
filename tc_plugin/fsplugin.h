@@ -108,7 +108,7 @@ extern "C" {
   BOOL __stdcall FsSetTime(bchar *RemoteName, FILETIME * CreationTime, FILETIME * LastAccessTime,
       FILETIME * LastWriteTime);
   void __stdcall FsStatusInfo(bchar *RemoteDir, int InfoStartEnd, int InfoOperation);
-  void __stdcall FsGetDefRootName(bchar *DefRootName, int maxlen);
+  void __stdcall FsGetDefRootName(char *DefRootName, int maxlen);
   int __stdcall FsExtractCustomIcon(bchar* RemoteName, int ExtractFlags, HICON* TheIcon);
 
   extern int gPluginNumber;

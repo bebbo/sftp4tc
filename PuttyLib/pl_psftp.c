@@ -43,12 +43,12 @@ static void init_winsock(void) {
 }
 
 extern char * selectedSession;
-char * connectMsg;
+char connectMsg[256];
 int connectPercent;
 
 struct config_tag * wcplg_open_sftp_session(char *userhost, char *user, char *pass, int portnumber) {
   wcplg_set_last_error_msg(NULL);
-  connectMsg = userhost;
+  strncpy(connectMsg, userhost, 255);
 
   if (ProgressProc("connecting", connectMsg, 0) == 1) {
     wcplg_set_last_error_msg("cancel by user");
@@ -234,13 +234,16 @@ int getPasswordDialog(char * caption, int isPw, char * dest, int len) {
   int r;
 
   if (cfg.sftp4tc.isUnicode) {
-    len = MultiByteToWideChar(cp, 0, caption, -1, buf1, 1024);
-    if (!len) {
+    int xlen = MultiByteToWideChar(cp, 0, caption, -1, buf1, 1024);
+    if (!xlen) {
       cp = CP_ACP;
-      len = MultiByteToWideChar(cp, 0, caption, -1, buf1, 1024);
+      xlen = MultiByteToWideChar(cp, 0, caption, -1, buf1, 1024);
     }
     caption = (char *) &buf1[0];
     dest = (char *) &buf2[0];
+	buf2[0] = 0;
+  } else {
+	  *dest = 0;
   }
   r = gRequestProc(gTotalCommanderPluginNr, isPw ? RT_UserName : RT_Password, caption, NULL, dest, 1023);
   if (cfg.sftp4tc.isUnicode) {
