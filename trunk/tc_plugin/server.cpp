@@ -54,7 +54,7 @@ bool Guard::isConnected() {
 
   if (!mapper || !mapper->hDll || mapper->disconnected()) {
     if (mapper) {
-      gLogProc(gPluginNumber, MSGTYPE_DISCONNECT, (TEXT("connection to ") + server->name + TEXT(" IS BROKEN!")).c_str());
+      //      gLogProc(gPluginNumber, MSGTYPE_DISCONNECT, (TEXT("connection to ") + server->name + TEXT(" IS BROKEN!")).c_str());
       delete mapper;
     }
     mapper = new PsftpMapper(server->name, server->myCfg);
@@ -64,7 +64,7 @@ bool Guard::isConnected() {
 #ifdef UNICODE
     char srvName[256];
     qudConvert(srvName, server->name.c_str(), 256);
-	// mark unicode usage
+    // mark unicode usage
     config_tag * cfg = mapper->connect(srvName, 0, srvName, 0);
 #else
     char const * srvName = server->name.c_str();

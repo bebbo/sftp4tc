@@ -1,7 +1,6 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
-#include "puttyver.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -17,10 +16,8 @@
 // Deutsch (Deutschland) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
-#ifdef _WIN32
 LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
 #pragma code_page(1252)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -28,8 +25,8 @@ LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION PUTTY_VERSION
- PRODUCTVERSION PUTTY_VERSION
+ FILEVERSION 1,3,60,9
+ PRODUCTVERSION 1,3,60,9
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -45,11 +42,11 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "SFTP Plugin for Total Commander"
-            VALUE "FileVersion", PUTTY_VERSION_STRING
+            VALUE "FileVersion", "1.3.60.9"
             VALUE "InternalName", "plugin_sftp"
             VALUE "OriginalFilename", "plugin_sftp.wfx"
             VALUE "ProductName", "plugin_sftp"
-            VALUE "ProductVersion", PUTTY_VERSION_STRING
+            VALUE "ProductVersion", "1.3.60.9"
         END
     END
     BLOCK "VarFileInfo"
@@ -66,10 +63,8 @@ END
 // Deutsch (Schweiz) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DES)
-#ifdef _WIN32
 LANGUAGE LANG_GERMAN, SUBLANG_GERMAN_SWISS
 #pragma code_page(1252)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
