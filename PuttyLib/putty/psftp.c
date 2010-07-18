@@ -560,6 +560,26 @@ int sftp_get_file(char *fname, char *outfname, int recurse, int restart)
 	return ret && result;
 }
 
+static int getFileDate (char *filename, FILETIME *pft) 
+{
+	BOOL bret;
+    FILETIME ct,lat;
+    HANDLE hFile = CreateFile(filename, GENERIC_READ,FILE_SHARE_READ |
+                         FILE_SHARE_WRITE,0,OPEN_EXISTING,0,0);
+    if (hFile == INVALID_HANDLE_VALUE) 
+        return 0;
+    bret = !GetFileTime(hFile,&ct,&lat,pft);
+	CloseHandle(hFile);
+    return !bret;
+}
+
+static unsigned long FileTimeToUnixTime(LPFILETIME ft) {
+  LONGLONG ll = ft->dwHighDateTime;
+  ll = (ll << 32) | ft->dwLowDateTime;
+  ll = (ll - 116444736000000000) / 10000000;
+  return (unsigned long) ll;
+}
+
 int sftp_put_file(char *fname, char *outfname, int recurse, int restart)
 {
 	struct fxp_handle *fh;
@@ -568,7 +588,7 @@ int sftp_put_file(char *fname, char *outfname, int recurse, int restart)
 	struct sftp_request *req, *rreq;
 	uint64 offset;
 	RFile *file;
-	int ret, err, eof;
+	int ret = 0, err, eof;
 	uint64  uintTotal, uintNull = uint64_make(0, 0);
 	__int64 written, total;
 	int lastIs0D = 0;
@@ -717,13 +737,13 @@ int sftp_put_file(char *fname, char *outfname, int recurse, int restart)
 			SSH_FXF_CREAT | SSH_FXF_TRUNC));
 	}
 	rreq = sftp_find_request(pktin = sftp_recv());
-	if (!rreq) return 0;
+	if (!rreq) goto Exit;
 	assert(rreq == req);
 	fh = fxp_open_recv(pktin, rreq);
 
 	if (!fh) {
 		noprintf(("%s: open for write: %s\n", outfname, fxp_error()));
-		return 0;
+		goto Exit;
 	}
 
 	// get file length
@@ -734,21 +754,21 @@ int sftp_put_file(char *fname, char *outfname, int recurse, int restart)
 	if (restart) {
 		char decbuf[30];
 		struct fxp_attrs attrs;
-		int ret;
 
 		sftp_register(req = fxp_fstat_send(fh));
 		rreq = sftp_find_request(pktin = sftp_recv());
-		if (!rreq) return 0;
+		if (!rreq) goto Exit;
 		assert(rreq == req);
 		ret = fxp_fstat_recv(pktin, rreq, &attrs);
 
 		if (!ret) {
 			noprintf(("read size of %s: %s\n", outfname, fxp_error()));
-			return 0;
+			goto Exit;
 		}
+		ret = 0;
 		if (!(attrs.flags & SSH_FILEXFER_ATTR_SIZE)) {
 			noprintf(("read size of %s: size was not given\n", outfname));
-			return 0;
+			goto Exit;
 		}
 		offset = attrs.size;
 		uint64_decimal(offset, decbuf);
@@ -863,6 +883,37 @@ int sftp_put_file(char *fname, char *outfname, int recurse, int restart)
 		assert(rreq == req);
 		fxp_close_recv(pktin, rreq);
 	}
+
+	if (ret &&!err) {
+		FILETIME ft;
+		if (getFileDate(fname, &ft)) {
+			struct fxp_attrs attrs;
+			struct sftp_packet *pktin;
+			struct sftp_request *req, *rreq;
+			int result;
+
+			sftp_register(req = fxp_stat_send(outfname));
+			rreq = sftp_find_request(pktin = sftp_recv());
+			if (rreq) {
+				assert(rreq == req);
+				result = fxp_stat_recv(pktin, rreq, &attrs);
+			} else result = 0;
+
+			if (result && (attrs.flags & SSH_FILEXFER_ATTR_ACMODTIME)) {
+				attrs.flags = SSH_FILEXFER_ATTR_ACMODTIME;   /* time _only_ */
+				attrs.atime = attrs.mtime = FileTimeToUnixTime(&ft);
+			}
+			
+			sftp_register(req = fxp_setstat_send(outfname, attrs));
+			rreq = sftp_find_request(pktin = sftp_recv());
+			if (rreq) {
+				assert(rreq == req);
+				result = fxp_setstat_recv(pktin, rreq);
+			}
+		}
+	}
+
+Exit:
 	close_rfile(file);
 
 	return ret && !err;

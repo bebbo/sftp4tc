@@ -1,3 +1,7 @@
+VERSION 1.3.60.10
+*FIXED if copy to server failed the source file could remain locked.
+*FIXED copies to the server did not preserve the file stamp.
+
 VERSION 1.3.60.9
 *FIXED #016602 aborting folder copies now aborts more early.
 *FIXED #016660/#016661 prompt is cleared - no more trash shown.

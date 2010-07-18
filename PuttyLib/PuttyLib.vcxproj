@@ -644,6 +644,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="PuttyLib.def" />
+    <None Include="putty\windows\putty.ico" />
+    <None Include="putty\windows\putty.mft" />
+    <None Include="putty\windows\puttycfg.ico" />
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -669,6 +672,7 @@
     <ClInclude Include="putty\SFTP.H" />
     <ClInclude Include="..\shared\sftp4tc_share.h" />
     <ClInclude Include="putty\SSH.H" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="putty\STORAGE.H" />
     <ClInclude Include="putty\TREE234.H" />

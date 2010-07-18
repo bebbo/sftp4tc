@@ -44,6 +44,7 @@
     <None Include="config.ico">
       <Filter>Ressourcendateien</Filter>
     </None>
+    <None Include="..\history.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bstring.h">
