@@ -537,7 +537,7 @@ bool Server::cmdPut(bstring const & localName, bstring const & remotePath, bool 
   FILETIME ft;
   HANDLE hFile = CreateFile(localName.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
   if (hFile == (HANDLE) HFILE_ERROR)
-    return true; // copy succeeded
+    return true; // put already succeeded
 
   GetFileTime(hFile, 0, 0, &ft);
   long fsHigh = 0;
@@ -564,15 +564,7 @@ bool Server::cmdPut(bstring const & localName, bstring const & remotePath, bool 
   // fake update the directory
   insertFile(remotePath, &ft, fsLow, fsHigh, '-', chmod);
 
-  // we cannot set the file time
-  if (disableMtime)
-    return true;
-
-  // if setting the mtime failes, do not try it again
-  if (!this->cmdMtime(remotePath, &ft))
-    disableMtime = true;
-
-  // put already succeeded.
+  // put succeeded.
   return true;
 }
 

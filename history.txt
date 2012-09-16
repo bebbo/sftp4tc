@@ -1,3 +1,10 @@
+VERSION 1.3.60.12
+*FIXED #016602 user abort is now handled correctly.
+
+VERSION 1.3.60.11
+*FIXED copying to the server could fail to preserve the file stamp for unicode files.
+*FIXED hiding .names caused an exception in the unicode version.
+
 VERSION 1.3.60.10
 *FIXED if copy to server failed the source file could remain locked.
 *FIXED copies to the server did not preserve the file stamp.
