@@ -25,6 +25,8 @@ HWND gMainWin;
 
 HINSTANCE ghThisDllModule;
 
+extern int lastPPR;
+
 static int quickConnectionCount;
 
 static HANDLE mutex = CreateMutex(0, 0, 0);
@@ -221,8 +223,13 @@ static HANDLE fillLfWithFile(WIN32_FIND_DATA * FindData, LastFindStructType * lf
   if (lf->hideDotNames) {
     // skip dot names
     for (;;) {
-      if (name->filename[0] != '.' || name->filename[1] == 0)
-        break;
+#ifdef UNICODE
+		if (name->ucFilename[0] != '.' || name->ucFilename[1] == 0)
+		    break;
+#else
+		if (name->filename[0] != '.' || name->filename[1] == 0)
+		    break;
+#endif
       ++n;
       if (n >= lf->mSumIndex)
         return INVALID_HANDLE_VALUE;
@@ -658,7 +665,7 @@ int __stdcall FsGetFile(bchar *fullRemoteName, bchar *LocalName, int CopyFlags, 
 
   // get it
   if (!server->cmdGet(remotePath, LocalName, resume && exists))
-	  return FS_FILE_USERABORT;
+    return lastPPR ? FS_FILE_USERABORT : FS_FILE_WRITEERROR;
 
   if (!move)
     return FS_FILE_OK;
@@ -694,7 +701,7 @@ int __stdcall FsPutFile(bchar * localName, bchar *fullRemoteName, int CopyFlags)
   server->setTransferAscii(doTransferAscii(remotePath));
 
   if (!server->cmdPut(localName, remotePath, resume && exists))
-    return FS_FILE_WRITEERROR;
+    return lastPPR ? FS_FILE_USERABORT : FS_FILE_WRITEERROR;
 
   if (!move)
     return FS_FILE_OK;

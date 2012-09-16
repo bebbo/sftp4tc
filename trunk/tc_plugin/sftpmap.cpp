@@ -22,6 +22,9 @@ extern HWND gMainWin;
 bool firstHalf;
 bool secondHalf;
 
+// keep the last progress proc result
+int lastPPR;
+
 //---------------------------------------------------------------------
 // show some progress
 static int __stdcall myProgressProc(int PluginNr, bchar *SourceName, bchar *TargetName, int PercentDone) {
@@ -31,12 +34,12 @@ static int __stdcall myProgressProc(int PluginNr, bchar *SourceName, bchar *Targ
       PercentDone += 50;
   }
 
-  int r = gProgressProc(PluginNr, SourceName, TargetName, PercentDone);
+  lastPPR = gProgressProc(PluginNr, SourceName, TargetName, PercentDone);
 
   // DBGPRINT(("gProgressProc: %d\r\n", r));
 
-  if (r)
-    return r;
+  if (lastPPR)
+    return lastPPR;
 
   MSG msg;
   for (int i = 0; i < 42; ++i) {

@@ -730,7 +730,7 @@ static void ttymodes_handler(union control *ctrl, void *dlg, void *data, int eve
       dlg_update_start(ctrl, dlg);
       dlg_listbox_clear(ctrl, dlg);
       while (*p) {
-        int tabpos = strchr(p, '\t') - p;
+        size_t tabpos = strchr(p, '\t') - p;
         char *disp = dupprintf("%.*s\t%s", tabpos, p, (p[tabpos + 1] == 'A') ? "(auto)" : p + tabpos + 2);
         dlg_listbox_add(ctrl, dlg, disp);
         p += strlen(p) + 1;
@@ -753,7 +753,7 @@ static void ttymodes_handler(union control *ctrl, void *dlg, void *data, int eve
       int ind = dlg_listbox_index(td->modelist, dlg);
       if (ind >= 0) {
         char type = dlg_radiobutton_get(td->valradio, dlg) ? 'V' : 'A';
-        int slen, left;
+        size_t slen, left;
         char *p, str[lenof(cfg->ttymodes)];
         /* Construct new entry */
         memset(str, 0, lenof(str));
@@ -763,13 +763,13 @@ static void ttymodes_handler(union control *ctrl, void *dlg, void *data, int eve
         str[slen + 1] = type;
         slen += 2;
         if (type == 'V') {
-          dlg_editbox_get(td->valbox, dlg, str + slen, lenof(str) - slen);
+          dlg_editbox_get(td->valbox, dlg, str + slen, (int)(lenof(str) - slen));
         }
         /* Find end of list, deleting any existing instance */
         p = cfg->ttymodes;
         left = lenof(cfg->ttymodes);
         while (*p) {
-          int t = strchr(p, '\t') - p;
+          size_t t = strchr(p, '\t') - p;
           if (t == strlen(ttymodes[ind]) && strncmp(p, ttymodes[ind], t) == 0) {
             memmove(p, p + strlen(p) + 1, left - (strlen(p) + 1));
             continue;
@@ -785,7 +785,7 @@ static void ttymodes_handler(union control *ctrl, void *dlg, void *data, int eve
         dlg_beep(dlg);
     } else if (ctrl == td->rembutton) {
       char *p = cfg->ttymodes;
-      int i = 0, len = lenof(cfg->ttymodes);
+      int i = 0; size_t len = lenof(cfg->ttymodes);
       while (*p) {
         int multisel = dlg_listbox_index(td->listbox, dlg) < 0;
         if (dlg_listbox_issel(td->listbox, dlg, i)) {
@@ -852,7 +852,7 @@ static void environ_handler(union control *ctrl, void *dlg, void *data, int even
       }
       p = str + strlen(str);
       *p++ = '\t';
-      dlg_editbox_get(ed->valbox, dlg, p, sizeof(str) - 1 - (p - str));
+      dlg_editbox_get(ed->valbox, dlg, p, (int)(sizeof(str) - 1 - (p - str)));
       if (!*p) {
         dlg_beep(dlg);
         return;
@@ -984,7 +984,7 @@ static void portfwd_handler(union control *ctrl, void *dlg, void *data, int even
       p = str + strlen(str);
       if (type != 'D') {
         *p++ = '\t';
-        dlg_editbox_get(pfd->destbox, dlg, p, sizeof(str) - (p - str));
+        dlg_editbox_get(pfd->destbox, dlg, p, (int)(sizeof(str) - (p - str)));
         if (!*p || !strchr(p, ':')) {
           dlg_error_msg(dlg, "You need to specify a destination address\n"
             "in the form \"host.name:port\"");
@@ -1032,8 +1032,8 @@ static void portfwd_handler(union control *ctrl, void *dlg, void *data, int even
          * delete, for ease of editing. */
         {
           static const char * const afs = "A46";
-          char *afp = strchr(afs, *p);
-          int idx = afp ? afp - afs : 0;
+          const char *afp = strchr(afs, *p);
+          int idx = afp ? (int)(afp - afs) : 0;
           if (afp)
             p++;
 #ifndef NO_IPV6
@@ -1043,7 +1043,7 @@ static void portfwd_handler(union control *ctrl, void *dlg, void *data, int even
         {
           static const char * const dirs = "LRD";
           dir = *p;
-          dlg_radiobutton_set(pfd->direction, dlg, strchr(dirs, dir) - dirs);
+          dlg_radiobutton_set(pfd->direction, dlg, (int)(strchr(dirs, dir) - dirs));
         }
         p++;
         if (dir != 'D') {

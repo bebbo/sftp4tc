@@ -564,8 +564,17 @@ static int getFileDate (char *filename, FILETIME *pft)
 {
 	BOOL bret;
     FILETIME ct,lat;
-    HANDLE hFile = CreateFile(filename, GENERIC_READ,FILE_SHARE_READ |
-                         FILE_SHARE_WRITE,0,OPEN_EXISTING,0,0);
+	int cp = cfg.sftp4tc.codePage;
+	wchar_t wout[1024];
+	HANDLE hFile;
+	if (cfg.sftp4tc.isUnicode) {
+		MultiByteToWideChar(cp, 0, filename, -1, wout, 1024);
+		hFile = CreateFileW(wout, GENERIC_READ,FILE_SHARE_READ |
+							 FILE_SHARE_WRITE,0,OPEN_EXISTING,0,0);
+	} else {
+		hFile = CreateFile(filename, GENERIC_READ,FILE_SHARE_READ |
+							 FILE_SHARE_WRITE,0,OPEN_EXISTING,0,0);
+	}
     if (hFile == INVALID_HANDLE_VALUE) 
         return 0;
     bret = !GetFileTime(hFile,&ct,&lat,pft);

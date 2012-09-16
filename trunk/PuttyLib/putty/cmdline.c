@@ -205,7 +205,8 @@ int cmdline_process_param(char *p, char *value, int need_save, Config *cfg)
     }
     if ((!strcmp(p, "-L") || !strcmp(p, "-R") || !strcmp(p, "-D"))) {
 	char *fwd, *ptr, *q, *qq;
-	int dynamic, i=0;
+	int dynamic;
+	size_t i=0;
 	RETURN(2);
 	UNAVAILABLE_IN(TOOLTYPE_FILETRANSFER | TOOLTYPE_NONNETWORK);
 	SAVEABLE(0);
@@ -260,7 +261,7 @@ int cmdline_process_param(char *p, char *value, int need_save, Config *cfg)
 	while (*portp && *portp != ':')
 	    portp++;
 	if (*portp) {
-	    unsigned len = portp - host;
+	    size_t len = portp - host;
 	    if (len >= sizeof(cfg->ssh_nc_host))
 		len = sizeof(cfg->ssh_nc_host) - 1;
 	    strncpy(cfg->ssh_nc_host, value, len);
