@@ -783,6 +783,7 @@
     <ClInclude Include="..\shared\sftp4tc_share.h" />
     <ClInclude Include="putty\SSH.H" />
     <ClInclude Include="putty\sshgssc.h" />
+    <ClInclude Include="putty\windows\resource.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="putty\STORAGE.H" />
