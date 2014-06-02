@@ -171,12 +171,6 @@
     <ClCompile Include="putty\windows\windlg.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="putty\windows\WINHANDL.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\windows\WINHELP.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="putty\windows\winmisc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -195,13 +189,7 @@
     <ClCompile Include="putty\windows\winstore.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="putty\windows\WINUCS.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="putty\windows\winutils.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\X11FWD.C">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="putty\pgssapi.c">
@@ -219,6 +207,18 @@
     <ClCompile Include="putty\cmdline.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="putty\x11fwd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\windows\winhandl.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\windows\winucs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\windows\winhelp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="PuttyLib.def">
@@ -234,10 +234,10 @@
     <None Include="putty\windows\putty.mft" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="putty\windows\PUTTY.RC">
+    <ResourceCompile Include="PuttyLib.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-    <ResourceCompile Include="PuttyLib.rc">
+    <ResourceCompile Include="putty\windows\putty.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

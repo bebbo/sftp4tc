@@ -672,6 +672,8 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <ClCompile Include="putty\windows\wincons.c" />
+    <ClCompile Include="putty\windows\winhandl.c" />
+    <ClCompile Include="putty\windows\winhelp.c" />
     <ClCompile Include="putty\windows\winjump.c" />
     <ClCompile Include="putty\time.c">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -737,26 +739,15 @@
     <ClCompile Include="putty\windows\winctrls.c" />
     <ClCompile Include="putty\windows\windefs.c" />
     <ClCompile Include="putty\windows\windlg.c" />
-    <ClCompile Include="putty\windows\WINHANDL.C" />
-    <ClCompile Include="putty\windows\WINHELP.C" />
     <ClCompile Include="putty\windows\winmisc.c" />
     <ClCompile Include="putty\windows\winnet.c" />
     <ClCompile Include="putty\windows\winnoise.c" />
     <ClCompile Include="putty\windows\winpgntc.c" />
     <ClCompile Include="putty\windows\winsftp.c" />
     <ClCompile Include="putty\windows\winstore.c" />
-    <ClCompile Include="putty\windows\WINUCS.C" />
+    <ClCompile Include="putty\windows\winucs.c" />
     <ClCompile Include="putty\windows\winutils.c" />
-    <ClCompile Include="putty\X11FWD.C">
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
+    <ClCompile Include="putty\x11fwd.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="PuttyLib.def" />
@@ -774,7 +765,7 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
-    <ResourceCompile Include="putty\windows\PUTTY.RC" />
+    <ResourceCompile Include="putty\windows\putty.rc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="putty\INT64.H" />
