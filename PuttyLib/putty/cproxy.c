@@ -23,7 +23,7 @@ static void hmacmd5_chap(const unsigned char *challenge, int challen,
 
     hmacmd5_ctx = hmacmd5_make_context();
 
-    pwlen = strlen(passwd);
+    pwlen = (int)strlen(passwd);
     if (pwlen>64) {
 	unsigned char md5buf[16];
 	MD5Simple(passwd, pwlen, md5buf);
@@ -130,7 +130,8 @@ int proxy_socks5_handlechap (Proxy_Socket p)
 		outbuf[2] = 0x04; /* Response */
 		outbuf[3] = 0x10; /* Length */
 		hmacmd5_chap(data, p->chap_current_datalen,
-			     p->cfg.proxy_password, &outbuf[4]);
+			     conf_get_str(p->conf, CONF_proxy_password),
+			     &outbuf[4]);
 		sk_write(p->sub_socket, (char *)outbuf, 20);
 	      break;
 	      case 0x11:
@@ -159,9 +160,11 @@ int proxy_socks5_handlechap (Proxy_Socket p)
 
 int proxy_socks5_selectchap(Proxy_Socket p)
 {
-    if (p->cfg.proxy_username[0] || p->cfg.proxy_password[0]) {
+    char *username = conf_get_str(p->conf, CONF_proxy_username);
+    char *password = conf_get_str(p->conf, CONF_proxy_password);
+    if (username[0] || password[0]) {
 	char chapbuf[514];
-	int ulen;
+	size_t ulen;
 	chapbuf[0] = '\x01'; /* Version */
 	chapbuf[1] = '\x02'; /* Number of attributes sent */
 	chapbuf[2] = '\x11'; /* First attribute - algorithms list */
@@ -169,13 +172,13 @@ int proxy_socks5_selectchap(Proxy_Socket p)
 	chapbuf[4] = '\x85'; /* ...and it's HMAC-MD5, the core one */
 	chapbuf[5] = '\x02'; /* Second attribute - username */
 
-	ulen = strlen(p->cfg.proxy_username);
+	ulen = strlen(username);
 	if (ulen > 255) ulen = 255; if (ulen < 1) ulen = 1;
 
-	chapbuf[6] = ulen;
-	memcpy(chapbuf+7, p->cfg.proxy_username, ulen);
+	chapbuf[6] = (char)ulen;
+	memcpy(chapbuf+7, username, ulen);
 
-	sk_write(p->sub_socket, chapbuf, ulen + 7);
+	sk_write(p->sub_socket, chapbuf, (int)ulen + 7);
 	p->chap_num_attributes = 0;
 	p->chap_num_attributes_processed = 0;
 	p->chap_current_attribute = -1;

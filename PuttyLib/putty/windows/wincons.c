@@ -235,7 +235,7 @@ int askalg(void *frontend, const char *algtype, const char *algname,
 * Ask whether to wipe a session log file before writing to it.
 * Returns 2 for wipe, 1 for append, 0 for cancel (don't log).
 */
-int askappend(void *frontend, Filename filename,
+int askappend(void *frontend, Filename * filename,
 			  void (*callback)(void *ctx, int result), void *ctx)
 {
     HANDLE hin;
@@ -257,11 +257,11 @@ int askappend(void *frontend, Filename filename,
     char line[32];
 	
     if (console_batch_mode) {
-		fprintf(stderr, msgtemplate_batch, FILENAME_MAX, filename.path);
+		fprintf(stderr, msgtemplate_batch, FILENAME_MAX, filename->path);
 		fflush(stderr);
 		return 0;
     }
-    fprintf(stderr, msgtemplate, FILENAME_MAX, filename.path);
+    fprintf(stderr, msgtemplate, FILENAME_MAX, filename->path);
     fflush(stderr);
 	
     hin = GetStdHandle(STD_INPUT_HANDLE);
@@ -305,6 +305,7 @@ void old_keyfile_warning(void)
     fputs(message, stderr);
 }
 
+#ifndef __SFTP4TC__
 /*
 * Display the fingerprints of the PGP Master Keys to the user.
 */
@@ -320,6 +321,7 @@ void pgp_fingerprints(void)
 		"PuTTY Master Key (DSA), 1024-bit:\n"
 		"  " PGP_DSA_MASTER_KEY_FP "\n", stdout);
 }
+#endif
 
 void console_provide_logctx(void *logctx)
 {
@@ -353,7 +355,7 @@ int console_get_userpass_input(prompts_t *p, unsigned char *in, int inlen)
     {
 		int i;
 		for (i = 0; i < (int)p->n_prompts; i++)
-			memset(p->prompts[i]->result, 0, p->prompts[i]->result_len);
+			memset(p->prompts[i]->result, 0, p->prompts[i]->resultsize);
     }
 	
     if (console_batch_mode)
@@ -371,14 +373,14 @@ int console_get_userpass_input(prompts_t *p, unsigned char *in, int inlen)
 	*/
     /* We only print the `name' caption if we have to... */
     if (p->name_reqd && p->name) {
-		size_t l = strlen(p->name);
+		int l = (int)strlen(p->name);
 		console_data_untrusted(hout, p->name, l);
 		if (p->name[l-1] != '\n')
 			console_data_untrusted(hout, "\n", 1);
     }
     /* ...but we always print any `instruction'. */
     if (p->instruction) {
-		size_t l = strlen(p->instruction);
+		int l = (int)strlen(p->instruction);
 		console_data_untrusted(hout, p->instruction, l);
 		if (p->instruction[l-1] != '\n')
 			console_data_untrusted(hout, "\n", 1);
@@ -395,8 +397,8 @@ int console_get_userpass_input(prompts_t *p, unsigned char *in, int inlen)
 		if (console_password) {			
 			DBG((buffer, "[PSFTP] using provided password %s\r\n", console_password));			
 
-			strncpy(pr->result, console_password, pr->result_len - 1);
-			pr->result[pr->result_len - 1] = '\0';
+			strncpy(pr->result, console_password, pr->resultsize - 1);
+			pr->result[pr->resultsize - 1] = '\0';
 			
 			free(console_password);
 			console_password = 0;
@@ -405,7 +407,10 @@ int console_get_userpass_input(prompts_t *p, unsigned char *in, int inlen)
 
 		DBG((buffer, "[PSFTP] reading prompt\r\n"));
 		
-		r = getPasswordDialog(pr->prompt, pr->echo, pr->result, pr->result_len);
+		r = getPasswordDialog(pr->prompt, 
+			pr->echo, 
+			pr->result, 
+			(int)pr->resultsize);
 
 		DBG((buffer, "[PSFTP] got %d : %s\r\n", r, pr->result));
 		if (!r) return 0;

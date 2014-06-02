@@ -29,12 +29,18 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "puttymem.h"
 #include "tree234.h"
 
 #ifdef TEST
 #define LOG(x) (printf x)
+#define snew(type) ((type *)malloc(sizeof(type)))
+#define snewn(n, type) ((type *)malloc((n) * sizeof(type)))
+#define sresize(ptr, n, type)                                         \
+    ((type *)realloc(sizeof((type *)0 == (ptr)) ? (ptr) : (ptr),      \
+                     (n) * sizeof(type)))
+#define sfree(ptr) free(ptr)
 #else
+#include "puttymem.h"
 #define LOG(x)
 #endif
 
@@ -220,7 +226,7 @@ static void *add234_internal(tree234 * t, void *e, int index)
 	     n->kids[2], n->counts[2], n->elems[2],
 	     n->kids[3], n->counts[3]));
 	LOG(("  need to insert %p/%d [%p] %p/%d at position %d\n",
-	     left, lcount, e, right, rcount, np - n->kids));
+	     left, lcount, e, right, rcount, (int)(np - n->kids)));
 	if (n->elems[1] == NULL) {
 	    /*
 	     * Insert in a 2-node; simple.

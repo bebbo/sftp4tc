@@ -25,7 +25,8 @@ char *psftp_lcd(char *newdir);
  * Retrieve file times on a local file. Must return two unsigned
  * longs in POSIX time_t format.
  */
-void get_file_times(char *filename, unsigned long *mtime, unsigned long *atime);
+void get_file_times(char *filename, unsigned long *mtime,
+		    unsigned long *atime);
 
 /*
  * One iteration of the PSFTP event loop: wait for network data and
@@ -58,8 +59,10 @@ int psftp_main(int argc, char *argv[]);
  * probably only ever be supported on Windows, so these functions
  * can safely be stubs on all other platforms.
  */
-void gui_update_stats(char *name, unsigned long size, int percentage, unsigned long elapsed, unsigned long done,
-    unsigned long eta, unsigned long ratebs);
+void gui_update_stats(char *name, unsigned long size,
+		      int percentage, unsigned long elapsed,
+		      unsigned long done, unsigned long eta,
+		      unsigned long ratebs);
 void gui_send_errcount(int list, int errs);
 void gui_send_char(int is_stderr, int c);
 void gui_enable(char *arg);
@@ -82,23 +85,24 @@ void gui_enable(char *arg);
  */
 typedef struct RFile RFile;
 typedef struct WFile WFile;
-/* Output params size, mtime and atime can all be NULL if desired */
-RFile *open_existing_file(char *name, uint64 *size, unsigned long *mtime, unsigned long *atime);
+/* Output params size, perms, mtime and atime can all be NULL if
+ * desired. perms will be -1 if the OS does not support POSIX permissions. */
+RFile *open_existing_file(char *name, uint64 *size,
+			  unsigned long *mtime, unsigned long *atime,
+                          long *perms);
 WFile *open_existing_wfile(char *name, uint64 *size);
 /* Returns <0 on error, 0 on eof, or number of bytes read, as usual */
 int read_from_file(RFile *f, void *buffer, int length);
 /* Closes and frees the RFile */
 void close_rfile(RFile *f);
-WFile *open_new_file(char *name);
+WFile *open_new_file(char *name, long perms);
 /* Returns <0 on error, 0 on eof, or number of bytes written, as usual */
 int write_to_file(WFile *f, void *buffer, int length);
 void set_file_times(WFile *f, unsigned long mtime, unsigned long atime);
 /* Closes and frees the WFile */
 void close_wfile(WFile *f);
 /* Seek offset bytes through file */
-enum {
-  FROM_START, FROM_CURRENT, FROM_END
-};
+enum { FROM_START, FROM_CURRENT, FROM_END };
 int seek_file(WFile *f, uint64 offset, int whence);
 /* Get file position */
 uint64 get_file_posn(WFile *f);

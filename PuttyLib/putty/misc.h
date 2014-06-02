@@ -29,6 +29,9 @@ char *dupstr(const char *s);
 char *dupcat(const char *s1, ...);
 char *dupprintf(const char *fmt, ...);
 char *dupvprintf(const char *fmt, va_list ap);
+void burnstr(char *string);
+
+int toint(unsigned);
 
 char *fgetline(FILE *fp);
 
@@ -50,6 +53,8 @@ void bufchain_fetch(bufchain *ch, void *data, int len);
 
 struct tm ltime(void);
 
+void smemclr(void *b, size_t len);
+
 /*
  * Debugging functions.
  *
@@ -62,7 +67,6 @@ struct tm ltime(void);
  * important (say because you'll be recording pointer values later
  * on).  dmemdump() is more concise.
  */
-
 #ifdef DEBUG
 void debug_printf(char *fmt, ...);
 void debug_memdump(void *buf, int len, int L);

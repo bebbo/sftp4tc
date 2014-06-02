@@ -8,12 +8,8 @@
     <LocalDebuggerCommand>C:\Program Files (x86)\totalcmd\TOTALCMD64.EXE</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='URelease|Win32'">
-    <LocalDebuggerCommand>C:\Program Files (x86)\totalcmd\TOTALCMD.EXE</LocalDebuggerCommand>
-    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='URelease|x64'">
-    <LocalDebuggerCommand>C:\Program Files (x86)\totalcmd\TOTALCMD.EXE</LocalDebuggerCommand>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerCommand>C:\Program Files %28x86%29\totalcmd\TOTALCMD64.EXE</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>
