@@ -29,12 +29,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="fsplugin.def">
-      <Filter>Quellcodedateien</Filter>
-    </None>
-    <None Include="fspluginUc.def">
-      <Filter>Quellcodedateien</Filter>
-    </None>
     <None Include="icon2.ico">
       <Filter>Ressourcendateien</Filter>
     </None>
@@ -45,6 +39,9 @@
       <Filter>Ressourcendateien</Filter>
     </None>
     <None Include="..\history.txt" />
+    <None Include="fsplugin.def">
+      <Filter>Quellcodedateien</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bstring.h">

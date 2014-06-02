@@ -18,9 +18,6 @@
     <ClCompile Include="putty\BE_ALL.C">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="putty\CMDLINE.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="putty\CONFIG.C">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -67,12 +64,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PuttyLib.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\RAW.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\RLOGIN.C">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="putty\SERCFG.C">
@@ -150,12 +141,6 @@
     <ClCompile Include="putty\SSHZLIB.C">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="StdAfx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\TELNET.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="putty\time.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -175,9 +160,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="putty\windows\wincfg.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\windows\wincons.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="putty\windows\winctrls.c">
@@ -220,6 +202,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="putty\X11FWD.C">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\pgssapi.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\conf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\windows\winjump.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\windows\wincons.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\cmdline.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -307,6 +304,9 @@
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\sshgssc.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

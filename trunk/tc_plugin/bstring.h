@@ -12,8 +12,8 @@ typedef wchar_t bchar;
 #define bstrdup wcsdup
 #define bstrrchr wcsrchr
 
-extern void qudConvert(wchar_t * dst, char const * src, unsigned int len);
-extern void qudConvert(char * dst, wchar_t const * src, unsigned int len);
+extern wchar_t * qudConvert(wchar_t * dst, char const * src, unsigned int len);
+extern char * qudConvert(char * dst, wchar_t const * src, unsigned int len);
 #define BCONVERT(t,s,dest,src) { t tmp_##dest [s]; qudConvert(tmp_##dest, src, s); dest = tmp_##dest; }
 
 #else

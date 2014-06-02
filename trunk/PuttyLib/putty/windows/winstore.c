@@ -18,8 +18,8 @@
 #endif
 
 /**
- * to keep track of a registry entry or an ini section.
- */
+* to keep track of a registry entry or an ini section.
+*/
 struct KeyOrIni {
 	void * key;
 	char * ini;
@@ -27,11 +27,11 @@ struct KeyOrIni {
 };
 
 /**
- * These ini paths define the search order for ini files.
- * Registry is always searched first.
- * newer found locations overwrite older locations (%home% wins always).
- * The patterns are expanded to real paths.
- */
+* These ini paths define the search order for ini files.
+* Registry is always searched first.
+* newer found locations overwrite older locations (%home% wins always).
+* The patterns are expanded to real paths.
+*/
 static char * iniPaths[] = {
 	"%windows%",
 	"%app%",
@@ -39,6 +39,8 @@ static char * iniPaths[] = {
 	0
 };
 
+static const char *const reg_jumplist_key = PUTTY_REG_POS "\\Jumplist";
+static const char *const reg_jumplist_value = "Recent sessions";
 static const char *const puttystr = PUTTY_REG_POS "\\Sessions";
 
 static const char hex[16] = "0123456789ABCDEF";
@@ -46,7 +48,7 @@ static const char hex[16] = "0123456789ABCDEF";
 static int tried_shgetfolderpath = FALSE;
 static HMODULE shell32_module = NULL;
 typedef HRESULT (WINAPI *p_SHGetFolderPath_t)
-(HWND, int, HANDLE, DWORD, LPTSTR);
+	(HWND, int, HANDLE, DWORD, LPTSTR);
 static p_SHGetFolderPath_t p_SHGetFolderPath = NULL;
 
 static void mungestr(const char *in, char *out)
@@ -94,7 +96,7 @@ static void unmungestr(const char *in, char *out, int outlen)
 	return;
 }
 
-void *open_settings_w(const char *sessionname, Config * cfg, char **errmsg)
+struct KeyOrIni *open_settings_w(const char *sessionname, struct Sftp4tc * cfg, char **errmsg)
 {
 	HKEY subkey1;
 	int ret;
@@ -117,57 +119,59 @@ void *open_settings_w(const char *sessionname, Config * cfg, char **errmsg)
 	mungestr(sessionname, p);
 
 	if (keyOrIni->ini[0] == 0) {
-  	  ret = RegCreateKey(HKEY_CURRENT_USER, puttystr, &subkey1);
-	  if (ret != ERROR_SUCCESS) {
-		*errmsg = dupprintf("Unable to create registry key\n"
-			"HKEY_CURRENT_USER\\%s", puttystr);
-		close_settings_w(keyOrIni);
-		return NULL;
-	  }
-	  ret = RegCreateKey(subkey1, p, &(HKEY)keyOrIni->key);
-	  RegCloseKey(subkey1);
-	  if (ret != ERROR_SUCCESS) {
-		*errmsg = dupprintf("Unable to create registry key\n"
-			"HKEY_CURRENT_USER\\%s\\%s", puttystr, p);
-		return NULL;
-	  }
+		ret = RegCreateKey(HKEY_CURRENT_USER, puttystr, &subkey1);
+		if (ret != ERROR_SUCCESS) {
+			*errmsg = dupprintf("Unable to create registry key\n"
+				"HKEY_CURRENT_USER\\%s", puttystr);
+			close_settings_w(keyOrIni);
+			return NULL;
+		}
+		ret = RegCreateKey(subkey1, p, &(HKEY)keyOrIni->key);
+		RegCloseKey(subkey1);
+		if (ret != ERROR_SUCCESS) {
+			*errmsg = dupprintf("Unable to create registry key\n"
+				"HKEY_CURRENT_USER\\%s\\%s", puttystr, p);
+			return NULL;
+		}
 	}
 	return keyOrIni;
 }
 
-int write_setting_s(struct KeyOrIni *handle, const char *key, const char *value)
+void write_setting_s(struct KeyOrIni *handle, const char *key, const char *value)
 {
 	if (!handle)
-		return 0;
+		return;
 
 	if (handle->key) {
-		return ERROR_SUCCESS == RegSetValueEx((HKEY) handle->key, key, 0, REG_SZ, value, 1 + strlen(value));
+		RegSetValueEx((HKEY) handle->key, key, 0, REG_SZ, (const BYTE *)value, 1 + (int)strlen(value));
+		return;
 	}
-	
+
 	// whoops
 	if (!handle->ini || !handle->section)
-		return 0;
+		return;
 
-	return WritePrivateProfileString(handle->section, key, value, handle->ini) > 0;
+	WritePrivateProfileString(handle->section, key, value, handle->ini);
 }
 
-int write_setting_i(struct KeyOrIni *handle, const char *key, int value)
+void write_setting_i(struct KeyOrIni *handle, const char *key, int value)
 {
 	if (!handle)
-		return 0;
+		return;
 
 	if (handle->key) {
-		return ERROR_SUCCESS == RegSetValueEx((HKEY) handle->key, key, 0, REG_DWORD,
-		    (CONST BYTE *) &value, sizeof(value));
+		RegSetValueEx((HKEY) handle->key, key, 0, REG_DWORD,
+			(CONST BYTE *) &value, sizeof(value));
+		return;
 	}
 	// whoops
 	if (!handle->ini || !handle->section)
-		return 0;
+		return;
 
 	{
 		char txt[32];
 		sprintf(txt, "%d", value);
-		return WritePrivateProfileString(handle->section, key, txt, handle->ini) > 0;
+		WritePrivateProfileString(handle->section, key, txt, handle->ini);
 	}
 }
 
@@ -201,43 +205,36 @@ char * get_initpath_by_index(int index) {
 		int sz = GetModuleFileName(0, appPath, 1024);
 		if (sz > 1012)
 			return 0;
-		// remove the file name
-		while (sz > 0 && appPath[sz-1] != '\\') {
-			--sz;
-			appPath[sz] = 0;
-		}
-		if (sz > 0 && appPath[sz-1] == '\\')
-			appPath[sz - 1] = 0;
 		path = appPath;
 	} else
-	if (0 == strcmp("%windows%", path)) {
-		static char windowsPath[1024];
-		int sz = GetWindowsDirectory(windowsPath, 1024);
-		if (sz > 1012)
-			return 0;
-		path = windowsPath;
-	} else
-	if (0 == strcmp("%home%", path)) {
-		static char homePath[1024];
-		int sz = GetEnvironmentVariable("HOMEDRIVE", homePath, 1024);
-		sz += GetEnvironmentVariable("HOMEPATH", homePath + sz, 1024 - sz);
-		if (sz > 1012)
-			return 0;
-		path = homePath;
-	} else {
-		return 0;
-	}
+		if (0 == strcmp("%windows%", path)) {
+			static char windowsPath[1024];
+			int sz = GetWindowsDirectory(windowsPath, 1024);
+			if (sz > 1012)
+				return 0;
+			path = windowsPath;
+		} else
+			if (0 == strcmp("%home%", path)) {
+				static char homePath[1024];
+				int sz = GetEnvironmentVariable("HOMEDRIVE", homePath, 1024);
+				sz += GetEnvironmentVariable("HOMEPATH", homePath + sz, 1024 - sz);
+				if (sz > 1012)
+					return 0;
+				path = homePath;
+			} else {
+				return 0;
+			}
 
-	strcat(path, "\\putty.ini");
-	iniPaths[index] = path;
-	return path;
+			strcat(path, "\\putty.ini");
+			iniPaths[index] = path;
+			return path;
 }
 
 /**
- * Get a handle for a session name.
- * Also update the cfg with the ini path, if an ini is used.
- */
-void * open_settings_r(const char *sessionname, Config * cfg)
+* Get a handle for a session name.
+* Also update the cfg with the ini path, if an ini is used.
+*/
+struct KeyOrIni * open_settings_r(const char *sessionname, struct Sftp4tc * cfg)
 {
 	HKEY subkey1;
 	char *p;
@@ -290,7 +287,7 @@ void * open_settings_r(const char *sessionname, Config * cfg)
 			}
 		}
 	}
-	
+
 	// update cfg
 	if (keyOrIni->ini)
 		strcpy(cfg->iniPath, keyOrIni->ini);
@@ -299,21 +296,26 @@ void * open_settings_r(const char *sessionname, Config * cfg)
 }
 
 /**
- * Read the string value either from registry or from the specified section inside the ini file.
- */
-char *read_setting_s(struct KeyOrIni *handle, const char *key, char *buffer, int buflen)
+* Read the string value either from registry or from the specified section inside the ini file.
+*/
+char *read_setting_s(struct KeyOrIni *handle, const char *key)
 {
 	DWORD type, size;
-	size = buflen;
+	char * ret;
 
 	if (!handle) return 0;
 
 	// use the registry key if present
 	if (handle->key) {
-		if (RegQueryValueEx((HKEY) handle->key, key, 0, &type, buffer, &size) != ERROR_SUCCESS ||
-		        type != REG_SZ)
+
+		/* Find out the type and size of the data. */
+		if (RegQueryValueEx(handle->key, key, 0, &type, NULL, &size) != ERROR_SUCCESS || type != REG_SZ)
 			return NULL;
-		return buffer;
+
+		ret = snewn(size+1, char);
+		if (RegQueryValueEx(handle->key, key, 0,&type, ret, &size) != ERROR_SUCCESS || type != REG_SZ) return NULL;
+
+		return ret; 
 	}
 
 	// whoops - nothing set
@@ -321,15 +323,28 @@ char *read_setting_s(struct KeyOrIni *handle, const char *key, char *buffer, int
 		return 0;
 
 	// use the specified ini
-	size = GetPrivateProfileString(handle->section, key, 0, buffer, buflen, handle->ini);
-	if (size == 0 || size == buflen - 1)
-		return 0;
-	return buffer;
+	size = 128;
+	ret = snewn(size + 1, char);
+
+	// loop to find a suitable size
+	for(;;) {
+		DWORD rsize = GetPrivateProfileString(handle->section, key, 0, ret, size, handle->ini);
+		if (rsize == 0) {
+			free(ret);
+			return 0;
+		}
+		if (rsize != size - 1)
+			return ret;
+
+		free(ret);
+		size += size;
+		ret = snewn(size + 1, char);
+	}
 }
 
 /**
- * Read the int value either from registry or from the specified section inside the ini file.
- */
+* Read the int value either from registry or from the specified section inside the ini file.
+*/
 int read_setting_i(struct KeyOrIni *handle, const char *key, int defvalue)
 {
 	DWORD type, val, size;
@@ -339,69 +354,77 @@ int read_setting_i(struct KeyOrIni *handle, const char *key, int defvalue)
 
 	if (handle->key) {
 		if (RegQueryValueEx((HKEY) handle->key, key, 0, &type, (BYTE *) &val, &size) != ERROR_SUCCESS ||
-		        size != sizeof(val) || type != REG_DWORD)
-		    return defvalue;
+			size != sizeof(val) || type != REG_DWORD)
+			return defvalue;
 		return val;
 	}
 
 	// whoops - nothing set
 	if (!handle->ini || !handle->section)
-		return defvalue;
+		return 0;
 
 	// use the specified ini
 	return GetPrivateProfileInt(handle->section, key, defvalue, handle->ini);
 }
 
-int read_setting_fontspec(struct KeyOrIni *handle, const char *name, FontSpec *result)
+FontSpec * read_setting_fontspec(struct KeyOrIni *handle, const char *name)
 {
 	char *settingname;
-	FontSpec ret;
+	char *fontname;
+	int isbold, height, charset;
 
-	if (!read_setting_s(handle, name, ret.name, sizeof(ret.name)))
-		return 0;
+	fontname = read_setting_s(handle, name);
+	if (!fontname)
+		return NULL;
+
 	settingname = dupcat(name, "IsBold", NULL);
-	ret.isbold = read_setting_i(handle, settingname, -1);
+	isbold = read_setting_i(handle, settingname, -1);
 	sfree(settingname);
-	if (ret.isbold == -1) return 0;
+	if (isbold == -1) return NULL;
+
 	settingname = dupcat(name, "CharSet", NULL);
-	ret.charset = read_setting_i(handle, settingname, -1);
+	charset = read_setting_i(handle, settingname, -1);
 	sfree(settingname);
-	if (ret.charset == -1) return 0;
+	if (charset == -1) return NULL;
+
 	settingname = dupcat(name, "Height", NULL);
-	ret.height = read_setting_i(handle, settingname, INT_MIN);
+	height = read_setting_i(handle, settingname, INT_MIN);
 	sfree(settingname);
-	if (ret.height == INT_MIN) return 0;
-	*result = ret;
-	return 1;
+	if (height == INT_MIN) return NULL;
+
+	return fontspec_new(fontname, isbold, height, charset);
 }
 
-int write_setting_fontspec(struct KeyOrIni *handle, const char *name, FontSpec font)
+void write_setting_fontspec(struct KeyOrIni *handle, const char *name, FontSpec * font)
 {
-	int ret;
 	char *settingname;
 
-	ret = write_setting_s(handle, name, font.name);
+	write_setting_s(handle, name, font->name);
 	settingname = dupcat(name, "IsBold", NULL);
-	ret &= write_setting_i(handle, settingname, font.isbold);
+	write_setting_i(handle, settingname, font->isbold);
 	sfree(settingname);
 	settingname = dupcat(name, "CharSet", NULL);
-	ret &= write_setting_i(handle, settingname, font.charset);
+	write_setting_i(handle, settingname, font->charset);
 	sfree(settingname);
 	settingname = dupcat(name, "Height", NULL);
-	ret &= write_setting_i(handle, settingname, font.height);
+	write_setting_i(handle, settingname, font->height);
 	sfree(settingname);
-
-	return ret;
 }
 
-int read_setting_filename(struct KeyOrIni *handle, const char *name, Filename *result)
+Filename *read_setting_filename(struct KeyOrIni *handle, const char *name)
 {
-	return !!read_setting_s(handle, name, result->path, sizeof(result->path));
+	char *tmp = read_setting_s(handle, name);
+	if (tmp) {
+		Filename *ret = filename_from_str(tmp);
+		sfree(tmp);
+		return ret;
+	}
+	return NULL;
 }
 
-int write_setting_filename(struct KeyOrIni *handle, const char *name, Filename result)
+void write_setting_filename(struct KeyOrIni *handle, const char *name, Filename * result)
 {
-	return write_setting_s(handle, name, result.path);
+	write_setting_s(handle, name, result->path);
 }
 
 void close_settings_r(struct KeyOrIni *handle)
@@ -409,25 +432,24 @@ void close_settings_r(struct KeyOrIni *handle)
 	close_settings_w(handle);
 }
 
-int del_settings(const char *sessionname, Config * cfg)
+int del_settings(const char *sessionname, struct Sftp4tc * cfg)
 {
-	int ret = 0;
- 	char *p = snewn(3 * strlen(sessionname) + 1, char);
+	char *p = snewn(3 * strlen(sessionname) + 1, char);
 	mungestr(sessionname, p);
 	if (cfg->iniPath[0] == 0) {
 		// delete from registry
 		HKEY subkey1;
 		if (RegOpenKey(HKEY_CURRENT_USER, puttystr, &subkey1) == ERROR_SUCCESS) {
-			ret = RegDeleteKey(subkey1, p) == ERROR_SUCCESS;
+			RegDeleteKey(subkey1, p);
 			RegCloseKey(subkey1);
 		}
 	} else {
 		// or from ini file
-		ret = WritePrivateProfileString(p, 0, 0, cfg->iniPath) > 0;
+		WritePrivateProfileString(p, 0, 0, cfg->iniPath);
 	}
 
 	sfree(p);
-	return ret;
+	return 0;
 }
 
 struct sList {
@@ -518,7 +540,7 @@ char *enum_settings_next(void *handle, char *buffer, int buflen)
 		// search all sections
 		p = sections;
 		while(*p) {
-			len = strlen(p);
+			len = (int)strlen(p);
 			otherbuf = snewn(len + 1, char);
 			unmungestr(p, otherbuf, len + 1);
 
@@ -555,10 +577,10 @@ void enum_settings_finish(void *handle)
 		RegCloseKey(e->key);
 
 	for (n = e->first; n;) {
-		 struct sList * m = n->next;
-		 sfree(n->string);
-		 sfree(n);
-		 n = m;
+		struct sList * m = n->next;
+		sfree(n->string);
+		sfree(n);
+		n = m;
 	}
 
 	sfree(e);
@@ -570,7 +592,7 @@ static void hostkey_regname(char *buffer, const char *hostname,
 	int len;
 	strcpy(buffer, keytype);
 	strcat(buffer, "@");
-	len = strlen(buffer);
+	len = (int)strlen(buffer);
 	len += sprintf(buffer + len, "%d:", port);
 	mungestr(hostname, buffer + strlen(buffer));
 }
@@ -585,7 +607,7 @@ int verify_host_key(const char *hostname, int port,
 	DWORD type;
 	int ret, compare;
 
-	len = 1 + strlen(key);
+	len = 1 + (int)strlen(key);
 
 	/*
 	* Now read a saved key in from the registry and see what it
@@ -637,7 +659,7 @@ int verify_host_key(const char *hostname, int port,
 					int ndigits, nwords;
 					*p++ = '0';
 					*p++ = 'x';
-					ndigits = strcspn(q, "/");	/* find / or end of string */
+					ndigits = (int)strcspn(q, "/");	/* find / or end of string */
 					nwords = ndigits / 4;
 					/* now trim ndigits to remove leading zeros */
 					while (q[(ndigits - 1) ^ 3] == '0' && ndigits > 1)
@@ -661,7 +683,7 @@ int verify_host_key(const char *hostname, int port,
 				*/
 				if (!strcmp(otherstr, key))
 					RegSetValueEx(rkey, regname, 0, REG_SZ, otherstr,
-					strlen(otherstr) + 1);
+					(int)strlen(otherstr) + 1);
 			}
 	}
 
@@ -693,7 +715,7 @@ void store_host_key(const char *hostname, int port,
 
 	if (RegCreateKey(HKEY_CURRENT_USER, PUTTY_REG_POS "\\SshHostKeys",
 		&rkey) == ERROR_SUCCESS) {
-			RegSetValueEx(rkey, regname, 0, REG_SZ, key, strlen(key) + 1);
+			RegSetValueEx(rkey, regname, 0, REG_SZ, (const BYTE *)key, (int)strlen(key) + 1);
 			RegCloseKey(rkey);
 	} /* else key does not exist in registry */
 
@@ -859,6 +881,173 @@ void write_random_seed(void *data, int len)
 }
 
 /*
+* Internal function supporting the jump list registry code. All the
+* functions to add, remove and read the list have substantially
+* similar content, so this is a generalisation of all of them which
+* transforms the list in the registry by prepending 'add' (if
+* non-null), removing 'rem' from what's left (if non-null), and
+* returning the resulting concatenated list of strings in 'out' (if
+* non-null).
+*/
+static int transform_jumplist_registry
+	(const char *add, const char *rem, char **out)
+{
+	int ret;
+	HKEY pjumplist_key, psettings_tmp;
+	DWORD type;
+	DWORD value_length;
+	char *old_value, *new_value;
+	char *piterator_old, *piterator_new, *piterator_tmp;
+
+	ret = RegCreateKeyEx(HKEY_CURRENT_USER, reg_jumplist_key, 0, NULL,
+		REG_OPTION_NON_VOLATILE, (KEY_READ | KEY_WRITE), NULL,
+		&pjumplist_key, NULL);
+	if (ret != ERROR_SUCCESS) {
+		return JUMPLISTREG_ERROR_KEYOPENCREATE_FAILURE;
+	}
+
+	/* Get current list of saved sessions in the registry. */
+	value_length = 200;
+	old_value = snewn(value_length, char);
+	ret = RegQueryValueEx(pjumplist_key, reg_jumplist_value, NULL, &type,
+		(BYTE *)old_value, &value_length);
+	/* When the passed buffer is too small, ERROR_MORE_DATA is
+	* returned and the required size is returned in the length
+	* argument. */
+	if (ret == ERROR_MORE_DATA) {
+		sfree(old_value);
+		old_value = snewn(value_length, char);
+		ret = RegQueryValueEx(pjumplist_key, reg_jumplist_value, NULL, &type,
+			(BYTE *)old_value, &value_length);
+	}
+
+	if (ret == ERROR_FILE_NOT_FOUND) {
+		/* Value doesn't exist yet. Start from an empty value. */
+		*old_value = '\0';
+		*(old_value + 1) = '\0';
+	} else if (ret != ERROR_SUCCESS) {
+		/* Some non-recoverable error occurred. */
+		sfree(old_value);
+		RegCloseKey(pjumplist_key);
+		return JUMPLISTREG_ERROR_VALUEREAD_FAILURE;
+	} else if (type != REG_MULTI_SZ) {
+		/* The value present in the registry has the wrong type: we
+		* try to delete it and start from an empty value. */
+		ret = RegDeleteValue(pjumplist_key, reg_jumplist_value);
+		if (ret != ERROR_SUCCESS) {
+			sfree(old_value);
+			RegCloseKey(pjumplist_key);
+			return JUMPLISTREG_ERROR_VALUEREAD_FAILURE;
+		}
+
+		*old_value = '\0';
+		*(old_value + 1) = '\0';
+	}
+
+	/* Check validity of registry data: REG_MULTI_SZ value must end
+	* with \0\0. */
+	piterator_tmp = old_value;
+	while (((piterator_tmp - old_value) < (value_length - 1)) &&
+		!(*piterator_tmp == '\0' && *(piterator_tmp+1) == '\0')) {
+			++piterator_tmp;
+	}
+
+	if ((piterator_tmp - old_value) >= (value_length-1)) {
+		/* Invalid value. Start from an empty value. */
+		*old_value = '\0';
+		*(old_value + 1) = '\0';
+	}
+
+	/*
+	* Modify the list, if we're modifying.
+	*/
+	if (add || rem) {
+		/* Walk through the existing list and construct the new list of
+		* saved sessions. */
+		new_value = snewn(value_length + (add ? strlen(add) + 1 : 0), char);
+		piterator_new = new_value;
+		piterator_old = old_value;
+
+		/* First add the new item to the beginning of the list. */
+		if (add) {
+			strcpy(piterator_new, add);
+			piterator_new += strlen(piterator_new) + 1;
+		}
+		/* Now add the existing list, taking care to leave out the removed
+		* item, if it was already in the existing list. */
+		while (*piterator_old != '\0') {
+			if (!rem || strcmp(piterator_old, rem) != 0) {
+				/* Check if this is a valid session, otherwise don't add. */
+				struct KeyOrIni * t =open_settings_r(piterator_old, NULL);
+				psettings_tmp = t ? t->key : 0;
+				if (psettings_tmp != NULL) {
+					struct KeyOrIni koi;
+					koi.key = psettings_tmp;
+					close_settings_r(&koi);
+
+					strcpy(piterator_new, piterator_old);
+					piterator_new += strlen(piterator_new) + 1;
+				}
+			}
+			piterator_old += strlen(piterator_old) + 1;
+		}
+		*piterator_new = '\0';
+		++piterator_new;
+
+		/* Save the new list to the registry. */
+		ret = RegSetValueEx(pjumplist_key, reg_jumplist_value, 0, REG_MULTI_SZ,
+			(const BYTE *)new_value, (int)(piterator_new - new_value));
+
+		sfree(old_value);
+		old_value = new_value;
+	} else
+		ret = ERROR_SUCCESS;
+
+	/*
+	* Either return or free the result.
+	*/
+	if (out)
+		*out = old_value;
+	else
+		sfree(old_value);
+
+	/* Clean up and return. */
+	RegCloseKey(pjumplist_key);
+
+	if (ret != ERROR_SUCCESS) {
+		return JUMPLISTREG_ERROR_VALUEWRITE_FAILURE;
+	} else {
+		return JUMPLISTREG_OK;
+	}
+}
+
+/* Adds a new entry to the jumplist entries in the registry. */
+int add_to_jumplist_registry(const char *item)
+{
+	return transform_jumplist_registry(item, item, NULL);
+}
+
+/* Removes an item from the jumplist entries in the registry. */
+int remove_from_jumplist_registry(const char *item)
+{
+	return transform_jumplist_registry(NULL, item, NULL);
+}
+
+/* Returns the jumplist entries from the registry. Caller must free
+* the returned pointer. */
+char *get_jumplist_registry_entries (void)
+{
+	char *list_value;
+
+	if (transform_jumplist_registry(NULL,NULL,&list_value) != ERROR_SUCCESS) {
+		list_value = snewn(2, char);
+		*list_value = '\0';
+		*(list_value + 1) = '\0';
+	}
+	return list_value;
+}
+
+/*
 * Recursively delete a registry key and everything under it.
 */
 static void registry_recursive_remove(HKEY key)
@@ -888,6 +1077,12 @@ void cleanup_all(void)
 	* locations.
 	*/
 	access_random_seed(DEL);
+
+	/* ------------------------------------------------------------
+	* Ask Windows to delete any jump list information associated
+	* with this installation of PuTTY.
+	*/
+	clear_jumplist();
 
 	/* ------------------------------------------------------------
 	* Destroy all registry information associated with PuTTY.

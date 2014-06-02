@@ -1,5 +1,5 @@
 EXPORTS
-	FsInitW=FsInit
+	FsInitW
 	FsFindFirstW=FsFindFirst
 	FsFindNextW=FsFindNext
 	FsMkDirW=FsMkDir
