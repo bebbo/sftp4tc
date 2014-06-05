@@ -8,8 +8,8 @@
 #include "fsplugin.h"
 //#include "pl_console.h"
 
-extern RequestProcType gRequestProc;
-extern ProgressProcType gProgressProc;
+extern tRequestProcW gRequestProc;
+extern tProgressProcW gProgressProc;
 extern int gTotalCommanderPluginNr;
 
 extern char *console_password;

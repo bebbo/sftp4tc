@@ -26,3 +26,5 @@ EXPORTS
 	FsExtractCustomIconW
 	FsDisconnect
 	FsDisconnectW
+	FsSetCryptCallback
+	FsGetBackgroundFlags

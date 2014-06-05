@@ -18,14 +18,14 @@
 //---------------------------------------------------------------------
 // Plugin's initialization values (TC FS Plugin Parameters)
 int gPluginNumber;
-ProgressProcType gProgressProc;
-LogProcType gLogProc;
-RequestProcType gRequestProc;
+tProgressProcW gProgressProc;
+tLogProcW gLogProc;
+tRequestProcW gRequestProc;
 
 // non unicode
-ProgressProcTypeA aProgressProc;
-LogProcTypeA aLogProc;
-RequestProcTypeA aRequestProc;
+tProgressProc aProgressProc;
+tLogProc aLogProc;
+tRequestProc aRequestProc;
 
 HWND gMainWin;
 
@@ -263,8 +263,8 @@ extern "C" BOOL APIENTRY DllMain(HANDLE _hModule, DWORD ul_reason_for_call,
 }
 //---------------------------------------------------------------------
 
-int __stdcall FsInit(int PluginNr, ProgressProcTypeA pProgressProc,
-		LogProcTypeA pLogProc, RequestProcTypeA pRequestProc) {
+int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc,
+		tLogProc pLogProc, tRequestProc pRequestProc) {
 	//remember all those values
 	aProgressProc = pProgressProc;
 	aLogProc = pLogProc;
@@ -283,8 +283,8 @@ int __stdcall FsInit(int PluginNr, ProgressProcTypeA pProgressProc,
 #endif
 }
 
-int __stdcall FsInitW(int PluginNr, ProgressProcType pProgressProc,
-		LogProcType pLogProc, RequestProcType pRequestProc) {
+int __stdcall FsInitW(int PluginNr, tProgressProcW pProgressProc,
+		tLogProcW pLogProc, tRequestProcW pRequestProc) {
 	//remember all those values
 	gProgressProc = pProgressProc;
 	gLogProc = pLogProc;
@@ -1013,4 +1013,13 @@ BOOL __stdcall FsExtractCustomIcon(char *fullRemoteName, int extractFlags,
 	bchar f[1024];
 	qudConvert(f, fullRemoteName, 1023);
 	return FsExtractCustomIconW(f, extractFlags, theIcon);
+}
+
+//---------------------------------------------------------------------
+void __stdcall FsSetCryptCallback(tCryptProc pCryptProc,int CryptoNr,int Flags) {
+}
+
+//---------------------------------------------------------------------
+int __stdcall FsGetBackgroundFlags(void) {
+	return 0; //BG_UPLOAD | BG_DOWNLOAD;
 }
