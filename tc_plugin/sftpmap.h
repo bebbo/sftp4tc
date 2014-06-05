@@ -23,7 +23,7 @@ typedef my_fxp_names *(__stdcall CALLBACK * PsftpGetCurrentDirStructProcType) (v
 typedef void (__stdcall CALLBACK * PsftpFreeCurrentDirStructProcType) (void);
 typedef char *(__stdcall CALLBACK * PsftpGetLastErrorMessageProcType) (void);
 typedef int (__stdcall CALLBACK * PsftpInitProcsProcType)
-(RequestProcType AP_RequestProc, ProgressProcType AP_ProgressProc, int Awc_PluginNr, HWND hwnd);
+(tRequestProcW AP_RequestProc, tProgressProcW AP_ProgressProc, int Awc_PluginNr, HWND hwnd);
 typedef int (CALLBACK * PsftpDisconnectedProcType)(void);
 typedef Sftp4tc * (CALLBACK * PsftpDoConfigType)(HWND, int, int);
 typedef fxp_attrs * (CALLBACK * PsftpGetLastAttrType)(void);

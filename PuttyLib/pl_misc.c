@@ -6,8 +6,8 @@
 extern struct config_tag cfg;
 
 HWND gGlobalHwnd;
-RequestProcType gRequestProc;
-ProgressProcType gProgressProc;
+tRequestProcW gRequestProc;
+tProgressProcW gProgressProc;
 
 int gTotalCommanderPluginNr = -1;
 char gTotalCommanderLastErrorMessage[1000];
@@ -36,7 +36,7 @@ void wcplg_set_last_error_msg(char *str_) {
 }
 //------------------------------------------------------------------------
 // initialize hooks and WND handle
-int init_Procs(RequestProcType prequestProc, ProgressProcType pprogressProc,
+int init_Procs(tRequestProcW prequestProc, tProgressProcW pprogressProc,
 		int totalCommaderPluginNr, HWND hwnd) {
 	gRequestProc = prequestProc;
 	gProgressProc = pprogressProc;
