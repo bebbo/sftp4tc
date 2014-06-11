@@ -22,9 +22,10 @@ extern "C" {
 
 //---------------------------------------------------------------------
 extern int gPluginNumber;
-extern ProgressProcType gProgressProc;
-extern LogProcType gLogProc;
-extern RequestProcType gRequestProc;
+extern tProgressProcW gProgressProc;
+extern tLogProcW gLogProc;
+extern tRequestProcW gRequestProc;
+extern tCryptProcW gCryptProc;
 
 extern HMODULE ghThisDllModule;
 extern HWND gMainWin;
@@ -118,7 +119,7 @@ void PsftpMapper::cleanup() {
 
 //---------------------------------------------------------------------
 // CT - create a new mapper
-PsftpMapper::PsftpMapper(bstring const & serverName, Sftp4tc * cfg) :
+PsftpMapper::PsftpMapper(bstring const & serverName, bstring const & sessionName, Sftp4tc * cfg) :
 		hDll(0) {
 	bchar tempPathBuffer[MAX_CMD_BUFFER];
 	bchar dll_2_copy[MAX_CMD_BUFFER];
@@ -225,7 +226,7 @@ PsftpMapper::PsftpMapper(bstring const & serverName, Sftp4tc * cfg) :
 #ifdef UNICODE0
 	this->initProcs((RequestProcType)reqProc, (ProgressProcType)progProc, gPluginNumber, gMainWin);
 #else
-	this->initProcs(gRequestProc, myProgressProc, gPluginNumber, gMainWin);
+	this->initProcs(gRequestProc, myProgressProc, gCryptProc, gPluginNumber, gCryptoNumber, gMainWin, sessionName.c_str());
 #endif
 	if (cfg)
 		this->setConfig(cfg);

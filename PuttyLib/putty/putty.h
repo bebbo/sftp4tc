@@ -864,6 +864,7 @@ void cleanup_exit(int);
 	X(STR, NONE, sftpHomeDir) \
 	X(STR, NONE, sftpCommand) \
 	X(STR, NONE, iniPath) \
+	X(INT, NONE, sftpStorePassword) \
 
 
 /* Now define the actual enum of option keywords using that macro. */

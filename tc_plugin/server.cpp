@@ -7,6 +7,7 @@ extern unsigned long FileTimeToUnixTime(LPFILETIME ft);
 extern bstring splitPath(bstring & path, bstring const & filePath);
 
 extern HWND gMainWin;
+extern DWORD gMainThread;
 
 /**
  * This class ensures that the used mapper exists and is still connected.
@@ -28,7 +29,7 @@ public:
 
 Guard::Guard() :
 		mapper(intern), server(0) {
-	mapper = new PsftpMapper(TEXT("~"));
+	mapper = new PsftpMapper(TEXT("~"), TEXT("~"));
 }
 
 Guard::Guard(Server * server, config_tag * cfg) :
@@ -42,7 +43,7 @@ Guard::~Guard() {
 
 bool Guard::isLoaded() {
 	if (!mapper && server)
-		mapper = new PsftpMapper(server->name, server->myCfg);
+		mapper = new PsftpMapper(server->name, server->sessionName, server->myCfg);
 	return mapper && mapper->hDll;
 }
 
@@ -59,7 +60,7 @@ bool Guard::isConnected() {
 		bstring ss = server->sessionName.length() ? server->sessionName : server->name;
 		if (server->myCfg)
 			qudConvert(server->myCfg->host, ss.c_str(), 511);
-		mapper = new PsftpMapper(ss, server->myCfg);
+		mapper = new PsftpMapper(server->name, server->sessionName, server->myCfg);
 		if (!mapper->hDll)
 			return false;
 
@@ -220,14 +221,6 @@ void Server::updateFileAttr(bstring const & path, bstring const & file,
 }
 
 //---------------------------------------------------------------------
-// CT
-// init with zeros
-Server::Server(bstring const & serverName_, bstring const & orgSessionName_) :
-		sessionName(orgSessionName_), name(serverName_), currentMapper(0), disableMtime(false), cacheFolders(
-				false), hideDotNames(false), myCfg(0) {
-}
-
-//---------------------------------------------------------------------
 // free one fxp_name
 static void freeFn(fxp_name * fn) {
 	if (!fn)
@@ -251,9 +244,20 @@ static void freeMfn(my_fxp_names * dir) {
 }
 
 //---------------------------------------------------------------------
+// CT
+// init with zeros
+Server::Server(bstring const & serverName_, bstring const & orgSessionName_, DWORD _tid) :
+		sessionName(orgSessionName_), name(serverName_), currentMapper(0), disableMtime(false), cacheFolders(
+				false), hideDotNames(false), myCfg(0), tid(_tid) {
+					mutex = ::CreateMutex(0, 0, 0);
+}
+
+//---------------------------------------------------------------------
 // DT
 // free all cached structures
 Server::~Server() {
+	::CloseHandle(mutex);
+
 	delete currentMapper;
 
 	clearDirCache();
@@ -282,6 +286,8 @@ void Server::clearDirCache() {
 // on success the remote path is also set
 Server * Server::findServer(bstring & remotePath,
 		bchar const * const fullPath) {
+	WLock wlock(global);
+
 	bstring serverName = *fullPath == TEXT('\\') ? fullPath + 1 : fullPath;
 	int slash = (int) serverName.find_first_of(TEXT('\\'));
 	if (slash > 0) {
@@ -296,13 +302,50 @@ Server * Server::findServer(bstring & remotePath,
 		remotePath = TEXT("/");
 	}
 
+	bstring sessionName = serverName;
+	DWORD tid = ::GetCurrentThreadId();
+	// if this is not the main thread, appand the ThreadId to the server name
+	if (tid != gMainThread) {
+		bchar buf[32];
+		bsprintf(buf, TEXT("-background-%d"), tid);
+		serverName += buf;
+	}
+
+	// remove servers whithout active thread
+	for (ServerMap::const_iterator i = serverMap.begin(); i != serverMap.end(); ++i) {
+		Server * server = i->second;
+		HANDLE h = ::OpenThread(THREAD_QUERY_INFORMATION, 1, server->tid);
+		if (h) {
+			DWORD x = 0;
+			if (!::GetExitCodeThread(h, &x))
+				x = STILL_ACTIVE;
+			::CloseHandle(h);
+			if (x != STILL_ACTIVE) {
+				delete server;
+				serverMap.erase(i);
+				break;
+			}
+		}
+	}
+
 	ServerMap::const_iterator i = serverMap.find(serverName);
 	Server * server;
 	if (i != serverMap.end()) {
 		server = i->second;
 	} else {
-		server = new Server(serverName, serverName);
+		server = new Server(serverName, sessionName, tid);
 		serverMap.insert(std::make_pair(serverName, server));
+
+		if (tid != gMainThread) {
+			// copy settings from main thread session
+			ServerMap::const_iterator j = serverMap.find(sessionName);
+			if (j != serverMap.end()) {
+				Server * mainServer = j->second;
+				if (mainServer->myCfg)
+					server->configure(mainServer->myCfg);
+			}
+		}
+
 	}
 
 	return server;
@@ -322,6 +365,8 @@ void Server::insertServer(bstring const & serverName, Server * server) {
 //---------------------------------------------------------------------
 // disconnects and performs a cleanup
 bool Server::removeServer(bchar const * serverName) {
+	WLock wlock(global);
+
 	ServerMap::const_iterator i = serverMap.find(serverName);
 	if (i == serverMap.end())
 		return false;
@@ -697,11 +742,22 @@ void Server::setTransferAscii(bool ta) {
 //---------------------------------------------------------------------
 // show the global config dialog
 Sftp4tc * const Server::doConfig() {
+	static int inside;
+	{
+		WLock wlock(global);
+		if (inside)
+			return 0;
+		++inside;
+	}
+
 	Guard guard(this);
 	if (!guard.isLoaded())
 		return 0;
 
-	return guard.mapper->doConfig(gMainWin, 0, 0);
+	Sftp4tc * r = guard.mapper->doConfig(gMainWin, 0, 0);
+	WLock wlock(global);
+	inside = 0;
+	return r;
 }
 //---------------------------------------------------------------------
 // reconfigure current server
@@ -715,11 +771,6 @@ Sftp4tc * const Server::doSelfConfig() {
 //---------------------------------------------------------------------
 // apply the configuration
 void Server::configure(Sftp4tc * cfg_) {
-#ifdef UNICODE
-	cfg_->isUnicode = true;
-#else
-	cfg_->isUnicode = false;
-#endif
 	if (!myCfg)
 		myCfg = new Sftp4tc;
 	*myCfg = *cfg_;

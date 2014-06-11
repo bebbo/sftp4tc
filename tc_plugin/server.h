@@ -53,9 +53,13 @@ class Server {
 
 	Sftp4tc * myCfg;
 
+	DWORD tid;
+
 public:
+	HANDLE mutex;
+
 	// ct / dt
-	Server(bstring const & sessionName, bstring const & orgSessionName);
+	Server(bstring const & sessionName, bstring const & orgSessionName, DWORD tid);
 	~Server();
 
 	// open global config panel
@@ -132,5 +136,18 @@ private:
 	// cleanup
 	void clearDirCache();
 };
+
+class WLock {
+	HANDLE m;
+public:
+	inline WLock(HANDLE mutex) : m (mutex) {
+		WaitForSingleObject(m, 0xffffffff);
+	}
+	inline ~WLock() {
+		ReleaseMutex(m);
+	}
+};
+
+extern HANDLE global;
 
 #endif //__SERVER_H__

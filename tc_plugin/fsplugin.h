@@ -1,10 +1,6 @@
 #ifndef fsplugin_h
 #define fsplugin_h
 
-#ifndef __BSTRING_H__
-#include <bstring.h>
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -357,10 +353,16 @@ int __stdcall FsGetBackgroundFlags(void);
 
 // end of contents of fsplugin.h  version 2.1 (27.April.2010)
 
+#ifndef __BSTRING_H__
+#include <bstring.h>
+#endif
+
 extern int gPluginNumber;
+extern int gCryptoNumber;
 extern tProgressProcW gProgressProc;
 extern tLogProcW gLogProc;
 extern tRequestProcW gRequestProc;
+extern tCryptProcW gCryptProc;
 
 #ifdef __cplusplus
 }

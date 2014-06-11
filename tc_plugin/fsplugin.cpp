@@ -18,6 +18,7 @@
 //---------------------------------------------------------------------
 // Plugin's initialization values (TC FS Plugin Parameters)
 int gPluginNumber;
+int gCryptoNumber;
 tProgressProcW gProgressProc;
 tLogProcW gLogProc;
 tRequestProcW gRequestProc;
@@ -31,21 +32,15 @@ HWND gMainWin;
 
 HINSTANCE ghThisDllModule;
 
+DWORD gMainThread;
+
+tCryptProcW gCryptProc;
+
 extern int lastPPR;
 
 static int quickConnectionCount;
 
-static HANDLE mutex = CreateMutex(0, 0, 0);
-
-class WLock {
-public:
-	inline WLock() {
-		WaitForSingleObject(mutex, 0xffffffff);
-	}
-	inline ~WLock() {
-		ReleaseMutex(mutex);
-	}
-};
+HANDLE global = CreateMutex(0, 0, 0);
 
 //---------------------------------------------------------------------
 // local defines
@@ -188,7 +183,7 @@ WCHAR* CustomText, WCHAR* ReturnedText, int maxlen) {
 }
 
 bool doTransferAscii(bstring const & filename) {
-	WLock wlock;
+	WLock wlock(global);
 	if (transferAscii)
 		return true;
 	if (modeExtensions.size() == 0)
@@ -276,6 +271,7 @@ int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc,
 
 	gPluginNumber = PluginNr;
 
+	gMainThread = ::GetCurrentThreadId();
 #ifdef UNICODE
 	return 1;
 #else
@@ -290,6 +286,8 @@ int __stdcall FsInitW(int PluginNr, tProgressProcW pProgressProc,
 	gLogProc = pLogProc;
 	gRequestProc = pRequestProc;
 	gPluginNumber = PluginNr;
+
+	gMainThread = ::GetCurrentThreadId();
 #ifndef UNICODE
 	return 1;
 #else
@@ -373,7 +371,6 @@ static HANDLE fillLfWithFile(WIN32_FIND_DATA * FindData,
 
 //---------------------------------------------------------------------
 HANDLE __stdcall FsFindFirstW(bchar * fullPath, WIN32_FIND_DATA * FindData) {
-	WLock wlock;
 	LastFindStructType * lf = (LastFindStructType*) malloc(
 			sizeof(LastFindStructType));
 	lf->mCurrentDir = 0;
@@ -381,6 +378,7 @@ HANDLE __stdcall FsFindFirstW(bchar * fullPath, WIN32_FIND_DATA * FindData) {
 	memset(FindData, 0, sizeof(WIN32_FIND_DATA));
 
 	if (bstrcmp(fullPath, TEXT("\\")) == 0) {
+		WLock wlock(global);
 		// list the connections - always scan PuTTy registry
 		lf->mSearchMode = HANDLE__SHOW_SFTP_SERVER;
 		lf->mSumIndex = Server::loadServers() + 1;
@@ -394,6 +392,7 @@ HANDLE __stdcall FsFindFirstW(bchar * fullPath, WIN32_FIND_DATA * FindData) {
 	bstring remotePath;
 	Server * server = Server::findServer(remotePath, fullPath);
 	if (server) {
+			WLock wlock(server->mutex);
 		if (server == lastServer && remotePath == lastDir) {
 			server->invalidateDirContent(remotePath);
 		} else {
@@ -463,7 +462,6 @@ int __stdcall FsFindClose(HANDLE Hdl) {
 //---------------------------------------------------------------------
 
 BOOL __stdcall FsMkDirW(bchar * fullPath) {
-	WLock wlock;
 	// disable automatic reloads
 	lastServer = 0;
 
@@ -472,6 +470,7 @@ BOOL __stdcall FsMkDirW(bchar * fullPath) {
 	if (!server)
 		return FS_EXEC_ERROR;
 
+	WLock(server->mutex);
 	return server->cmdMkDir(remotePath);
 }
 BOOL __stdcall FsMkDir(char * fullPath) {
@@ -487,7 +486,6 @@ BOOL __stdcall FsMkDir(char * fullPath) {
 int __stdcall FsExecuteFileW(HWND MainWin, bchar * fullRemoteName,
 		bchar * verb) {
 	gMainWin = MainWin;
-	WLock wlock;
 	if (!verb || !*verb)
 		return FS_EXEC_ERROR;
 
@@ -501,6 +499,7 @@ int __stdcall FsExecuteFileW(HWND MainWin, bchar * fullRemoteName,
 
 	// set the global mode!? -- ignore, since SFTP does not support it.
 	if (cmd.length() > 5 && cmd.substr(0, 4) == TEXT("MODE")) {
+		WLock wlock(global);
 		if (cmd[5] == 'A')
 			transferAscii = true;
 		else {
@@ -536,6 +535,9 @@ int __stdcall FsExecuteFileW(HWND MainWin, bchar * fullRemoteName,
 					fullRemotePath.c_str());
 			if (!server)
 				return FS_EXEC_ERROR;
+
+			WLock wlock(server->mutex);
+
 			// distinguish between link and something else?
 			size_t last = remotePath.find_last_of('/') + 1;
 			bstring fileName = remotePath.substr(last);
@@ -565,6 +567,8 @@ int __stdcall FsExecuteFileW(HWND MainWin, bchar * fullRemoteName,
 					fullRemotePath.c_str());
 			if (!server)
 				return FS_EXEC_ERROR;
+
+			WLock wlock(server->mutex);
 			/*
 			 if (!server->connect()) {
 			 Server::removeServer(server->getName().c_str());
@@ -587,7 +591,7 @@ int __stdcall FsExecuteFileW(HWND MainWin, bchar * fullRemoteName,
 		}
 
 		// It's edit connections. Create a temp server - maybe we keep it.
-		Server server(TEXT(""), TEXT("~"));
+		Server server(TEXT(""), TEXT("~"), 0);
 
 		// popup config dialog
 		Sftp4tc * const cfg = server.doConfig();
@@ -631,7 +635,7 @@ int __stdcall FsExecuteFileW(HWND MainWin, bchar * fullRemoteName,
 		bstrcat(fullRemoteName, homeDir);
 		toDos(fullRemoteName);
 
-		Server * newServer = new Server(sessionName, orgSessionName);
+		Server * newServer = new Server(sessionName, orgSessionName, ::GetCurrentThreadId());
 		Server::insertServer(sessionName, newServer);
 		newServer->configure(cfg);
 
@@ -647,7 +651,8 @@ int __stdcall FsExecuteFileW(HWND MainWin, bchar * fullRemoteName,
 	if (!server) {
 		return FS_EXEC_ERROR;
 	}
-
+		
+	WLock wlock(server->mutex);
 	if (cmd == TEXT("properties")) {
 		size_t slash = fullRemotePath.find_first_of('\\');
 		if (slash != (size_t) -1) {
@@ -725,7 +730,6 @@ int __stdcall FsExecuteFile(HWND MainWin, char * fullRemoteName, char * verb) {
 
 int __stdcall FsGetFileW(bchar *fullRemoteName, bchar *LocalName, int CopyFlags,
 		RemoteInfoStruct * ri) {
-	WLock wlock;
 	// disable automatic reloads
 	lastServer = 0;
 
@@ -749,6 +753,7 @@ int __stdcall FsGetFileW(bchar *fullRemoteName, bchar *LocalName, int CopyFlags,
 	if (!server)
 		return FS_FILE_NOTFOUND;
 
+	WLock wlock(server->mutex);
 	// remove the file if overwrite is set
 	if (exists && overwrite) {
 		DeleteFile(LocalName);
@@ -781,7 +786,6 @@ int __stdcall FsGetFile(char *fullRemoteName, char *localName, int CopyFlags,
 
 int __stdcall FsPutFileW(bchar * localName, bchar *fullRemoteName,
 		int CopyFlags) {
-	WLock wlock;
 	// disable automatic reloads
 	lastServer = 0;
 
@@ -794,6 +798,7 @@ int __stdcall FsPutFileW(bchar * localName, bchar *fullRemoteName,
 	if (!server)
 		return FS_FILE_NOTFOUND;
 
+	WLock wlock(server->mutex);
 	bool exists = server->remoteFileExists(remotePath);
 
 	if (!overwrite && !resume) {
@@ -828,7 +833,6 @@ extern bool secondHalf;
 
 int __stdcall FsRenMovFileW(bchar *fullOldName, bchar *fullNewName, BOOL move,
 		BOOL overWrite, RemoteInfoStruct * ri) {
-	WLock wlock;
 	// disable automatic reloads
 	lastServer = 0;
 
@@ -836,6 +840,9 @@ int __stdcall FsRenMovFileW(bchar *fullOldName, bchar *fullNewName, BOOL move,
 	Server * oldServer = Server::findServer(oldRemotePath, fullOldName);
 	bstring newRemotePath;
 	Server * newServer = Server::findServer(newRemotePath, fullNewName);
+
+	WLock wlock1(oldServer->mutex);
+	WLock wlock2(newServer->mutex);
 
 	DBGPRINT(("renmove %s -> %s\r\n", fullOldName, fullNewName));
 
@@ -883,7 +890,6 @@ int __stdcall FsRenMovFile(char *fullOldName, char *fullNewName, BOOL move,
 
 //---------------------------------------------------------------------
 BOOL __stdcall FsDeleteFileW(bchar *fullRemoteName) {
-	WLock wlock;
 	// disable automatic reloads
 	lastServer = 0;
 
@@ -892,6 +898,7 @@ BOOL __stdcall FsDeleteFileW(bchar *fullRemoteName) {
 	if (!server)
 		return FS_FILE_NOTFOUND;
 
+	WLock wlock(server->mutex);
 	if (remotePath == TEXT("/"))
 		return FS_FILE_NOTSUPPORTED;
 
@@ -906,7 +913,6 @@ BOOL __stdcall FsDeleteFile(char *fullRemoteName) {
 //---------------------------------------------------------------------
 
 BOOL __stdcall FsRemoveDirW(bchar *fullRemoteName) {
-	WLock wlock;
 	// disable automatic reloads
 	lastServer = 0;
 
@@ -915,6 +921,7 @@ BOOL __stdcall FsRemoveDirW(bchar *fullRemoteName) {
 	if (!server)
 		return FS_FILE_NOTFOUND;
 
+	WLock wlock(server->mutex);
 	if (remotePath == TEXT("/"))
 		return FS_FILE_NOTSUPPORTED;
 
@@ -929,7 +936,8 @@ BOOL __stdcall FsRemoveDir(char *fullRemoteName) {
 //---------------------------------------------------------------------
 
 BOOL __stdcall FsDisconnectW(bchar * disconnectRoot) {
-	WLock wlock;
+	WLock wlock(global);
+
 	if (*disconnectRoot == TEXT('\\'))
 		++disconnectRoot;
 	if (Server::removeServer(disconnectRoot)) {
@@ -968,23 +976,6 @@ void __stdcall FsGetDefRootName(char * defRootName, int maxlen) {
 
 void __stdcall FsStatusInfo(bchar *RemoteDir, int InfoStartEnd,
 		int InfoOperation) {
-	switch (InfoOperation) {
-	case FS_STATUS_OP_DELETE: {
-		//			if (strcmp(RemoteDir, "\\") == 0) // Deleting connection!
-		{
-			//				gDeleteOnlyConnection = (InfoStartEnd == FS_STATUS_START);
-		}
-	}
-	case FS_STATUS_OP_PUT_SINGLE:
-	case FS_STATUS_OP_PUT_MULTI:
-	case FS_STATUS_OP_RENMOV_SINGLE:
-	case FS_STATUS_OP_RENMOV_MULTI:
-	case FS_STATUS_OP_ATTRIB:
-	case FS_STATUS_OP_MKDIR:
-	case FS_STATUS_OP_LIST: {
-		//			gAcceptRefresh = true;
-	}
-	}
 }
 
 //---------------------------------------------------------------------
@@ -1016,10 +1007,12 @@ BOOL __stdcall FsExtractCustomIcon(char *fullRemoteName, int extractFlags,
 }
 
 //---------------------------------------------------------------------
-void __stdcall FsSetCryptCallback(tCryptProc pCryptProc,int CryptoNr,int Flags) {
+void __stdcall FsSetCryptCallbackW(tCryptProcW pCryptProc,int CryptoNr,int Flags) {
+	gCryptProc = pCryptProc;
+	gCryptoNumber = CryptoNr;
 }
 
 //---------------------------------------------------------------------
 int __stdcall FsGetBackgroundFlags(void) {
-	return 0; //BG_UPLOAD | BG_DOWNLOAD;
+	return BG_UPLOAD | BG_DOWNLOAD | BG_ASK_USER;
 }

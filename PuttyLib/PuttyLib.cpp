@@ -38,8 +38,6 @@ Sftp4tc * __stdcall __map__wcplg_open_sftp_session(char *user, char *password,
 		char *host, int port) {
 	Sftp4tc * c;
 	ISinitT = 0;
-	if (user)
-		cfg.isUnicode = 1;
 	c = wcplg_open_sftp_session(host, 0, 0, port);
 
 	return c;
@@ -49,9 +47,7 @@ int __stdcall __map__wcplg_close_sftp_session() {
 	return wcplg_close_sftp_session();
 }
 
-int __stdcall __map__wcplg_do_sftp(char *_cmd, char *_server_output) {
-	if (!cfg.isUnicode)
-		return wcplg_do_sftp(_cmd, _server_output);
+int __stdcall __map__wcplg_do_sftp(wchar_t *_cmd, wchar_t *_server_output) {
 
 	// handle unicode conversion
 	{
@@ -87,9 +83,10 @@ int __stdcall __map__disconnected() {
 	return fxp_disconnected();
 }
 
-int __stdcall __map__init_Procs(tRequestProcType AP_RequestProc,
-		tProgressProc AP_ProgressProc, int Awc_PluginNr, HWND hwnd) {
-	return init_Procs(AP_RequestProc, AP_ProgressProc, Awc_PluginNr, hwnd);
+int __stdcall __map__init_Procs(tRequestProcW AP_RequestProc,
+								tProgressProcW AP_ProgressProc, tCryptProcW cryptProc,
+								int PluginNr, int CryptoNr, HWND hwnd, wchar_t * sessionName) {
+	return init_Procs(AP_RequestProc, AP_ProgressProc, cryptProc, PluginNr, CryptoNr, hwnd, sessionName);
 }
 
 struct Sftp4tc * __stdcall __map__do_config(HWND hwnd, int midsession,

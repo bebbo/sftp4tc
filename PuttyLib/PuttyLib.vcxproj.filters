@@ -45,9 +45,6 @@
     <ClCompile Include="putty\pinger.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pl_misc.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="pl_psftp.c">
       <Filter>Source Files</Filter>
     </ClCompile>
