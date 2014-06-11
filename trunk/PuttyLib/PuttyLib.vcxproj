@@ -103,7 +103,7 @@
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <AdditionalIncludeDirectories>..\PuttyLib;..\PuttyLib\putty;..\PuttyLib\putty\windows;..\tc_plugin;..\shared;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NO_GSSAPI;__SFTP4TC__;WIN32;NDEBUG;_WINDOWS;_USRDLL;PUTTYLIB_EXPORTS;NO_WS2;SECURITY_WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RELEASE=0.63;NO_GSSAPI;__SFTP4TC__;WIN32;NDEBUG;_WINDOWS;_USRDLL;PUTTYLIB_EXPORTS;NO_WS2;SECURITY_WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>
       </ExceptionHandling>
@@ -163,7 +163,7 @@
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <AdditionalIncludeDirectories>..\PuttyLib;..\PuttyLib\putty;..\PuttyLib\putty\windows;..\tc_plugin;..\shared;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NO_GSSAPI;__SFTP4TC__;WIN32;NDEBUG;_WINDOWS;_USRDLL;PUTTYLIB_EXPORTS;NO_WS2;SECURITY_WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RELEASE=0.63;NO_GSSAPI;__SFTP4TC__;WIN32;NDEBUG;_WINDOWS;_USRDLL;PUTTYLIB_EXPORTS;NO_WS2;SECURITY_WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>
       </ExceptionHandling>
@@ -171,10 +171,10 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <AssemblerListingLocation>$(Configuration)\</AssemblerListingLocation>
-      <ObjectFileName>$(Configuration)\</ObjectFileName>
-      <ProgramDataBaseFileName>$(Configuration)\vc90.pdb</ProgramDataBaseFileName>
-      <XMLDocumentationFileName>$(Configuration)\</XMLDocumentationFileName>
+      <AssemblerListingLocation>$(Configuration)64\</AssemblerListingLocation>
+      <ObjectFileName>$(Configuration)64\</ObjectFileName>
+      <ProgramDataBaseFileName>$(Configuration)64\vc90.pdb</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>$(Configuration)64\</XMLDocumentationFileName>
       <BrowseInformation>true</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -193,13 +193,13 @@
       <OutputFile>../tc_plugin/$(Configuration)64/psftp64.dll</OutputFile>
       <Version>1.0</Version>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <ManifestFile>$(Configuration)\$(TargetFileName).intermediate.manifest</ManifestFile>
+      <ManifestFile>$(Configuration)64\$(TargetFileName).intermediate.manifest</ManifestFile>
       <ModuleDefinitionFile>.\PuttyLib.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <OptimizeReferences>true</OptimizeReferences>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <ImportLibrary>.\$(Configuration)/psftp.lib</ImportLibrary>
+      <ImportLibrary>.\$(Configuration)64/psftp.lib</ImportLibrary>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -378,16 +378,6 @@
     <ClCompile Include="putty\NOPRINT.C" />
     <ClCompile Include="putty\pgssapi.c" />
     <ClCompile Include="putty\pinger.c">
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="pl_misc.c">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>

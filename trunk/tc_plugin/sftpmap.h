@@ -23,7 +23,7 @@ typedef my_fxp_names *(__stdcall CALLBACK * PsftpGetCurrentDirStructProcType) (v
 typedef void (__stdcall CALLBACK * PsftpFreeCurrentDirStructProcType) (void);
 typedef char *(__stdcall CALLBACK * PsftpGetLastErrorMessageProcType) (void);
 typedef int (__stdcall CALLBACK * PsftpInitProcsProcType)
-(tRequestProcW AP_RequestProc, tProgressProcW AP_ProgressProc, int Awc_PluginNr, HWND hwnd);
+	(tRequestProcW AP_RequestProc, tProgressProcW AP_ProgressProc, tCryptProcW cryptProc, int PluginNr, int CryptoNr, HWND hwnd, wchar_t const * );
 typedef int (CALLBACK * PsftpDisconnectedProcType)(void);
 typedef Sftp4tc * (CALLBACK * PsftpDoConfigType)(HWND, int, int);
 typedef fxp_attrs * (CALLBACK * PsftpGetLastAttrType)(void);
@@ -63,7 +63,7 @@ struct PsftpMapper {
 
 	bstring dllName;
 
-	PsftpMapper(bstring const &, Sftp4tc * = 0);
+	PsftpMapper(bstring const & server, bstring const & session, Sftp4tc * = 0);
 	~PsftpMapper();
 
 	void import_putty_sessions(std::vector<ServerInfo> & serverInfos);

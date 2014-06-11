@@ -49,6 +49,8 @@ int do_sftp_init(void);
 void do_sftp_cleanup();
 void set_disconnected(void);
 
+extern int ssh_closed(void * handle);
+
 /* ----------------------------------------------------------------------
  * sftp client state.
  */
@@ -2906,7 +2908,9 @@ int psftp_connect(char *userhost, char *user, int portnumber) {
 #ifdef __SFTP4TC__
 
 	if (1 == ProgressProc("connecting", connectMsg, 5))
-	return 1;
+		return 1;
+
+	firstPwdPrompt = 1;
 #endif
 
 	err = back->init(NULL, &backhandle, conf, conf_get_str(conf, CONF_host),
@@ -2923,6 +2927,9 @@ int psftp_connect(char *userhost, char *user, int portnumber) {
 	{
 		double v = 0.99;
 		while (!back->sendok(backhandle)) {
+			if (ssh_closed(backhandle))
+				return 1;
+
 			v *= 0.85;
 			if (1
 					== ProgressProc("connecting", connectMsg,

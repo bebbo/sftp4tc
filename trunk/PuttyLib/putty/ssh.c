@@ -17,6 +17,8 @@
 #include "sshgss.h"
 #endif
 
+extern void set_disconnected(void);
+
 #ifndef FALSE
 #define FALSE 0
 #endif
@@ -3277,6 +3279,8 @@ static void ssh_disconnect(Ssh ssh, char *client_reason, char *wire_reason,
     ssh->clean_exit = clean_exit;
     ssh_closing((Plug)ssh, error, 0, 0);
     sfree(error);
+
+	set_disconnected();
 }
 
 /*
@@ -10252,6 +10256,11 @@ static int ssh_sendok(void *handle)
 {
     Ssh ssh = (Ssh) handle;
     return ssh->send_ok;
+}
+
+int ssh_closed(void * handle) {
+    Ssh ssh = (Ssh) handle;
+	return ssh->state == SSH_STATE_CLOSED;
 }
 
 static int ssh_ldisc(void *handle, int option)

@@ -2544,5 +2544,8 @@ void setup_config_box(struct controlbox *b, int midsession,
 			ctrl_editbox(s, "special SFTP command", 'p', 100,
 				HELPCTX(no_help),
 				conf_editbox_handler, I(CONF_sftpCommand), I(1));
+			ctrl_checkbox(s, "store password", 's',
+				HELPCTX(no_help),
+				conf_checkbox_handler,I(CONF_sftpStorePassword));
 
 }

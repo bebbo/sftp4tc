@@ -178,10 +178,10 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderOutputFile>
       </PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>$(Configuration)\</AssemblerListingLocation>
-      <ObjectFileName>$(Configuration)\</ObjectFileName>
-      <ProgramDataBaseFileName>$(Configuration)\vc90.pdb</ProgramDataBaseFileName>
-      <XMLDocumentationFileName>$(Configuration)\</XMLDocumentationFileName>
+      <AssemblerListingLocation>$(Configuration)64\</AssemblerListingLocation>
+      <ObjectFileName>$(Configuration)64\</ObjectFileName>
+      <ProgramDataBaseFileName>$(Configuration)64\vc90x.pdb</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>$(Configuration)64\</XMLDocumentationFileName>
       <BrowseInformation>true</BrowseInformation>
       <BrowseInformationFile>.\$(Configuration)/</BrowseInformationFile>
       <WarningLevel>Level3</WarningLevel>

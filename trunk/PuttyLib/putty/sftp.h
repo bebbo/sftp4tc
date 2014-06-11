@@ -292,7 +292,6 @@ struct Sftp4tc {
 
 	// plugin specific
     int saved;
-    int isUnicode;
     int codePage;
     // cfg values
     int cacheFolders;
@@ -304,6 +303,7 @@ struct Sftp4tc {
     char sftpCommand[1024];
 
 	char iniPath[1024];
+	int storePassword;
 };
 
 #endif // __SFTP_H__

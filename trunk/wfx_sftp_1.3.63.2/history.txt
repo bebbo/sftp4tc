@@ -1,3 +1,8 @@
+VERSION 1.3.63.2 [2014-06-05]
++ADDED support for background copies
++ADDED support for Total Commander's passwort store (check SFTP4TC options)
+/FIXED connect did not terminate properly after N password errors
+
 VERSION 1.3.63.1 [2014-06-02]
 *UPDATE updated to PuTTY 0.63
 /CHANGED improved stability if connection drops.
@@ -197,7 +202,7 @@ VERSION 1.01
 *FIXED *.dll 2 *.wfx
 
 VERSION 1.00   [09.10.2002 Berlin - Hans]
-?TODO RequestProc mit RT_MsgYesNo Funzt nicht, gibt immer FALSE zurück
+?TODO RequestProc mit RT_MsgYesNo Funzt nicht, gibt immer FALSE zurï¿½ck
 +ADDED Add Connection (Port syntax Host[:Port])
 
 
@@ -252,17 +257,17 @@ FIXED - hostkey abfrage, TESTEN !!!
 FIXED  - Folder permission check bevor chdir FIX ME PLZ
 FIXED  - in psftp.dll stdout umleiten zu char *logBuf und dann an LogProc() weiterleiten
  - if psftp.dll connect 2 an open NON ssh [22] port, psftp hangs forever
- - get_sftpServer_ID_by_Path(): title nach sonderzeichen parsen und rausschneiden, doppelte title einträge vermeiden!
-FIXED - "Bookmark" funst ned, müsste aba an WC selbst geändert werden, have 2 talk with Ghisler
+ - get_sftpServer_ID_by_Path(): title nach sonderzeichen parsen und rausschneiden, doppelte title eintrï¿½ge vermeiden!
+FIXED - "Bookmark" funst ned, mï¿½sste aba an WC selbst geï¿½ndert werden, have 2 talk with Ghisler
  - WC merkt sich nicht die "aktuelle Position" wenn man z.B.: von plugion nach C: und dann wieda zu Plugin geht, have 2 talk with Ghisler
  - ftp <-> plugin filetransfer funst ned, API!, have 2 talk with Ghisler
 FIXED - !!!alle delete aktionen  deaktivieren wenn der user nicht in seinem ensprechendem sftp dir drinn ist!!!
  - wie komm ich an das windowscommander tmp $wc ran ???
 FIXED - progressbar noch abstimmen
  - fsrenmv(): fehler abfangen wenn user im serverRoot folder moven oder renamen will
-FIXED  - Verbinfungsleiste "oben ", geht manchmal ned wech obwohl disconnect gedrückt) API error ?  have 2 talk with Ghisler
+FIXED  - Verbinfungsleiste "oben ", geht manchmal ned wech obwohl disconnect gedrï¿½ckt) API error ?  have 2 talk with Ghisler
 FIXED  - Manchmal Segfault error wenn in dir wechseln will wo keine berechtigung
-FIXED  - SetLastError(ERROR_ACCESS_DENIED) in fsFindFirst !!! wechselt nach C zurück ?!?!?
+FIXED  - SetLastError(ERROR_ACCESS_DENIED) in fsFindFirst !!! wechselt nach C zurï¿½ck ?!?!?
 FIXED  - Nach chmod: dir refresh zeigt aktuelle werte nicht an obwohl auf server gesetzt, cached by WC ?!
 FIXED - DWORD    dwFileAttributes=FILE_ATTRIBUTE_REPARSE_POINT; wc sollte link als symbol auch anzeigen
 FIXED - API fehler, wenn man die Filelisten sortiert und dann fasfifirst called

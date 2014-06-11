@@ -8,10 +8,6 @@
 #include "fsplugin.h"
 //#include "pl_console.h"
 
-extern tRequestProcW gRequestProc;
-extern tProgressProcW gProgressProc;
-extern int gTotalCommanderPluginNr;
-
 extern char *console_password;
 extern char *server_output;
 struct Sftp4tc cfg;
@@ -22,19 +18,61 @@ extern struct sftp_command *line2command(char * line, int mode, int modeflags);
 extern int disconnected;
 extern int loaded_session;
 
-HANDLE myCreateFile(char * name, DWORD a, DWORD b, LPSECURITY_ATTRIBUTES p,
-		DWORD d, DWORD e, HANDLE f) {
-	if (cfg.isUnicode) {
-		wchar_t buff[1024] = { 0 };
-		int cp = cfg.codePage;
-		if (!MultiByteToWideChar(cp, 0, name, -1, buff, 1024)) {
-			cp = CP_ACP;
-			MultiByteToWideChar(cp, 0, name, -1, buff, 1024);
-		}
+HWND gGlobalHwnd;
+tRequestProcW gRequestProc;
+tProgressProcW gProgressProc;
+tCryptProcW gCryptProc;
 
-		return CreateFileW(buff, a, b, p, d, e, f);
+int gPluginNumber = -1;
+int gCryptoNumber = -1;
+wchar_t * gSessionName;
+
+char gTotalCommanderLastErrorMessage[1000];
+
+char *wcplg_get_last_error_msg() {
+	if (strlen(gTotalCommanderLastErrorMessage) < 1) {
+		if (fxp_error()) {
+			strcpy(gTotalCommanderLastErrorMessage, (char *) fxp_error());
+		} else {
+			gTotalCommanderLastErrorMessage[0] = 0;
+		}
 	}
-	return CreateFileA(name, a, b, p, d, e, f);
+
+	return gTotalCommanderLastErrorMessage;
+}
+
+void wcplg_set_last_error_msg(char const *str_) {
+	if (str_) {
+		strcpy(gTotalCommanderLastErrorMessage, str_);
+	} else {
+		gTotalCommanderLastErrorMessage[0] = 0;
+	}
+}
+//------------------------------------------------------------------------
+// initialize hooks and WND handle
+int init_Procs(tRequestProcW prequestProc, tProgressProcW pprogressProc, tCryptProcW cryptProc,
+		int totalCommaderPluginNr, int cryptoNr, HWND hwnd, wchar_t  * sessionName) {
+	gRequestProc = prequestProc;
+	gProgressProc = pprogressProc;
+	gCryptProc = cryptProc;
+	gPluginNumber = totalCommaderPluginNr;
+	gCryptoNumber = cryptoNr;
+	gGlobalHwnd = hwnd;
+	gSessionName = sessionName;
+
+	return 1;
+}
+
+HANDLE myCreateFile(char * name, DWORD a, DWORD b, LPSECURITY_ATTRIBUTES p,
+	DWORD d, DWORD e, HANDLE f) {
+	wchar_t buff[1024] = { 0 };
+	int cp = cfg.codePage;
+	if (!MultiByteToWideChar(cp, 0, name, -1, buff, 1024)) {
+		cp = CP_ACP;
+		MultiByteToWideChar(cp, 0, name, -1, buff, 1024);
+	}
+
+	return CreateFileW(buff, a, b, p, d, e, f);
 }
 
 /*extern*/struct sftp_command {
@@ -154,7 +192,6 @@ int wcplg_close_sftp_session() {
 		sftp_recvdata(&ch, 1);
 	}
 
-	// psftp_memory_hole__stopfen();
 	random_save_seed();
 	return 1;
 }
@@ -217,8 +254,7 @@ int ProgressProc(char *SourceName, char *TargetName, int PercentDone) {
 	static wchar_t buf1[1024];
 	static wchar_t buf2[1024];
 	int progress;
-	if (gProgressProc != NULL && gTotalCommanderPluginNr != -1) {
-		if (cfg.isUnicode) {
+	if (gProgressProc != NULL && gPluginNumber != -1) {
 			int cp = cfg.codePage;
 			int len = MultiByteToWideChar(cp, 0, SourceName, -1, buf1, 1024);
 			if (!len) {
@@ -226,43 +262,62 @@ int ProgressProc(char *SourceName, char *TargetName, int PercentDone) {
 				len = MultiByteToWideChar(cp, 0, SourceName, -1, buf1, 1024);
 			}
 			len = MultiByteToWideChar(cp, 0, TargetName, -1, buf2, 1024);
-			// hack o - tcmd expects wchar_t!
-			SourceName = (char *) &buf1[0];
-			TargetName = (char *) &buf2[0];
-		}
-		progress = gProgressProc(gTotalCommanderPluginNr, SourceName,
-				TargetName, PercentDone);
+		progress = gProgressProc(gPluginNumber, buf1,
+				buf2, PercentDone);
 		return progress;
 	}
 	return 0;
 }
 
 //------------------------------------------------------------------------
-// call the progress bar - also perform multibyte conversion, if necessary
-int getPasswordDialog(char * caption, int isPw, char * dest, int len) {
-	wchar_t buf1[1024];
-	wchar_t buf2[1024];
-	char * pwd = dest;
-	int cp = cfg.codePage;
-	int r;
+// call the request proc - also perform multibyte conversion, if necessary
 
-	if (cfg.isUnicode) {
+int firstPwdPrompt;
+
+int getPasswordDialog(char * caption, int showClearText, char * dest, int len) {
+	wchar_t buf2[1024];
+	int cp = cfg.codePage;
+	int r = 1;
+
+	buf2[0] = 0;
+	if (!cfg.storePassword || !firstPwdPrompt || showClearText || !gCryptProc || gCryptProc(gPluginNumber, gCryptoNumber, FS_CRYPT_LOAD_PASSWORD, gSessionName, buf2, 1023) != FS_FILE_OK) {
+		wchar_t buf1[1024];
+
 		int xlen = MultiByteToWideChar(cp, 0, caption, -1, buf1, 1024);
 		if (!xlen) {
 			cp = CP_ACP;
 			xlen = MultiByteToWideChar(cp, 0, caption, -1, buf1, 1024);
 		}
-		caption = (char *) &buf1[0];
-		dest = (char *) &buf2[0];
-		buf2[0] = 0;
-	} else {
-		*dest = 0;
+		r = gRequestProc(gPluginNumber, showClearText ? RT_UserName : RT_Password,
+				buf1, NULL, buf2, 1023);
+		if (r && cfg.storePassword && !showClearText && gCryptProc) {
+			gCryptProc(gPluginNumber, gCryptoNumber, FS_CRYPT_SAVE_PASSWORD, gSessionName, buf2, 1023);
+		}
 	}
-	r = gRequestProc(gTotalCommanderPluginNr, isPw ? RT_UserName : RT_Password,
-			caption, NULL, dest, 1023);
-	if (cfg.isUnicode) {
-		WideCharToMultiByte(cp, 0, buf2, -1, pwd, len, 0, 0);
-	}
+	firstPwdPrompt = 0;
+	WideCharToMultiByte(cp, 0, buf2, -1, dest, len, 0, 0);
 	return r;
+}
+
+//------------------------------------------------------------------------
+// call the crypt proc - also perform multibyte conversion, if necessary
+int CryptProc(int cryptoNr, int mode, char *ConnectionName, char *Password, int maxlen) {
+	int r;
+	static wchar_t buf1[1024];
+	static wchar_t buf2[1024];
+	if (gCryptProc != NULL && gPluginNumber != -1) {
+		int cp = cfg.codePage;
+		int len = MultiByteToWideChar(cp, 0, ConnectionName, -1, buf1, 1024);
+		if (!len) {
+			cp = CP_ACP;
+			len = MultiByteToWideChar(cp, 0, ConnectionName, -1, buf1, 1024);
+		}
+		buf2[0] = 0;
+		r = gCryptProc(gPluginNumber, cryptoNr, mode, buf1, buf2, 1023);
+
+		WideCharToMultiByte(cp, 0, buf2, -1, Password, maxlen, 0, 0);
+		return r;
+	}
+	return FS_FILE_NOTSUPPORTED;
 }
 

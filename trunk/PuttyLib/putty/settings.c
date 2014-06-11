@@ -846,6 +846,8 @@ void save_open_settings(struct KeyOrIni *sesskey, Conf *conf)
 	write_setting_s(sesskey, "SFTP4TC:exeExtensions", conf_get_str(conf, CONF_sftpExeExtensions));
 	write_setting_s(sesskey, "SFTP4TC:homeDir", conf_get_str(conf, CONF_sftpHomeDir));
 	write_setting_s(sesskey, "SFTP4TC:sftpCommand", conf_get_str(conf, CONF_sftpCommand));
+	write_setting_i(sesskey, "SFTP4TC:storePassword", conf_get_int(conf, CONF_sftpStorePassword));
+	
 }
 
 void load_settings(char *section, struct Sftp4tc *conf)
@@ -875,6 +877,7 @@ void load_settings(char *section, struct Sftp4tc *conf)
   strncpy(conf->host, conf_get_str(conf->config, CONF_host), 511);
   strncpy(conf->iniPath, conf_get_str(conf->config, CONF_iniPath), 1023);
   strncpy(conf->sftpCommand, conf_get_str(conf->config, CONF_sftpCommand), 1023);
+  conf->storePassword = conf_get_int(conf->config, CONF_sftpStorePassword);
 
   setCodePage(conf);
 
@@ -1219,6 +1222,7 @@ void load_open_settings(struct KeyOrIni *sesskey, Conf *conf)
 	gpps(sesskey, "SFTP4TC:exeExtensions", "", conf, CONF_sftpExeExtensions);
 	gpps(sesskey, "SFTP4TC:homeDir", "", conf, CONF_sftpHomeDir);
 	gpps(sesskey, "SFTP4TC:sftpCommand", "", conf, CONF_sftpCommand);
+	gppi(sesskey, "SFTP4TC:storePassword", 0, conf, CONF_sftpStorePassword);
 
 }
 

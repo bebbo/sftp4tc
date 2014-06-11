@@ -220,6 +220,12 @@ static INT_PTR CALLBACK AboutProc(HWND hwnd, UINT msg,
 				"http://www.chiark.greenend.org.uk/~sgtatham/putty/",
 				0, 0, SW_SHOWDEFAULT);
 			return 0;
+		case IDA_WEB2:
+			/* Load web browser */
+			ShellExecute(hwnd, "open",
+				"https://sourceforge.net/p/sftp4tc/",
+				0, 0, SW_SHOWDEFAULT);
+			return 0;
 		}
 		return 0;
 	case WM_CLOSE:
