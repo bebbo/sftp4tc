@@ -1,3 +1,6 @@
+VERSION 1.4.63.1 [2014-08-26]
++ADDED new commands ".show" and ".hide" to change show/hide of .files
+
 VERSION 1.3.63.2 [2014-06-05]
 +ADDED support for background copies
 +ADDED support for Total Commander's passwort store (check SFTP4TC options)

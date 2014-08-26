@@ -657,7 +657,7 @@ int __stdcall FsExecuteFileW(HWND MainWin, bchar * fullRemoteName,
 		size_t slash = fullRemotePath.find_first_of('\\');
 		if (slash != (size_t) -1) {
 			// invoke da menu
-			::PostMessage(gMainWin, WM_COMMAND, 2, 0);
+			::PostMessage(gMainWin, WM_COMMAND, 0x00048512, (LPARAM)gMainWin);
 			return FS_EXEC_OK;
 		}
 
@@ -684,6 +684,17 @@ int __stdcall FsExecuteFileW(HWND MainWin, bchar * fullRemoteName,
 
 	if (cmd.length() >= 6 && cmd.substr(0, 6) == TEXT("quote ")) {
 		cmd = cmd.substr(6);
+
+		if (cmd == TEXT(".show")) {
+			server->setHideDotNames(false);
+			server->clearDirCache();
+			return FS_EXEC_OK;
+		}
+		if (cmd == TEXT(".hide")) {
+			server->setHideDotNames(true);
+			server->clearDirCache();
+			return FS_EXEC_OK;
+		}
 
 		// set transfer mode for commands
 		if ((cmd.length() > 4

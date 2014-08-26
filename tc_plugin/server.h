@@ -117,9 +117,12 @@ public:
 	inline bool isHideDotNames() const {
 		return hideDotNames;
 	}
+	inline void setHideDotNames(bool b) { hideDotNames = b; }
 
 	void updateFileAttr(bstring const & path, bstring const & file,
 			bstring const & attrs);
+	// cleanup
+	void clearDirCache();
 private:
 
 	// prohibit copies
@@ -133,8 +136,6 @@ private:
 			unsigned long szLo, unsigned long szHi, char kind,
 			bstring const & chmod = TEXT("---"));
 
-	// cleanup
-	void clearDirCache();
 };
 
 class WLock {
