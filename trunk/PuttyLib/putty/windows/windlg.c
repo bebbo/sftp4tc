@@ -45,7 +45,6 @@ static char **events = NULL;
 static int nevents = 0, negsize = 0;
 
 extern struct Sftp4tc cfg;		     
-extern struct Sftp4tc savedCfg;
 
 #define PRINTER_DISABLED_STRING "None (printing disabled)"
 
@@ -672,26 +671,20 @@ int do_config(void)
 }
 #endif
 
-#define SAVEDSESSION_LEN 2048
-extern char * selectedSession;
-char theSelectedSession[SAVEDSESSION_LEN];
-
+#define SAVEDSESSION_LEN 512
+char theSelectedSession[512];
 
 struct Sftp4tc * do_config(HWND hwnd, int midsession, int protcfginfo)
 {
-	Conf *backup_conf;
 	int ret, protocol;
+	default_protocol = PROT_SSH;
+	default_port = 22;
 
-	if (!cfg.config)
-		cfg.config = conf_new();
-
-	backup_conf = conf_copy(cfg.config);
-	selectedSession = 0;
-
-	load_settings(0, &cfg);
+	if (!midsession)
+		load_settings(0, &cfg);
 
 	ctrlbox = ctrl_new_box();
-	protocol = conf_get_int(cfg.config, CONF_protocol);
+	protocol = PROT_SSH;
 	setup_config_box(ctrlbox, midsession, protocol, protcfginfo);
 	win_setup_config_box(ctrlbox, &dp.hwnd, has_help(), midsession, protocol);
 	dp_init(&dp);
@@ -705,11 +698,8 @@ struct Sftp4tc * do_config(HWND hwnd, int midsession, int protcfginfo)
 	dlg_auto_set_fixed_pitch_flag(&dp);
 	dp.shortcuts['g'] = TRUE;	       /* the treeview: `Cate&gory' */
 
-	ret = SaneDialogBox(hinst, MAKEINTRESOURCE(IDD_MAINBOX), NULL,
+	ret = SaneDialogBox(hinst, MAKEINTRESOURCE(IDD_MAINBOX), hwnd,
 		GenericMainDlgProc);
-
-	if (selectedSession) strncpy(theSelectedSession, selectedSession, SAVEDSESSION_LEN - 1);
-	else theSelectedSession[0] = 0;
 
 	ctrl_free_box(ctrlbox);
 	winctrl_cleanup(&ctrls_base);
@@ -717,22 +707,15 @@ struct Sftp4tc * do_config(HWND hwnd, int midsession, int protcfginfo)
 	dp_cleanup(&dp);
 
 	if (!ret) {
-		conf_copy_into(cfg.config, backup_conf);
-
-		conf_free(backup_conf);
+		conf_free(cfg.config);
+		cfg.config = 0;
 		return 0;
 	}
 
-	// kill the saved flag avoid session usage
-	if (0 != memcmp(&cfg, &savedCfg, sizeof(struct Sftp4tc)))
-		cfg.saved = 0;
+	strcpy(cfg.session, theSelectedSession);
+	updateSftpCfg(&cfg);
 
-	cfg.selectedSession = theSelectedSession;
-
-	conf_free(backup_conf);
-	conf_free(cfg.config);
-	cfg.config = 0;
-
+	// do not free/clear cfg.config!
 	return &cfg;
 }
 

@@ -61,7 +61,7 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 	    c->generic.column = 1;
 	}
     }
-
+#ifndef __SFTP4TC__
     /*
      * Full-screen mode is a Windows peculiarity; hence
      * scrollbar_in_fullscreen is as well.
@@ -172,7 +172,6 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 		      "Disabled", I(B_IND_DISABLED),
 		      "Flashing", I(B_IND_FLASH),
 		      "Steady", I(B_IND_STEADY), NULL);
-
     /*
      * The sunken-edge border is a Windows GUI feature.
      */
@@ -197,8 +196,9 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 		      "Non-Antialiased", I(FQ_NONANTIALIASED),
 		      "ClearType", I(FQ_CLEARTYPE),
 		      "Default", I(FQ_DEFAULT), NULL);
+#endif
 
-    /*
+	/*
      * Cyrillic Lock is a horrid misfeature even on Windows, and
      * the least we can do is ensure it never makes it to any other
      * platform (at least unless someone fixes it!).
@@ -264,6 +264,8 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 	    }
 	}
     }
+
+#ifndef __SFTP4TC__
 
     /*
      * RTF paste is Windows-specific.
@@ -345,6 +347,7 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 		  HELPCTX(behaviour_altenter),
 		  conf_checkbox_handler,
 		  I(CONF_fullscreenonaltenter));
+#endif
 
     /*
      * Windows supports a local-command proxy. This also means we
@@ -386,9 +389,10 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
     /*
      * Serial back end is available on Windows.
      */
+#ifndef __SFTP4TC__
     if (!midsession || (protocol == PROT_SERIAL))
         ser_setup_config_box(b, midsession, 0x1F, 0x0F);
-
+#endif
     /*
      * $XAUTHORITY is not reliable on Windows, so we provide a
      * means to override it.

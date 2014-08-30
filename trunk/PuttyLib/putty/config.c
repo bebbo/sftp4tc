@@ -270,8 +270,8 @@ void config_protocolbuttons_handler(union control *ctrl, void *dlg,
 		if (oldproto != newproto) {
 			Backend *ob = backend_from_proto(oldproto);
 			Backend *nb = backend_from_proto(newproto);
-			assert(ob);
-			assert(nb);
+			// assert(ob);
+			// assert(nb);
 			/* Iff the user hasn't changed the port from the old protocol's
 			* default, update it with the new protocol's default.
 			* (This includes a "default" of 0, implying that there is no
@@ -282,7 +282,7 @@ void config_protocolbuttons_handler(union control *ctrl, void *dlg,
 			* getting to the protocol; we want that non-default port
 			* to be preserved. */
 			port = conf_get_int(conf, CONF_port);
-			if (port == ob->default_port)
+			if (ob && nb && port == ob->default_port)
 				conf_set_int(conf, CONF_port, nb->default_port);
 		}
 		dlg_refresh(hp->host, dlg);
@@ -632,6 +632,8 @@ static int load_selected_session(struct sessionsaver_data *ssd,
 	return 1;
 }
 
+static int inSelect;
+extern char theSelectedSession[512];
 static void sessionsaver_handler(union control *ctrl, void *dlg,
 								 void *data, int event)
 {
@@ -657,10 +659,13 @@ static void sessionsaver_handler(union control *ctrl, void *dlg,
 	} else if (!dlg_get_privdata(ssd->editbox, dlg)) {
 		savedsession = (char *)
 			dlg_alloc_privdata(ssd->editbox, dlg, SAVEDSESSION_LEN);
-		savedsession[0] = '\0';
+		//savedsession[0] = '\0';
+		strcpy(savedsession, conf->session);
 	} else {
 		savedsession = dlg_get_privdata(ssd->editbox, dlg);
 	}
+	if (savedsession)
+		strncpy(theSelectedSession, savedsession, 512);
 
 	if (event == EVENT_REFRESH) {
 		if (ctrl == ssd->editbox) {
@@ -671,6 +676,13 @@ static void sessionsaver_handler(union control *ctrl, void *dlg,
 			dlg_listbox_clear(ctrl, dlg);
 			for (i = 0; i < ssd->sesslist.nsessions; i++)
 				dlg_listbox_add(ctrl, dlg, ssd->sesslist.sessions[i]);
+		if (*savedsession && !inSelect) {
+				int mbl = FALSE;
+				inSelect = 1;
+				dlg_listbox_select_string(ssd->listbox, dlg, savedsession);
+				load_selected_session(ssd, savedsession, dlg, conf, &mbl);
+				inSelect = 0;
+		}
 			dlg_update_done(ctrl, dlg);
 		}
 	} else if (event == EVENT_VALCHANGE) {
@@ -693,7 +705,8 @@ static void sessionsaver_handler(union control *ctrl, void *dlg,
 			if (top == ssd->sesslist.nsessions) {
 				top -= 1;
 			}
-			dlg_listbox_select(ssd->listbox, dlg, top);
+			if (ssd->listbox)
+				dlg_listbox_select(ssd->listbox, dlg, top);
 		}
 	} else if (event == EVENT_ACTION) {
 		int mbl = FALSE;
@@ -1339,6 +1352,13 @@ void setup_config_box(struct controlbox *b, int midsession,
 		hp->port = c;
 		ctrl_columns(s, 1, 100);
 
+#ifdef __SFTP4TC__
+			ctrl_radiobuttons(s, "Connection type:", NO_SHORTCUT, 4,
+				HELPCTX(session_hostname),
+				config_protocolbuttons_handler, P(hp),
+				"SSH", 's', I(PROT_SSH),
+				NULL);
+#else
 		if (!backend_from_proto(PROT_SSH)) {
 			ctrl_radiobuttons(s, "Connection type:", NO_SHORTCUT, 3,
 				HELPCTX(session_hostname),
@@ -1357,6 +1377,7 @@ void setup_config_box(struct controlbox *b, int midsession,
 				"SSH", 's', I(PROT_SSH),
 				NULL);
 		}
+#endif
 	}
 
 	/*
@@ -1371,6 +1392,8 @@ void setup_config_box(struct controlbox *b, int midsession,
 		HELPCTX(session_saved),
 		sessionsaver_handler, P(ssd), P(NULL));
 	ssd->editbox->generic.column = 0;
+
+	if (!midsession) {
 	/* Reset columns so that the buttons are alongside the list, rather
 	* than alongside that edit box. */
 	ctrl_columns(s, 1, 100);
@@ -1379,7 +1402,7 @@ void setup_config_box(struct controlbox *b, int midsession,
 		HELPCTX(session_saved),
 		sessionsaver_handler, P(ssd));
 	ssd->listbox->generic.column = 0;
-	ssd->listbox->listbox.height = 6;
+	ssd->listbox->listbox.height = 11;
 	
 	c = ctrl_droplist(s, "ini file", 'f', 75,
 		P("ini-path"),
@@ -1387,7 +1410,6 @@ void setup_config_box(struct controlbox *b, int midsession,
 	c->generic.column = 0;
 
 
-	if (!midsession) {
 		ssd->loadbutton = ctrl_pushbutton(s, "Load", 'l',
 			HELPCTX(session_saved),
 			sessionsaver_handler, P(ssd));
@@ -1415,6 +1437,7 @@ void setup_config_box(struct controlbox *b, int midsession,
 	}
 	ctrl_columns(s, 1, 100);
 
+#ifndef __SFTP4TC__
 	s = ctrl_getset(b, "Session", "otheropts", NULL);
 	c = ctrl_radiobuttons(s, "Close window on exit:", 'x', 4,
 		HELPCTX(session_coe),
@@ -1423,7 +1446,7 @@ void setup_config_box(struct controlbox *b, int midsession,
 		"Always", I(FORCE_ON),
 		"Never", I(FORCE_OFF),
 		"Only on clean exit", I(AUTO), NULL);
-
+#endif
 	/*
 	* The Session/Logging panel.
 	*/
@@ -1484,6 +1507,7 @@ void setup_config_box(struct controlbox *b, int midsession,
 				conf_checkbox_handler, I(CONF_logomitdata));
 	}
 
+#ifndef __SFTP4TC__
 	/*
 	* The Terminal panel.
 	*/
@@ -1648,6 +1672,7 @@ void setup_config_box(struct controlbox *b, int midsession,
 	ctrl_checkbox(s, "Disable bidirectional text display",
 		'd', HELPCTX(features_bidi), conf_checkbox_handler,
 		I(CONF_bidi));
+#endif
 
 	/*
 	* The Window panel.
@@ -1656,6 +1681,7 @@ void setup_config_box(struct controlbox *b, int midsession,
 	ctrl_settitle(b, "Window", str);
 	sfree(str);
 
+#ifndef __SFTP4TC__
 	s = ctrl_getset(b, "Window", "size", "Set the size of the window");
 	ctrl_columns(s, 2, 50, 50);
 	c = ctrl_editbox(s, "Columns", 'm', 100,
@@ -1747,6 +1773,7 @@ void setup_config_box(struct controlbox *b, int midsession,
 	ctrl_checkbox(s, "Warn before closing window", 'w',
 		HELPCTX(behaviour_closewarn),
 		conf_checkbox_handler, I(CONF_warn_on_close));
+#endif
 
 	/*
 	* The Window/Translation panel.
@@ -1779,6 +1806,7 @@ void setup_config_box(struct controlbox *b, int midsession,
 		HELPCTX(selection_linedraw),
 		conf_checkbox_handler, I(CONF_rawcnp));
 
+#ifndef __SFTP4TC__
 	/*
 	* The Window/Selection panel.
 	*/
@@ -1871,7 +1899,7 @@ void setup_config_box(struct controlbox *b, int midsession,
 		colour_handler, P(cd));
 	cd->button->generic.column = 1;
 	ctrl_columns(s, 1, 100);
-
+#endif
 	/*
 	* The Connection panel. This doesn't show up if we're in a
 	* non-network utility such as pterm. We tell this by being

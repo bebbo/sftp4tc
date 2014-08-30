@@ -35,8 +35,8 @@ class Server {
 	static std::vector<ServerInfo> serverInfos;
 
 	// initialized during CT
-	bstring sessionName;
 	bstring name;
+	bstring sessionName;
 	PsftpMapper * currentMapper;
 	bool disableMtime;
 
@@ -59,7 +59,9 @@ public:
 	HANDLE mutex;
 
 	// ct / dt
-	Server(bstring const & sessionName, bstring const & orgSessionName, DWORD tid);
+	// serverName = the unique name to maintain it
+	// sessionName = the name of the session.
+	Server(bstring const & serverName, bstring const & sessionName, DWORD tid);
 	~Server();
 
 	// open global config panel
@@ -84,6 +86,7 @@ public:
 	static bchar const * const getServerName(size_t index);
 
 	bool connect();
+	bool isConnected() const { return myCfg != 0; }
 	void configure(Sftp4tc * const sessionCfg);
 
 	// used as ls - includes caching

@@ -7,8 +7,7 @@
 extern int psftp_connect(char *userhost, char *user, int portnumber);
 extern int do_sftp_init(void);
 struct Sftp4tc;
-struct Sftp4tc * wcplg_open_sftp_session(char *userhost, char *user, char *pass,
-		int portnumber);
+struct Sftp4tc * wcplg_open_sftp_session(char const * displayName, char const * sessionName);
 int wcplg_close_sftp_session(void);
 int wcplg_do_sftp(char *_cmd, char *_server_output);
 char *wcplg_get_last_error_msg();

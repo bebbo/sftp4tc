@@ -284,11 +284,11 @@ struct Sftp4tc {
 	struct config_tag * config;
 
 	// values copied from config
-	char host[512];
-	int port;
 
     // selected session
-    char * selectedSession;
+    char session[512];
+	char host[512];
+	int port;
 
 	// plugin specific
     int saved;
@@ -304,6 +304,9 @@ struct Sftp4tc {
 
 	char iniPath[1024];
 	int storePassword;
+
+	int copyMe;
+
 };
 
 #endif // __SFTP_H__

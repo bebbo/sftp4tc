@@ -946,7 +946,7 @@ void load_open_settings(void *sesskey, Conf *conf);
 void get_sesslist(struct sesslist *, int allocate);
 void do_defaults(char *, struct Sftp4tc *);
 void registry_cleanup(void);
-
+void updateSftpCfg(struct Sftp4tc *conf);
 /*
  * Functions used by settings.c to provide platform-specific
  * default settings.

@@ -11,8 +11,6 @@
 extern char *console_password;
 extern char *server_output;
 struct Sftp4tc cfg;
-struct Sftp4tc savedCfg;
-char * selectedSession;
 extern struct sftp_command *line2command(char * line, int mode, int modeflags);
 
 extern int disconnected;
@@ -96,56 +94,53 @@ static void init_winsock(void) {
 	}
 }
 
-extern char * selectedSession;
 char connectMsg[256];
 int connectPercent;
 
-struct Sftp4tc * wcplg_open_sftp_session(char *sessionOrHost, char *user,
-		char *pass, int portnumber) {
-	char * cfgHost;
+void configure(char const * sessionName) {
+	strcpy(cfg.session, sessionName);
+	if (!cfg.config) {
+		cfg.config = conf_new();
+		do_defaults((char *)sessionName, &cfg);
+	} else if (cfg.copyMe) {
+		// quick connection provides a config object, if open was pressed
+		// take a copy, since it belongs to a different DLL
+		cfg.config = conf_copy(cfg.config);
+		cfg.copyMe = 0;
+	}
+	updateSftpCfg(&cfg);
+}
+
+struct Sftp4tc * wcplg_open_sftp_session(char const * displayName, char const *sessionName) {
+	char * cfgHost, * user;
+	int portnumber;
 
 	wcplg_set_last_error_msg(NULL);
-	strncpy(connectMsg, sessionOrHost, 255);
+	strncpy(connectMsg, displayName, 255);
 
 	if (ProgressProc("connecting", connectMsg, 0) == 1) {
 		wcplg_set_last_error_msg("cancel by user");
 		return RESULT_ERR;
 	}
 
-	if (!cfg.config) {
-		cfg.config = conf_new();
-		conf_set_str(cfg.config, CONF_host, "");
-		do_defaults(sessionOrHost, &cfg);
-	}
+	configure(sessionName);
 
 	cfgHost = conf_get_str(cfg.config, CONF_host);
-	if (!cfgHost || !cfgHost[0])
-		cfgHost = sessionOrHost;
 
-	if (!user) {
-		user = conf_get_str(cfg.config, CONF_username);
-		// no username?
-		if (!*user) {
-			char * at = strchr(cfgHost, '@');
-			if (at) {
-				static char huser[256];
-				strncpy(huser, cfgHost, 255);
-				huser[255] = 0;
-				at = strchr(huser, '@');
-				*at = 0;
-				user = huser;
-			}
+	user = conf_get_str(cfg.config, CONF_username);
+	// no username?
+	if (!user || !*user) {
+		char * at = strchr(cfgHost, '@');
+		if (at) {
+			static char huser[256];
+			strncpy(huser, cfgHost, 255);
+			huser[255] = 0;
+			at = strchr(huser, '@');
+			*at = 0;
+			user = huser;
 		}
 	}
-	if (!portnumber)
-		portnumber = conf_get_int(cfg.config, CONF_port);
-
-	if (pass) {
-		console_password = dupstr(pass);
-		flags = 0; //FLAG_STDERR | FLAG_INTERACTIVE;
-		cmdline_tooltype = TOOLTYPE_FILETRANSFER;
-		//ssh_get_line = &console_get_line;
-	}
+	portnumber = conf_get_int(cfg.config, CONF_port);
 
 	//  init_winsock();
 	sk_init();
@@ -174,10 +169,9 @@ struct Sftp4tc * wcplg_open_sftp_session(char *sessionOrHost, char *user,
 
 	disconnected = 0;
 
-	cfg.selectedSession = selectedSession;
-
-	conf_free(cfg.config);
-	cfg.config = 0;
+// keep it
+//	conf_free(cfg.config);
+//	cfg.config = 0;
 
 	return &cfg;
 }

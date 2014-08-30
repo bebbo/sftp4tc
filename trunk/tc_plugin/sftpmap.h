@@ -16,7 +16,7 @@ typedef std::string bstring;
 
 typedef bstring ServerInfo;
 
-typedef Sftp4tc * (__stdcall CALLBACK * PsftpConnectProcType) (char const * const, char const * const, char const *const, int);
+typedef Sftp4tc * (__stdcall CALLBACK * PsftpConnectProcType) (char const * const, char const * const);
 // this one is ok to use bchar - psftp.dll side handles conversion.
 typedef int (__stdcall CALLBACK * PsftpDoSftpProcType) (bchar const * const, bchar *);
 typedef my_fxp_names *(__stdcall CALLBACK * PsftpGetCurrentDirStructProcType) (void);
@@ -25,7 +25,7 @@ typedef char *(__stdcall CALLBACK * PsftpGetLastErrorMessageProcType) (void);
 typedef int (__stdcall CALLBACK * PsftpInitProcsProcType)
 	(tRequestProcW AP_RequestProc, tProgressProcW AP_ProgressProc, tCryptProcW cryptProc, int PluginNr, int CryptoNr, HWND hwnd, wchar_t const * );
 typedef int (CALLBACK * PsftpDisconnectedProcType)(void);
-typedef Sftp4tc * (CALLBACK * PsftpDoConfigType)(HWND, int, int);
+typedef Sftp4tc * (CALLBACK * PsftpDoConfigType)(HWND, int, int, char const *);
 typedef fxp_attrs * (CALLBACK * PsftpGetLastAttrType)(void);
 typedef void (CALLBACK * PsftpSetTransferAscii)(int);
 typedef void (CALLBACK * PsftpSetConfig)(Sftp4tc *);
@@ -63,7 +63,7 @@ struct PsftpMapper {
 
 	bstring dllName;
 
-	PsftpMapper(bstring const & server, bstring const & session, Sftp4tc * = 0);
+	PsftpMapper(bstring const & serverName, bstring const & sessionName, Sftp4tc * = 0);
 	~PsftpMapper();
 
 	void import_putty_sessions(std::vector<ServerInfo> & serverInfos);
