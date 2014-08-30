@@ -558,6 +558,7 @@ int dlg_listbox_getid(union control *ctrl, void *dlg, int index);
 int dlg_listbox_index(union control *ctrl, void *dlg);
 int dlg_listbox_issel(union control *ctrl, void *dlg, int index);
 void dlg_listbox_select(union control *ctrl, void *dlg, int index);
+void dlg_listbox_select_string(union control *ctrl, void *dlg, char const * txt);
 void dlg_text_set(union control *ctrl, void *dlg, char const *text);
 void dlg_filesel_set(union control *ctrl, void *dlg, Filename *fn);
 Filename *dlg_filesel_get(union control *ctrl, void *dlg);

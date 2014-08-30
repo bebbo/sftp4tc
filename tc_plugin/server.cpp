@@ -29,7 +29,7 @@ public:
 
 Guard::Guard() :
 		mapper(intern), server(0) {
-	mapper = new PsftpMapper(TEXT("~"), TEXT("~"));
+	mapper = new PsftpMapper(TEXT("~"), TEXT(""));
 }
 
 Guard::Guard(Server * server, config_tag * cfg) :
@@ -57,9 +57,6 @@ bool Guard::isConnected() {
 			//      gLogProc(gPluginNumber, MSGTYPE_DISCONNECT, (TEXT("connection to ") + server->name + TEXT(" IS BROKEN!")).c_str());
 			delete mapper;
 		}
-		bstring ss = server->sessionName.length() ? server->sessionName : server->name;
-		if (server->myCfg)
-			qudConvert(server->myCfg->host, ss.c_str(), 511);
 		mapper = new PsftpMapper(server->name, server->sessionName, server->myCfg);
 		if (!mapper->hDll)
 			return false;
@@ -67,20 +64,15 @@ bool Guard::isConnected() {
 		bstring msg = TEXT("CONNECT \\") + server->name;
 		gLogProc(gPluginNumber, MSGTYPE_CONNECT, msg.c_str());
 #ifdef UNICODE
-		char srvName[256];
-		qudConvert(srvName, server->name.c_str(), 255);
-		int port = 0;
-
-		if (server && server->myCfg) {
-			strncpy(srvName, server->myCfg->host, 255);
-			port = server->myCfg->port;
-		}
-
-		Sftp4tc * cfg = mapper->connect(srvName, 0, srvName, port);
+		char displayName[256];
+		qudConvert(displayName, server->name.c_str(), 255);
+		char sessName[256];
+		qudConvert(sessName, server->sessionName.c_str(), 255);
 #else
-		char const * srvName = server->name.c_str();
-		Sftp4tc * cfg = mapper->connect(0, 0, srvName, 0);
+		char const * displayName = server->name.c_str();
+		char const * sessName = server->sessionName.c_str();
 #endif
+		Sftp4tc * cfg = mapper->connect(displayName, sessName);
 		if (!cfg || mapper->disconnected()) {
 			gLogProc(gPluginNumber, MSGTYPE_CONNECTCOMPLETE,
 					(TEXT("NOT connected to ") + server->name).c_str());
@@ -246,8 +238,8 @@ static void freeMfn(my_fxp_names * dir) {
 //---------------------------------------------------------------------
 // CT
 // init with zeros
-Server::Server(bstring const & serverName_, bstring const & orgSessionName_, DWORD _tid) :
-		sessionName(orgSessionName_), name(serverName_), currentMapper(0), disableMtime(false), cacheFolders(
+Server::Server(bstring const & serverName_, bstring const & sessionName_, DWORD _tid) :
+		name(serverName_), sessionName(sessionName_), currentMapper(0), disableMtime(false), cacheFolders(
 				false), hideDotNames(false), myCfg(0), tid(_tid) {
 					mutex = ::CreateMutex(0, 0, 0);
 }
@@ -406,17 +398,17 @@ bool Server::getHomeDir(bstring & response) {
 	if (!guard.isLoaded())
 		return false;
 
-	Sftp4tc cfg;
-	memset(&cfg, 0, sizeof(cfg));
+	if (!myCfg)
+		myCfg = new Sftp4tc();
 #ifdef UNICODE
 	char srvName[256];
 	qudConvert(srvName, name.c_str(), 256);
 #else
 	char const * srvName = name.c_str();
 #endif
-	guard.mapper->loadConfig(srvName, &cfg);
+	guard.mapper->loadConfig(srvName, myCfg);
 #ifdef UNICODE
-	BCONVERT(wchar_t, 256, response, cfg.homeDir);
+	BCONVERT(wchar_t, 256, response, myCfg->homeDir);
 #else
 	response = cfg.homeDir;
 #endif
@@ -568,9 +560,7 @@ bool Server::cmdGet(bstring const & remotePath, bstring const & localName,
 			bstring(
 					exists ?
 							TEXT("reget \"") :
-							TEXT(
-									"get \"")) + remotePath + TEXT("\" \"") + localName + TEXT(
-											"\"");
+							TEXT("get \"")) + remotePath + TEXT("\" \"") + localName + TEXT("\"");
 
 	if (!doCommand(cmd))
 		return false;
@@ -595,9 +585,7 @@ bool Server::cmdPut(bstring const & localName, bstring const & remotePath,
 			bstring(
 					exists ?
 							TEXT("reput \"") :
-							TEXT(
-									"put \"")) + localName + TEXT("\" \"") + remotePath + TEXT(
-											"\"");
+							TEXT("put \"")) + localName + TEXT("\" \"") + remotePath + TEXT("\"");
 
 	if (!doCommand(cmd))
 		return false;
@@ -626,9 +614,7 @@ bool Server::cmdPut(bstring const & localName, bstring const & remotePath,
 		}
 		if (chmod.length() > 0) {
 			cmd =
-					bstring(
-							TEXT(
-									"chmod ")) + chmod + TEXT(" \"") + remotePath + TEXT("\"");
+					bstring(TEXT("chmod ")) + chmod + TEXT(" \"") + remotePath + TEXT("\"");
 			doCommand(cmd);
 		}
 	}
@@ -658,9 +644,7 @@ bool Server::cmdMkDir(bstring const & remotePath) {
 bool Server::cmdMove(bstring const & oldRemotePath,
 		bstring const & newRemotePath) {
 	bstring cmd =
-			bstring(
-					TEXT(
-							"mv \"")) + oldRemotePath + TEXT("\" \"") + newRemotePath + TEXT("\"");
+			bstring(TEXT("mv \"")) + oldRemotePath + TEXT("\" \"") + newRemotePath + TEXT("\"");
 
 	if (!doCommand(cmd))
 		return false;
@@ -754,7 +738,13 @@ Sftp4tc * const Server::doConfig() {
 	if (!guard.isLoaded())
 		return 0;
 
-	Sftp4tc * r = guard.mapper->doConfig(gMainWin, 0, 0);
+#ifdef UNICODE
+		char sessName[256];
+		qudConvert(sessName, sessionName.c_str(), 255);
+#else
+		char const * sessName = server->sessionName.c_str();
+#endif
+	Sftp4tc * r = guard.mapper->doConfig(gMainWin, 0, 0, sessName);
 	WLock wlock(global);
 	inside = 0;
 	return r;
@@ -763,14 +753,22 @@ Sftp4tc * const Server::doConfig() {
 // reconfigure current server
 Sftp4tc * const Server::doSelfConfig() {
 	Guard guard(this);
-	if (!guard.isConnected())
+	if (!guard.isLoaded())
 		return 0;
 
-	return guard.mapper->doConfig(gMainWin, 1, 0);
+#ifdef UNICODE
+		char sessName[256];
+		qudConvert(sessName, sessionName.c_str(), 255);
+#else
+		char const * sessName = server->sessionName.c_str();
+#endif
+	return guard.mapper->doConfig(gMainWin, 1, myCfg ? 1 : 0, sessName);
 }
 //---------------------------------------------------------------------
 // apply the configuration
 void Server::configure(Sftp4tc * cfg_) {
+	if (!cfg_)
+		return;
 	if (!myCfg)
 		myCfg = new Sftp4tc;
 	*myCfg = *cfg_;

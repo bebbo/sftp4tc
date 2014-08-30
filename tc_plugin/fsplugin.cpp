@@ -480,6 +480,57 @@ BOOL __stdcall FsMkDir(char * fullPath) {
 }
 //---------------------------------------------------------------------
 
+static int openConnection(Server * server, bchar * fullRemoteName, Sftp4tc * cfg) {
+		// is there a session?
+		bstring sessionName;
+#ifdef UNICODE
+		BCONVERT(wchar_t, 256, sessionName, cfg->session)
+#else
+		sessionName = cfg->session;
+#endif
+		bchar buf[16];
+		bstring orgSessionName = sessionName;
+
+		if (sessionName.length() == 0) {
+			// no create a name from host
+			sessionName = TEXT("quick connection (");
+			bsprintf(buf, TEXT("%d) "), ++quickConnectionCount);
+			bchar const * host;
+#ifdef UNICODE
+			BCONVERT(wchar_t, 256, host, cfg->host)
+#else
+			host = cfg->host;
+#endif
+			sessionName = sessionName + buf + host;
+//		} else if (!cfg->saved) {
+//			bsprintf(buf, TEXT("%d) "), ++quickConnectionCount);
+//			sessionName = TEXT("(") + (buf + sessionName);
+		}
+		bstrcpy(fullRemoteName + 1, sessionName.c_str());
+		bchar const * homeDir;
+#ifdef UNICODE
+		BCONVERT(wchar_t, 512, homeDir, cfg->homeDir)
+#else
+		homeDir = cfg->homeDir;
+#endif
+		bstrcat(fullRemoteName, homeDir);
+		toDos(fullRemoteName);
+
+		cfg->copyMe = 1; // make a copy for our DLL
+		if (server == 0) {
+			server = new Server(sessionName, orgSessionName, ::GetCurrentThreadId());
+			Server::insertServer(sessionName, server);
+		}
+		server->configure(cfg);
+
+		if (!server->connect()) {
+			Server::removeServer(sessionName.c_str());
+			return FS_EXEC_ERROR;
+		}
+
+		return FS_EXEC_SYMLINK;
+}
+
 /**
  * Invoked from Total Commander's command line - or by pressing enter.
  */
@@ -590,8 +641,8 @@ int __stdcall FsExecuteFileW(HWND MainWin, bchar * fullRemoteName,
 			return FS_EXEC_SYMLINK;
 		}
 
-		// It's edit connections. Create a temp server - maybe we keep it.
-		Server server(TEXT(""), TEXT("~"), 0);
+		// It's edit connections. Create a temp server.
+		Server server(TEXT("~"), TEXT(""), 0);
 
 		// popup config dialog
 		Sftp4tc * const cfg = server.doConfig();
@@ -599,52 +650,7 @@ int __stdcall FsExecuteFileW(HWND MainWin, bchar * fullRemoteName,
 			fullRemoteName[1] = 0;
 			return FS_EXEC_SYMLINK;
 		}
-
-		// is there a session?
-		bstring sessionName;
-#ifdef UNICODE
-		BCONVERT(wchar_t, 256, sessionName, cfg->selectedSession)
-#else
-		sessionName = cfg->selectedSession;
-#endif
-		bchar buf[16];
-		bstring orgSessionName = sessionName;
-
-		if (sessionName.length() == 0) {
-			// no create a name from host
-			sessionName = TEXT("quick connection (");
-			bsprintf(buf, TEXT("%d) "), ++quickConnectionCount);
-			bchar const * host;
-#ifdef UNICODE
-			BCONVERT(wchar_t, 256, host, cfg->host)
-#else
-			host = cfg->host;
-#endif
-			sessionName = sessionName + buf + host;
-		} else if (!cfg->saved) {
-			bsprintf(buf, TEXT("%d) "), ++quickConnectionCount);
-			sessionName = TEXT("(") + (buf + sessionName);
-		}
-		bstrcpy(fullRemoteName + 1, sessionName.c_str());
-		bchar const * homeDir;
-#ifdef UNICODE
-		BCONVERT(wchar_t, 512, homeDir, cfg->homeDir)
-#else
-		homeDir = cfg->homeDir;
-#endif
-		bstrcat(fullRemoteName, homeDir);
-		toDos(fullRemoteName);
-
-		Server * newServer = new Server(sessionName, orgSessionName, ::GetCurrentThreadId());
-		Server::insertServer(sessionName, newServer);
-		newServer->configure(cfg);
-
-		if (!newServer->connect()) {
-			Server::removeServer(sessionName.c_str());
-			return FS_EXEC_ERROR;
-		}
-
-		return FS_EXEC_SYMLINK;
+		return openConnection(0, fullRemoteName, cfg);
 	}
 
 	Server * server = Server::findServer(remotePath, fullRemoteName);
@@ -657,13 +663,16 @@ int __stdcall FsExecuteFileW(HWND MainWin, bchar * fullRemoteName,
 		size_t slash = fullRemotePath.find_first_of('\\');
 		if (slash != (size_t) -1) {
 			// invoke da menu
-			::PostMessage(gMainWin, WM_COMMAND, 0x00048512, (LPARAM)gMainWin);
+			::PostMessage(gMainWin, WM_COMMAND, 122, 0);
 			return FS_EXEC_OK;
 		}
 
 		Sftp4tc * const session = server->doSelfConfig();
 		if (session) {
-			server->configure(session);
+//			if (!server->isConnected()) 
+//				openConnection(server, fullRemoteName, session);
+//			else
+				server->configure(session);
 		}
 		return FS_EXEC_OK;
 	}

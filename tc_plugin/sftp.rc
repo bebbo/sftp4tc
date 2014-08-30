@@ -1,6 +1,7 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
+#include "puttyver.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -25,8 +26,8 @@ LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,4,63,1
- PRODUCTVERSION 1,4,63,1
+ FILEVERSION PUTTY_VERSION
+ PRODUCTVERSION PUTTY_VERSION
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -42,11 +43,11 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "SFTP Plugin for Total Commander"
-            VALUE "FileVersion", "1.4.63.1"
+            VALUE "FileVersion", PUTTY_VERSION_STRING
             VALUE "InternalName", "plugin_sftp"
             VALUE "OriginalFilename", "plugin_sftp.wfx"
             VALUE "ProductName", "plugin_sftp"
-            VALUE "ProductVersion", "1.4.63.1"
+            VALUE "ProductVersion", PUTTY_VERSION_STRING
         END
     END
     BLOCK "VarFileInfo"

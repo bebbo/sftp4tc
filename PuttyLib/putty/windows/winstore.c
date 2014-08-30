@@ -361,7 +361,7 @@ int read_setting_i(struct KeyOrIni *handle, const char *key, int defvalue)
 
 	// whoops - nothing set
 	if (!handle->ini || !handle->section)
-		return 0;
+		return defvalue;
 
 	// use the specified ini
 	return GetPrivateProfileInt(handle->section, key, defvalue, handle->ini);

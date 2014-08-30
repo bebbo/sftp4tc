@@ -18,6 +18,7 @@ extern "C" {
 
 extern HINSTANCE hinst;
 extern Sftp4tc cfg;
+extern void configure(char const * sessionName);
 
 int fxp_disconnected();
 
@@ -34,11 +35,13 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call,
 	return TRUE;
 }
 
-Sftp4tc * __stdcall __map__wcplg_open_sftp_session(char *user, char *password,
-		char *host, int port) {
+/**
+ * sessionName = name of the putty session.
+ */
+Sftp4tc * __stdcall __map__wcplg_open_sftp_session(char const * displayName, char const * sessionName) {
 	Sftp4tc * c;
 	ISinitT = 0;
-	c = wcplg_open_sftp_session(host, 0, 0, port);
+	c = wcplg_open_sftp_session(displayName, sessionName);
 
 	return c;
 }
@@ -90,8 +93,9 @@ int __stdcall __map__init_Procs(tRequestProcW AP_RequestProc,
 }
 
 struct Sftp4tc * __stdcall __map__do_config(HWND hwnd, int midsession,
-		int protocol) {
-	Sftp4tc * c = do_config(hwnd, midsession, protocol);
+		int flag, char const * sessionName) {
+	configure(sessionName);
+	Sftp4tc * c = do_config(hwnd, midsession, flag);
 	return c;
 }
 
@@ -112,6 +116,9 @@ void __stdcall __map__set_config(Sftp4tc * oldCfg) {
 
 void __stdcall __map__load_config(char * name, Sftp4tc * cfg) {
 	load_settings(name, cfg);
+	updateSftpCfg(cfg);
+	conf_free(cfg->config);
+	cfg->config = 0;
 }
 
 extern void *enum_settings_start(void);

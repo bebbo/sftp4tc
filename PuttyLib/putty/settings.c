@@ -856,15 +856,20 @@ void load_settings(char *section, struct Sftp4tc *conf)
 
 	if (!conf->config) {
 	  conf->config = conf_new();
-	  conf_set_str(conf->config, CONF_host, conf->host);
-	  do_defaults(conf->host, conf);
+//R	  conf_set_str(conf->config, CONF_host, conf->host);
     }
 
 	sesskey = open_settings_r(section, conf);
 	load_open_settings(sesskey, conf->config);
 	close_settings_r(sesskey);
 
-	  // update structure
+	if (conf_launchable(conf->config))
+		add_session_to_jumplist(section);
+}
+
+void updateSftpCfg(struct Sftp4tc *conf) {
+		  // update structure
+
   conf->cacheFolders = conf_get_int(conf->config, CONF_sftpCacheFolders);
   conf->hideDotNames = conf_get_int(conf->config, CONF_sftpHideDotNames);
   //conf->isUnicode = conf_get_int(conf->config, CONF_);
@@ -880,9 +885,6 @@ void load_settings(char *section, struct Sftp4tc *conf)
   conf->storePassword = conf_get_int(conf->config, CONF_sftpStorePassword);
 
   setCodePage(conf);
-
-	if (conf_launchable(conf->config))
-		add_session_to_jumplist(section);
 }
 
 void load_open_settings(struct KeyOrIni *sesskey, Conf *conf)

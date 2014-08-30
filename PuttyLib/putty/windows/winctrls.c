@@ -2153,6 +2153,20 @@ void dlg_listbox_add(union control *ctrl, void *dlg, char const *text)
     SendDlgItemMessage(dp->hwnd, c->base_id+1, msg, 0, (LPARAM)text);
 }
 
+void dlg_listbox_select_string(union control *ctrl, void *dlg, char const *text)
+{
+    struct dlgparam *dp = (struct dlgparam *)dlg;
+    struct winctrl *c = dlg_findbyctrl(dp, ctrl);
+    int msg;
+    assert(c &&
+	   (c->ctrl->generic.type == CTRL_LISTBOX ||
+	    (c->ctrl->generic.type == CTRL_EDITBOX &&
+	     c->ctrl->editbox.has_list)));
+    msg = (c->ctrl->generic.type==CTRL_LISTBOX && c->ctrl->listbox.height!=0 ?
+	   LB_SELECTSTRING : CB_SELECTSTRING);
+    SendDlgItemMessage(dp->hwnd, c->base_id+1, msg, -1, (LPARAM)text);
+}
+
 /*
  * Each listbox entry may have a numeric id associated with it.
  * Note that some front ends only permit a string to be stored at
