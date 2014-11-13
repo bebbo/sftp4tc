@@ -680,7 +680,7 @@ static void sessionsaver_handler(union control *ctrl, void *dlg,
 				int mbl = FALSE;
 				inSelect = 1;
 				dlg_listbox_select_string(ssd->listbox, dlg, savedsession);
-				load_selected_session(ssd, savedsession, dlg, conf, &mbl);
+//				load_selected_session(ssd, savedsession, dlg, conf, &mbl);
 				inSelect = 0;
 		}
 			dlg_update_done(ctrl, dlg);
@@ -710,6 +710,7 @@ static void sessionsaver_handler(union control *ctrl, void *dlg,
 		}
 	} else if (event == EVENT_ACTION) {
 		int mbl = FALSE;
+		void * x = conf;
 		if (!ssd->midsession &&
 			(ctrl == ssd->listbox ||
 			(ssd->loadbutton && ctrl == ssd->loadbutton))) {
