@@ -692,7 +692,7 @@ struct Sftp4tc * do_config(HWND hwnd, int midsession, int protcfginfo)
 	winctrl_init(&ctrls_panel);
 	dp_add_tree(&dp, &ctrls_base);
 	dp_add_tree(&dp, &ctrls_panel);
-	dp.wintitle = dupprintf("%s Reconfiguration", appname);
+	dp.wintitle =  dupprintf(midsession ? "%s Reconfiguration" : "%s Configuration", appname);
 	dp.errtitle = dupprintf("%s Error", appname);
 	dp.data = &cfg;
 	dlg_auto_set_fixed_pitch_flag(&dp);

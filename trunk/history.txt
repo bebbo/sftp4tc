@@ -1,3 +1,6 @@
+VERSION 1.4.63.4 [2014-11-13]
+*FIXED property changes were not saved
+
 VERSION 1.4.63.3 [2014-11-13]
 *FIXED #2 Wrong path for putty.ini in TC directory
 *FIXED #3 About dialog shows wrong info
