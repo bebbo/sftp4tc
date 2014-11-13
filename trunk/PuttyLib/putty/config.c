@@ -1402,14 +1402,8 @@ void setup_config_box(struct controlbox *b, int midsession,
 		HELPCTX(session_saved),
 		sessionsaver_handler, P(ssd));
 	ssd->listbox->generic.column = 0;
-	ssd->listbox->listbox.height = 11;
+	ssd->listbox->listbox.height = 10;
 	
-	c = ctrl_droplist(s, "ini file", 'f', 75,
-		P("ini-path"),
-		inipath_handler, I(CONF_iniPath));
-	c->generic.column = 0;
-
-
 		ssd->loadbutton = ctrl_pushbutton(s, "Load", 'l',
 			HELPCTX(session_saved),
 			sessionsaver_handler, P(ssd));
@@ -1436,6 +1430,12 @@ void setup_config_box(struct controlbox *b, int midsession,
 		ssd->delbutton = NULL;
 	}
 	ctrl_columns(s, 1, 100);
+
+	c = ctrl_droplist(s, "ini file", 'f', 100,
+		P("ini-path"),
+		inipath_handler, I(CONF_iniPath));
+	c->generic.column = 0;
+
 
 #ifndef __SFTP4TC__
 	s = ctrl_getset(b, "Session", "otheropts", NULL);

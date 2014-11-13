@@ -747,6 +747,7 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="putty\windows\puttycfg.ico" />
+    <None Include="putty\windows\win_res.rc2" />
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>

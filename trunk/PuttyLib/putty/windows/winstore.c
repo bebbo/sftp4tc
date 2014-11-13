@@ -206,6 +206,13 @@ char * get_initpath_by_index(int index) {
 		if (sz > 1012)
 			return 0;
 		path = appPath;
+		while (--sz > 0) {
+			if (appPath[sz] == '\\') {
+				appPath[sz] = 0;
+				break;
+			}
+			appPath[sz] = 0;
+		}
 	} else
 		if (0 == strcmp("%windows%", path)) {
 			static char windowsPath[1024];
