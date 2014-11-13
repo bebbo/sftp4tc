@@ -229,6 +229,9 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="putty\windows\putty.mft" />
+    <None Include="putty\windows\win_res.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PuttyLib.rc">

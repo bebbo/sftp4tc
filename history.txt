@@ -1,3 +1,7 @@
+VERSION 1.4.63.3 [2014-11-13]
+*FIXED #2 Wrong path for putty.ini in TC directory
+*FIXED #3 About dialog shows wrong info
+
 VERSION 1.4.63.2 [2014-08-30]
 *FIXED #1 can not connect by edit connection 
 
