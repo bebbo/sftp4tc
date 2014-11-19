@@ -441,14 +441,16 @@ my_fxp_names * Server::getDirContent(bstring const & _path) {
 	bstring path = _path;
 	if (path.length() == 0 || path[path.length() - 1] != TEXT('/'))
 		path = path + TEXT('/');
-	DirCache::iterator i = dirCache.find(path);
-	if (i != dirCache.end())
-		return i->second;
+	if (cacheFolders) {
+		DirCache::iterator i = dirCache.find(path);
+		if (i != dirCache.end())
+			return i->second;
+	}
 
 	if (!this->cmdLs(path))
 		return 0;
 
-	i = dirCache.find(path);
+	DirCache::iterator i = dirCache.find(path);
 	if (i != dirCache.end())
 		return i->second;
 
