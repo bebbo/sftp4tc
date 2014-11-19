@@ -121,6 +121,7 @@ public:
 		return hideDotNames;
 	}
 	inline void setHideDotNames(bool b) { hideDotNames = b; }
+	inline void setCacheFolders(bool b) { cacheFolders = b; }
 
 	void updateFileAttr(bstring const & path, bstring const & file,
 			bstring const & attrs);

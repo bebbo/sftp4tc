@@ -1,3 +1,8 @@
+VERSION 1.4.63.5 [2014-11-19]
+*FIXED #4 	Re-read directory issue
+*FIXED #5 	Cannot enter directory with square brackets
++ADDED new commands "con" and "coff" to enable/disable folder cache
+
 VERSION 1.4.63.4 [2014-11-13]
 *FIXED property changes were not saved
 

@@ -317,8 +317,11 @@ int wc_unescape(char *output, const char *wildcard)
 		    *output++ = *wildcard;
 		wildcard++;
 	    }
-	} else if (*wildcard == '*' || *wildcard == '?' ||
-		   *wildcard == '[' || *wildcard == ']') {
+	} else if (*wildcard == '*' || *wildcard == '?' 
+#ifndef __SFTP4TC__
+		|| *wildcard == '[' || *wildcard == ']'
+#endif
+		   ) {
 	    return 0;		       /* it's a wildcard! */
 	} else {
 	    if (output)

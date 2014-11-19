@@ -697,11 +697,25 @@ int __stdcall FsExecuteFileW(HWND MainWin, bchar * fullRemoteName,
 		if (cmd == TEXT(".show")) {
 			server->setHideDotNames(false);
 			server->clearDirCache();
+			gLogProc(gPluginNumber, MSGTYPE_OPERATIONCOMPLETE, TEXT("show . names"));
 			return FS_EXEC_OK;
 		}
 		if (cmd == TEXT(".hide")) {
 			server->setHideDotNames(true);
 			server->clearDirCache();
+			gLogProc(gPluginNumber, MSGTYPE_OPERATIONCOMPLETE, TEXT("hide . names"));
+			return FS_EXEC_OK;
+		}
+		if (cmd == TEXT("con")) {
+			server->setCacheFolders(true);
+			server->clearDirCache();
+			gLogProc(gPluginNumber, MSGTYPE_OPERATIONCOMPLETE, TEXT("cache folders is on"));
+			return FS_EXEC_OK;
+		}
+		if (cmd == TEXT("coff")) {
+			server->setCacheFolders(false);
+			server->clearDirCache();
+			gLogProc(gPluginNumber, MSGTYPE_OPERATIONCOMPLETE, TEXT("cache folders is off"));
 			return FS_EXEC_OK;
 		}
 
