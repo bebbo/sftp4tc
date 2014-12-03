@@ -1,3 +1,6 @@
+VERSION 1.4.63.6 [2014-12-03]
+*FIXED file dates are transferred correctly
+
 VERSION 1.4.63.5 [2014-11-19]
 *FIXED #4 	Re-read directory issue
 *FIXED #5 	Cannot enter directory with square brackets

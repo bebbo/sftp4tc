@@ -38,7 +38,6 @@
     <None Include="config.ico">
       <Filter>Ressourcendateien</Filter>
     </None>
-    <None Include="..\history.txt" />
     <None Include="fsplugin.def">
       <Filter>Quellcodedateien</Filter>
     </None>
