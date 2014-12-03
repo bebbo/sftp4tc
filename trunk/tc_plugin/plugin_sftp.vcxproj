@@ -343,7 +343,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\history.txt" />
     <None Include="config.ico" />
     <None Include="fsplugin.def" />
     <None Include="icon2.ico" />

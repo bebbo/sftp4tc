@@ -589,22 +589,24 @@ bool Server::cmdPut(bstring const & localName, bstring const & remotePath,
 							TEXT("reput \"") :
 							TEXT("put \"")) + localName + TEXT("\" \"") + remotePath + TEXT("\"");
 
-	if (!doCommand(cmd))
+	HANDLE hFile = CreateFile(localName.c_str(), GENERIC_READ, FILE_SHARE_READ,
+				NULL, OPEN_EXISTING, 0, NULL);
+	if (hFile == (HANDLE) HFILE_ERROR) 
 		return false;
 
-	FILETIME ft;
-	HANDLE hFile = CreateFile(localName.c_str(), GENERIC_READ, FILE_SHARE_READ,
-			NULL, OPEN_EXISTING, 0, NULL);
-	if (hFile == (HANDLE) HFILE_ERROR)
-		return true; // put already succeeded
-
-	GetFileTime(hFile, 0, 0, &ft);
 	long fsHigh = 0;
 	long fsLow = SetFilePointer(hFile, 0, &fsHigh, FILE_END);
 
+	FILETIME ft;
+	GetFileTime(hFile, 0, 0, &ft);
+
 	CloseHandle(hFile);
 
-	bstring chmod = TEXT("----");
+	fxp_attrs * attrs = currentMapper->getLastAttr();
+	attrs->atime = attrs->mtime = FileTimeToUnixTime(&ft);
+	attrs->flags = SSH_FILEXFER_ATTR_ACMODTIME;
+
+	bstring chmod = TEXT("0000");
 	if (defChMod.length() > 0 || exeChMod.length() > 0) {
 		chmod = defChMod;
 		size_t ldot = remotePath.find_last_of('.');
@@ -615,11 +617,15 @@ bool Server::cmdPut(bstring const & localName, bstring const & remotePath,
 				chmod = exeChMod;
 		}
 		if (chmod.length() > 0) {
-			cmd =
-					bstring(TEXT("chmod ")) + chmod + TEXT(" \"") + remotePath + TEXT("\"");
-			doCommand(cmd);
+			attrs->permissions = bstrtol(chmod.c_str(), '\0', 8);
+			attrs->flags |= SSH_FILEXFER_ATTR_PERMISSIONS;
 		}
 	}
+
+
+	if (!doCommand(cmd))
+		return false;
+
 
 	// fake update the directory
 	insertFile(remotePath, &ft, fsLow, fsHigh, '-', chmod);

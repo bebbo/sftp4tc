@@ -252,8 +252,9 @@ int sftp_get_file(char *fname, char *outfname, int recurse, int restart) {
 	uint64 offset;
 	WFile *file;
 	int ret, shown_err = FALSE;
+#ifndef __SFTP4TC__
 	struct fxp_attrs attrs;
-#ifdef __SFTP4TC__
+#else
 	int userAbort = 0;
 	__int64 written, total;
 	int result;
@@ -594,10 +595,11 @@ int sftp_put_file(char *fname, char *outfname, int recurse, int restart) {
 	RFile *file;
 	int ret, err, eof;
 	int userAbort = 0;
-	struct fxp_attrs attrs;
 	long permissions;
 
-#ifdef __SFTP4TC__	
+#ifndef __SFTP4TC__	
+	struct fxp_attrs attrs;
+#else
 	uint64 uintTotal, uintNull = uint64_make(0, 0);
 	__int64 written, total;
 	int lastIs0D = 0;
@@ -736,8 +738,10 @@ int sftp_put_file(char *fname, char *outfname, int recurse, int restart) {
 		nprintf(("local: unable to open %s\n", fname));
 		return 0;
 	}
-	attrs.flags = 0;
+#ifndef __SFTP4TC__
+	attrs.flags = 0; // flags set by plugin
 	PUT_PERMISSIONS(attrs, permissions);
+#endif
 	if (restart) {
 		req = fxp_open_send(outfname, SSH_FXF_WRITE, &attrs);
 	} else {
@@ -762,7 +766,9 @@ int sftp_put_file(char *fname, char *outfname, int recurse, int restart) {
 
 	if (restart) {
 		char decbuf[30];
+#ifndef __SFTP4TC__
 		struct fxp_attrs attrs;
+#endif
 		int ret;
 
 		req = fxp_fstat_send(fh);
@@ -877,6 +883,11 @@ int sftp_put_file(char *fname, char *outfname, int recurse, int restart) {
 			break;
 		}
 	}
+#ifdef __SFTP4TC__
+	req = fxp_fsetstat_send(fh, attrs);
+	pktin = sftp_wait_for_reply(req);
+	fxp_setstat_recv(pktin, req);
+#endif
 
 	xfer_cleanup(xfer);
 
@@ -1659,7 +1670,9 @@ int sftp_cmd_rm(struct sftp_command *cmd) {
 static int check_is_dir(char *dstfname) {
 	struct sftp_packet *pktin;
 	struct sftp_request *req;
+#ifndef __SFTP4TC__
 	struct fxp_attrs attrs;
+#endif
 	int result;
 
 	req = fxp_stat_send(dstfname);
@@ -1774,7 +1787,9 @@ struct sftp_context_chmod {
 };
 
 static int sftp_action_chmod(void *vctx, char *fname) {
+#ifndef __SFTP4TC__
 	struct fxp_attrs attrs;
+#endif
 	struct sftp_packet *pktin;
 	struct sftp_request *req;
 	int result;
