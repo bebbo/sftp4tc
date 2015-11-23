@@ -23,8 +23,9 @@ public:
 	Guard();
 	Guard(Server * server, config_tag * cfg = 0);
 	~Guard();
-	bool isConnected();
+	bool connect();
 	bool isLoaded();
+	bool isConnected();
 };
 
 Guard::Guard() :
@@ -47,15 +48,20 @@ bool Guard::isLoaded() {
 	return mapper && mapper->hDll;
 }
 
-// checks existing connection and creates a new one if none exists.
 bool Guard::isConnected() {
+	return mapper && mapper->hDll && !mapper->disconnected();
+}
+
+// checks existing connection and creates a new one if none exists.
+bool Guard::connect() {
 	if (!server)
 		return false;
 
-	if (!mapper || !mapper->hDll || mapper->disconnected()) {
+	if (!isConnected()) {
 		if (mapper) {
 			//      gLogProc(gPluginNumber, MSGTYPE_DISCONNECT, (TEXT("connection to ") + server->name + TEXT(" IS BROKEN!")).c_str());
 			delete mapper;
+			server->myCfg->config = 0;
 		}
 		mapper = new PsftpMapper(server->name, server->sessionName, server->myCfg);
 		if (!mapper->hDll)
@@ -259,7 +265,7 @@ Server::~Server() {
 
 bool Server::connect() {
 	Guard guard(this);
-	return guard.isConnected();
+	return guard.connect();
 	//return true;
 }
 
@@ -419,20 +425,29 @@ bool Server::getHomeDir(bstring & response) {
 // execute a SFTP command
 bool Server::doCommand(bstring const & command, bstring & response) {
 	Guard guard(this);
-	if (!guard.isConnected())
+	if (!guard.connect())
 		return false;
 
 	gLogProc(gPluginNumber, MSGTYPE_DETAILS, command.c_str());
 
 	bchar buffer[8192];
-	*buffer = 0;
-	int r = guard.mapper->doSftp(command.c_str(), buffer);
+	
+	for (int retry = 0; retry < 2; ++retry) {
+		*buffer = 0;
+		int r = guard.mapper->doSftp(command.c_str(), buffer);
 
-	if (*buffer) {
-		response = buffer;
-		gLogProc(gPluginNumber, MSGTYPE_OPERATIONCOMPLETE, buffer);
+		if (guard.isConnected()) {
+			if (*buffer) {
+				response = buffer;
+				gLogProc(gPluginNumber, MSGTYPE_OPERATIONCOMPLETE, buffer);
+			}
+			return 0 != r;
+		}
+
+		if (!guard.connect())
+			return false;
 	}
-	return 0 != r;
+	return false;
 }
 
 //---------------------------------------------------------------------
@@ -491,17 +506,17 @@ bool Server::remoteFileExists(bstring const & remotePath) {
 // get remote content and store it into the dir cache
 bool Server::cmdLs(bstring const & remotePath) {
 	Guard guard(this);
-	if (!guard.isConnected())
+	if (!guard.connect())
 		return false;
 
 	bstring cmd = bstring(TEXT("ls \"")) + remotePath + TEXT('"');
 
 	guard.mapper->freeCurrentDirStruct();
-	my_fxp_names * cds = guard.mapper->getCurrentDirStruct();
 
 	if (!doCommand(cmd))
 		return false;
 
+	my_fxp_names * cds = guard.mapper->getCurrentDirStruct();
 	if (!cds->names)
 		return false;
 
@@ -725,7 +740,7 @@ bool Server::cmdMtime(bstring const & remotePath, FILETIME * ft) {
 //---------------------------------------------------------------------
 void Server::setTransferAscii(bool ta) {
 	Guard guard(this);
-	if (!guard.isConnected())
+	if (!guard.connect())
 		return;
 
 	guard.mapper->setTransferAscii(ta);

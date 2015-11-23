@@ -28,8 +28,8 @@ BEGIN
     CTEXT "PuTTY Release 0.63", IDA_VERSION, 10, 8, 194, 16
     CTEXT "\251 1997-2013 Simon Tatham. All rights reserved.",
           IDA_TEXT2, 10, 16, 194, 16
-    CTEXT "SFTP4TC 1.4.63.6", 997, 10, 30, 194, 8
-    CTEXT "Copyright \251 2002-2014 by Stefan Bebbo Franke,", 998, 10, 40, 194, 8
+    CTEXT "SFTP4TC 1.4.63.7", 997, 10, 30, 194, 8
+    CTEXT "Copyright \251 2002-2015 by Stefan Bebbo Franke,", 998, 10, 40, 194, 8
     CTEXT "Hans Petrich, Martin Kanich, Lubos Kosco", 999, 10, 50, 194, 8
 END
 
@@ -61,7 +61,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON "OK", IDOK, 98, 243, 44, 14
 
-    LTEXT "SFTP4TC Copyright \251 2002-2014 by Stefan Bebbo Franke,", 998, 10, 0, 206, 8
+    LTEXT "SFTP4TC Copyright \251 2002-2015 by Stefan Bebbo Franke,", 998, 10, 0, 206, 8
     LTEXT "               Hans Petrich, Martin Kanich, Lubos Kosco", 999, 10, 8, 206, 8
     LTEXT "PuTTY   Copyright \251 1997-2013 Simon Tatham", 1000, 10, 20, 206, 8
 
@@ -94,4 +94,4 @@ BEGIN
 
 END
 
-#include "version.rc2"
+//#include "version.rc2"

@@ -203,12 +203,10 @@
       <ManifestFile>$(Configuration)\$(TargetFileName).intermediate.manifest</ManifestFile>
       <ModuleDefinitionFile>.\fsplugin.def</ModuleDefinitionFile>
       <IgnoreEmbeddedIDL>true</IgnoreEmbeddedIDL>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>.\$(Configuration)/plugin_sftp.pdb</ProgramDatabaseFile>
-      <GenerateMapFile>true</GenerateMapFile>
+      <ProgramDatabaseFile>.\$(Configuration)64/plugin_sftp.pdb</ProgramDatabaseFile>
       <OptimizeReferences>true</OptimizeReferences>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <ImportLibrary>.\$(Configuration)/plugin_sftp.lib</ImportLibrary>
+      <ImportLibrary>.\$(Configuration)64/plugin_sftp.lib</ImportLibrary>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>

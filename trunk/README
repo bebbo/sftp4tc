@@ -1,3 +1,7 @@
+﻿VERSION 1.4.63.7 [2015-11-20]
+*FIXED #8 reconnect an expired session could cause a crash
++ADDED if the connection is broken, one attempt to reconnect is done immediately
+
 VERSION 1.4.63.6 [2014-12-03]
 *FIXED file dates are transferred correctly
 

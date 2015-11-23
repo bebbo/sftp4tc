@@ -247,6 +247,21 @@ const char *const ttymodes[] = {
     c->codePage = cp->cp;
   }
 
+    /**
+   * Get the code page from selected name.
+   */
+  char * getCodePage(struct Sftp4tc * c) {
+    struct CpData * cp = &CPDATA[0];
+
+    // search all code page
+    while (cp->name) {
+		if (c->codePage == cp->cp)
+			return cp->name;
+      ++cp;
+    }
+    return NULL;
+  }
+
 
 /*
 * Convenience functions to access the backends[] array
@@ -872,9 +887,7 @@ void updateSftpCfg(struct Sftp4tc *conf) {
 
   conf->cacheFolders = conf_get_int(conf->config, CONF_sftpCacheFolders);
   conf->hideDotNames = conf_get_int(conf->config, CONF_sftpHideDotNames);
-  //conf->isUnicode = conf_get_int(conf->config, CONF_);
   conf->port = conf_get_int(conf->config, CONF_port);
-//  conf->codePage= conf_get_int(conf->config, CONF_line_codepage);
   strncpy(conf->defChMod, conf_get_str(conf->config, CONF_sftpDefChMod), 31);
   strncpy(conf->exeChMod, conf_get_str(conf->config, CONF_sftpExeChMod), 31);
   strncpy(conf->exeExtensions, conf_get_str(conf->config, CONF_sftpExeExtensions), 1023);
@@ -885,6 +898,24 @@ void updateSftpCfg(struct Sftp4tc *conf) {
   conf->storePassword = conf_get_int(conf->config, CONF_sftpStorePassword);
 
   setCodePage(conf);
+}
+
+void loadSftpCfg(struct Sftp4tc *conf) {
+		  // update structure
+
+  conf_set_int(conf->config, CONF_sftpCacheFolders, conf->cacheFolders);
+  conf_set_int(conf->config, CONF_sftpHideDotNames, conf->hideDotNames);
+  conf_set_int(conf->config, CONF_port, conf->port);
+  conf_set_str(conf->config, CONF_sftpDefChMod, conf->defChMod);
+  conf_set_str(conf->config, CONF_sftpExeChMod, conf->exeChMod);
+  conf_set_str(conf->config, CONF_sftpExeExtensions, conf->exeExtensions);
+  conf_set_str(conf->config, CONF_sftpHomeDir, conf->homeDir);
+  conf_set_str(conf->config, CONF_host, conf->host);
+  conf_set_str(conf->config, CONF_iniPath, conf->iniPath);
+  conf_set_str(conf->config, CONF_sftpCommand, conf->sftpCommand);
+  conf_set_int(conf->config, CONF_sftpStorePassword, conf->storePassword );
+
+  getCodePage(conf);
 }
 
 void load_open_settings(struct KeyOrIni *sesskey, Conf *conf)

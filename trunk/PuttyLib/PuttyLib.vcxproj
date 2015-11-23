@@ -134,8 +134,8 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ManifestFile>$(Configuration)\$(TargetFileName).intermediate.manifest</ManifestFile>
       <ModuleDefinitionFile>.\PuttyLib.def</ModuleDefinitionFile>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <GenerateMapFile>true</GenerateMapFile>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateMapFile>false</GenerateMapFile>
       <OptimizeReferences>true</OptimizeReferences>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <ImportLibrary>.\$(Configuration)/psftp.lib</ImportLibrary>
@@ -195,8 +195,8 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ManifestFile>$(Configuration)64\$(TargetFileName).intermediate.manifest</ManifestFile>
       <ModuleDefinitionFile>.\PuttyLib.def</ModuleDefinitionFile>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <GenerateMapFile>true</GenerateMapFile>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateMapFile>false</GenerateMapFile>
       <OptimizeReferences>true</OptimizeReferences>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <ImportLibrary>.\$(Configuration)64/psftp.lib</ImportLibrary>
