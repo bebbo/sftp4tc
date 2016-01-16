@@ -900,24 +900,6 @@ void updateSftpCfg(struct Sftp4tc *conf) {
   setCodePage(conf);
 }
 
-void loadSftpCfg(struct Sftp4tc *conf) {
-		  // update structure
-
-  conf_set_int(conf->config, CONF_sftpCacheFolders, conf->cacheFolders);
-  conf_set_int(conf->config, CONF_sftpHideDotNames, conf->hideDotNames);
-  conf_set_int(conf->config, CONF_port, conf->port);
-  conf_set_str(conf->config, CONF_sftpDefChMod, conf->defChMod);
-  conf_set_str(conf->config, CONF_sftpExeChMod, conf->exeChMod);
-  conf_set_str(conf->config, CONF_sftpExeExtensions, conf->exeExtensions);
-  conf_set_str(conf->config, CONF_sftpHomeDir, conf->homeDir);
-  conf_set_str(conf->config, CONF_host, conf->host);
-  conf_set_str(conf->config, CONF_iniPath, conf->iniPath);
-  conf_set_str(conf->config, CONF_sftpCommand, conf->sftpCommand);
-  conf_set_int(conf->config, CONF_sftpStorePassword, conf->storePassword );
-
-  getCodePage(conf);
-}
-
 void load_open_settings(struct KeyOrIni *sesskey, Conf *conf)
 {
 	int i;
