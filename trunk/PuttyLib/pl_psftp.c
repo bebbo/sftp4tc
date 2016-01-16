@@ -102,7 +102,6 @@ void configure(char const * sessionName) {
 	if (!cfg.config) {
 		cfg.config = conf_new();
 		do_defaults((char *)sessionName, &cfg);
-		loadSftpCfg(&cfg);
 	} else if (cfg.copyMe) {
 		// quick connection provides a config object, if open was pressed
 		// take a copy, since it belongs to a different DLL

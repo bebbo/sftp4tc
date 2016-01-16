@@ -1,5 +1,5 @@
 [plugininstall]
-description=SFTP4TC the PuTTY based SFTP plugin V 1.4.63.7
+description=SFTP4TC the PuTTY based SFTP plugin V 1.4.63.8
 type=wfx
 file=plugin_sftp.wfx
 file=psftp.dll
