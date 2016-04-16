@@ -1,3 +1,6 @@
+VERSON 1.4.63.9 [2016-04-16]
+*FIXED #10 Handle missing "." in ls response for empty folders.
+
 VERSON 1.4.63.8 [2016-01-15]
 *FIXED #9 Automatically establish a connection on navigation to \\Secure FTP Connections\SOMENAME
 
