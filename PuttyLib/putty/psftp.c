@@ -1226,6 +1226,20 @@ int sftp_cmd_ls(struct sftp_command *cmd) {
 			}
 			if (names->nnames == 0) {
 				fxp_free_names(names);
+
+				// server does not send "."
+				if (nnames == 0) {
+
+					static struct fxp_name DOTENTRY = { ".", "drwxrwxr-x    1 unknown  unknown         0 Jan 01 01:23 .", 
+					{0, 0, 0, 0, 0, 0, 0, 0}, L"." };
+
+					if (nnames >= namesize) {
+						namesize += 1;
+						ournames = sresize(ournames, namesize, struct fxp_name *);
+					}
+					ournames[nnames++] = fxp_dup_name(&DOTENTRY);
+				}
+
 				break;
 			}
 
