@@ -198,7 +198,7 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 		      "ClearType", I(FQ_CLEARTYPE),
 		      "Default", I(FQ_DEFAULT), NULL);
 #endif
-
+#ifndef __SFTP4TC__
     /*
      * Cyrillic Lock is a horrid misfeature even on Windows, and
      * the least we can do is ensure it never makes it to any other
@@ -209,7 +209,7 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 		  HELPCTX(translation_cyrillic),
 		  conf_checkbox_handler,
 		  I(CONF_xlat_capslockcyr));
-
+#endif
     /*
      * On Windows we can use but not enumerate translation tables
      * from the operating system. Briefly document this.
@@ -219,7 +219,7 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
     ctrl_text(s, "(Codepages supported by Windows but not listed here, "
 	      "such as CP866 on many systems, can be entered manually)",
 	      HELPCTX(translation_codepage));
-
+#ifndef __SFTP4TC__
     /*
      * Windows has the weird OEM font mode, which gives us some
      * additional options when working with line-drawing
@@ -265,7 +265,7 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 	    }
 	}
     }
-
+#endif
 #ifndef __SFTP4TC__
 
     /*
@@ -398,6 +398,7 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
      * $XAUTHORITY is not reliable on Windows, so we provide a
      * means to override it.
      */
+#ifndef __SFTP4TC__
     if (!midsession && backend_from_proto(PROT_SSH)) {
 	s = ctrl_getset(b, "Connection/SSH/X11", "x11", "X11 forwarding");
 	ctrl_filesel(s, "X authority file for local display", 't',
@@ -405,4 +406,6 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 		     HELPCTX(ssh_tunnels_xauthority),
 		     conf_filesel_handler, I(CONF_xauthfile));
     }
+#endif
+
 }

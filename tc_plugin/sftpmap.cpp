@@ -14,10 +14,10 @@ extern "C" {
 #define PSFTPDLLNF L"psftp64.dll not found"
 #define PSFTPDLLU L"psftp64_"
 #else
-#define PSFTPDLL L"psftp.dll"
-#define RPSFTPDLL L"\\psftp.dll"
-#define PSFTPDLLNF L"psftp.dll not found"
-#define PSFTPDLLU L"psftp_"
+#define PSFTPDLL TEXT("psftp.dll")
+#define RPSFTPDLL TEXT("\\psftp.dll")
+#define PSFTPDLLNF TEXT("psftp.dll not found")
+#define PSFTPDLLU TEXT("psftp_")
 #endif
 
 //---------------------------------------------------------------------

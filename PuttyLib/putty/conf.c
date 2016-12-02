@@ -39,6 +39,16 @@ struct key {
     } secondary;
 };
 
+/* Variant form of struct key which doesn't contain dynamic data, used
+ * for lookups. */
+struct constkey {
+    int primary;
+    union {
+	int i;
+	const char *s;
+    } secondary;
+};
+
 struct value {
     union {
 	int intval;
@@ -69,6 +79,29 @@ static int conf_cmp(void *av, void *bv)
 {
     struct key *a = (struct key *)av;
     struct key *b = (struct key *)bv;
+
+    if (a->primary < b->primary)
+	return -1;
+    else if (a->primary > b->primary)
+	return +1;
+    switch (subkeytypes[a->primary]) {
+      case TYPE_INT:
+	if (a->secondary.i < b->secondary.i)
+	    return -1;
+	else if (a->secondary.i > b->secondary.i)
+	    return +1;
+	return 0;
+      case TYPE_STR:
+	return strcmp(a->secondary.s, b->secondary.s);
+      default:
+	return 0;
+    }
+}
+
+static int conf_cmp_constkey(void *av, void *bv)
+{
+    struct key *a = (struct key *)av;
+    struct constkey *b = (struct constkey *)bv;
 
     if (a->primary < b->primary)
 	return -1;
@@ -289,7 +322,7 @@ char *conf_get_str_str(Conf *conf, int primary, const char *secondary)
 char *conf_get_str_strs(Conf *conf, int primary,
 		       char *subkeyin, char **subkeyout)
 {
-    struct key key;
+    struct constkey key;
     struct conf_entry *entry;
 
     assert(subkeytypes[primary] == TYPE_STR);
@@ -300,7 +333,7 @@ char *conf_get_str_strs(Conf *conf, int primary,
 	entry = findrel234(conf->tree, &key, NULL, REL234_GT);
     } else {
 	key.secondary.s = "";
-	entry = findrel234(conf->tree, &key, NULL, REL234_GE);
+	entry = findrel234(conf->tree, &key, conf_cmp_constkey, REL234_GE);
     }
     if (!entry || entry->key.primary != primary)
 	return NULL;
@@ -310,7 +343,7 @@ char *conf_get_str_strs(Conf *conf, int primary,
 
 char *conf_get_str_nthstrkey(Conf *conf, int primary, int n)
 {
-    struct key key;
+    struct constkey key;
     struct conf_entry *entry;
     int index;
 
@@ -318,7 +351,8 @@ char *conf_get_str_nthstrkey(Conf *conf, int primary, int n)
     assert(valuetypes[primary] == TYPE_STR);
     key.primary = primary;
     key.secondary.s = "";
-    entry = findrelpos234(conf->tree, &key, NULL, REL234_GE, &index);
+    entry = findrelpos234(conf->tree, &key, conf_cmp_constkey,
+                          REL234_GE, &index);
     if (!entry || entry->key.primary != primary)
 	return NULL;
     entry = index234(conf->tree, index + n);
@@ -438,11 +472,11 @@ void conf_set_fontspec(Conf *conf, int primary, const FontSpec *value)
     conf_insert(conf, entry);
 }
 
-size_t conf_serialised_size(Conf *conf)
+int conf_serialised_size(Conf *conf)
 {
     int i;
     struct conf_entry *entry;
-    size_t size = 0;
+    int size = 0;
 
     for (i = 0; (entry = index234(conf->tree, i)) != NULL; i++) {
 	size += 4;   /* primary key */
@@ -478,8 +512,7 @@ size_t conf_serialised_size(Conf *conf)
 void conf_serialise(Conf *conf, void *vdata)
 {
     unsigned char *data = (unsigned char *)vdata;
-    int i;
-	size_t len;
+    int i, len;
     struct conf_entry *entry;
 
     for (i = 0; (entry = index234(conf->tree, i)) != NULL; i++) {
@@ -526,14 +559,15 @@ int conf_deserialise(Conf *conf, void *vdata, int maxsize)
     unsigned char *data = (unsigned char *)vdata;
     unsigned char *start = data;
     struct conf_entry *entry;
-    int primary, used;
+    unsigned primary;
+    int used;
     unsigned char *zero;
 
     while (maxsize >= 4) {
 	primary = GET_32BIT_MSB_FIRST(data);
 	data += 4, maxsize -= 4;
 
-	if ((unsigned)primary >= N_CONFIG_OPTIONS)
+	if (primary >= N_CONFIG_OPTIONS)
 	    break;
 
 	entry = snew(struct conf_entry);
@@ -555,7 +589,7 @@ int conf_deserialise(Conf *conf, void *vdata, int maxsize)
 		goto done;
 	    }
 	    entry->key.secondary.s = dupstr((char *)data);
-	    maxsize -= (int)(zero + 1 - data);
+	    maxsize -= (zero + 1 - data);
 	    data = zero + 1;
 	    break;
 	}
@@ -568,7 +602,7 @@ int conf_deserialise(Conf *conf, void *vdata, int maxsize)
 		sfree(entry);
 		goto done;
 	    }
-	    entry->value.u.intval = GET_32BIT_MSB_FIRST(data);
+	    entry->value.u.intval = toint(GET_32BIT_MSB_FIRST(data));
 	    data += 4, maxsize -= 4;
 	    break;
 	  case TYPE_STR:
@@ -580,7 +614,7 @@ int conf_deserialise(Conf *conf, void *vdata, int maxsize)
 		goto done;
 	    }
 	    entry->value.u.stringval = dupstr((char *)data);
-	    maxsize -= (int)(zero + 1 - data);
+	    maxsize -= (zero + 1 - data);
 	    data = zero + 1;
 	    break;
 	  case TYPE_FILENAME:

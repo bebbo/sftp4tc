@@ -88,7 +88,7 @@ struct sftp_packet *sftp_wait_for_reply(struct sftp_request *req) {
  * canonification fails, at least fall back to returning a _valid_
  * pathname (though it may be ugly, eg /home/simon/../foobar).
  */
-char *canonify(char *name)
+char *canonify(const char *name)
 {
 	char *fullname, *canonname;
 	struct sftp_packet *pktin;
@@ -97,7 +97,7 @@ char *canonify(char *name)
 	if (name[0] == '/') {
 		fullname = dupstr(name);
 	} else {
-		char *slash;
+		const char *slash;
 		if (pwd[strlen(pwd) - 1] == '/')
 			slash = "";
 		else
@@ -188,32 +188,6 @@ char *canonify(char *name)
 		sfree(canonname);
 		return returnname;
 	}
-}
-
-/*
- * Return a pointer to the portion of str that comes after the last
- * slash (or backslash or colon, if `local' is TRUE).
- */
-static char *stripslashes(char *str, int local) {
-	char *p;
-
-	if (local) {
-		p = strchr(str, ':');
-		if (p)
-			str = p + 1;
-	}
-
-	p = strrchr(str, '/');
-	if (p)
-		str = p + 1;
-
-	if (local) {
-		p = strrchr(str, '\\');
-		if (p)
-			str = p + 1;
-	}
-
-	return str;
 }
 
 /*
@@ -1169,7 +1143,8 @@ int sftp_cmd_ls(struct sftp_command *cmd) {
 	struct fxp_names *names;
 	struct fxp_name **ournames;
 	int nnames, namesize;
-	char *dir, *cdir, *unwcdir, *wildcard;
+    const char *dir;
+    char *cdir, *unwcdir, *wildcard;
 	struct sftp_packet *pktin;
 	struct sftp_request *req;
 	int i;
@@ -2083,7 +2058,7 @@ static int sftp_cmd_pling(struct sftp_command *cmd) {
 static int sftp_cmd_help(struct sftp_command *cmd);
 
 static struct sftp_cmd_lookup {
-	char *name;
+	const char *name;
 	/*
 	 * For help purposes, there are two kinds of command:
 	 *
@@ -2097,8 +2072,8 @@ static struct sftp_cmd_lookup {
 	 *    contains the help that should double up for this command.
 	 */
 	int listed; /* do we list this in primary help? */
-	char *shorthelp;
-	char *longhelp;
+	const char *shorthelp;
+	const char *longhelp;
 	int (*obey)(struct sftp_command *);
 } sftp_lookup[] =
 		{
@@ -2261,7 +2236,7 @@ static struct sftp_cmd_lookup {
 								"  Wildcards may be used to specify multiple directories.\n",
 						sftp_cmd_rmdir } };
 
-const struct sftp_cmd_lookup *lookup_command(char *name) {
+const struct sftp_cmd_lookup *lookup_command(const char *name) {
 	int i, j, k, cmp;
 
 	i = -1;
@@ -2578,7 +2553,7 @@ static int verbose = 0;
 /*
  *  Print an error message and perform a fatal exit.
  */
-void fatalbox(char *fmt, ...) {
+void fatalbox(const char *fmt, ...) {
 set_disconnected();
 #ifndef __SFTP4TC__
 char *str, *str2;
@@ -2594,7 +2569,7 @@ sfree(str2);
 cleanup_exit(1);
 #endif
 }
-void modalfatalbox(char *fmt, ...) {
+void modalfatalbox(const char *fmt, ...) {
 set_disconnected();
 #ifndef __SFTP4TC__
 char *str, *str2;
@@ -2610,7 +2585,7 @@ sfree(str2);
 cleanup_exit(1);
 #endif
 }
-void nonfatal(char *fmt, ...) {
+void nonfatal(const char *fmt, ...) {
 char *str, *str2;
 va_list ap;
 va_start(ap, fmt);
@@ -2621,7 +2596,7 @@ va_end(ap);
 fputs(str2, stderr);
 sfree(str2);
 }
-void connection_fatal(void *frontend, char *fmt, ...) {
+void connection_fatal(void *frontend, const char *fmt, ...) {
 set_disconnected();
 #ifndef __SFTP4TC__
 char *str, *str2;
@@ -2638,15 +2613,7 @@ cleanup_exit(1);
 #endif
 }
 
-void ldisc_send(void *handle, char *buf, int len, int interactive) {
-/*
- * This is only here because of the calls to ldisc_send(NULL,
- * 0) in ssh.c. Nothing in PSFTP actually needs to use the
- * ldisc as an ldisc. So if we get called with any real data, I
- * want to know about it.
- */
-assert(len == 0);
-}
+void ldisc_echoedit_update(void *handle) { }
 
 /*
  * In psftp, all agent requests should be synchronous, so this is a
@@ -2769,6 +2736,11 @@ return 1;
 int sftp_senddata(char *buf, int len) {
 back->send(backhandle, buf, len);
 return 1;
+}
+
+int sftp_sendbuffer(void)
+{
+    return back->sendbuffer(backhandle);
 }
 
 #ifndef __STFP4TC__
@@ -3028,7 +3000,7 @@ if (realhost != NULL)
 return 0;
 }
 
-void cmdline_error(char *p, ...) {
+void cmdline_error(const char *p, ...) {
 va_list ap;
 fnprintf((stderr, "psftp: "));
 va_start(ap, p);
@@ -3117,6 +3089,8 @@ for (i = 1; i < argc; i++) {
 argc -= i;
 argv += i;
 back = NULL;
+
+platform_psftp_post_option_setup();
 
 /*
  * If the loaded session provides a hostname, and a hostname has not

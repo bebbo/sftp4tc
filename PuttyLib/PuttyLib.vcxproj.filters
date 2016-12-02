@@ -33,66 +33,6 @@
     <ClCompile Include="..\shared\sftp4tc_share.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="putty\SSHAES.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHARCF.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHBLOWF.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHBN.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHCRC.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHCRCDA.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHDES.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHDH.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHDSS.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHDSSG.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHMD5.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHPRIME.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHPUBK.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHRAND.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHRSA.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHRSAG.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHSH256.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHSH512.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHSHA.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSHZLIB.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="putty\time.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -139,9 +79,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="putty\windows\winjump.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\windows\wincons.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="putty\windows\winhandl.c">
@@ -210,6 +147,93 @@
     <ClCompile Include="putty\winsecur.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="putty\sshaes.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\ssharcf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshbcrypt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshblowf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshbn.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshccp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshcrc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshcrcda.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshdes.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshdh.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshdss.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshdssg.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshecc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshecdsag.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshgssc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshmd5.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshnogss.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshprime.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshpubk.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshrand.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshrsa.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshrsag.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshsh256.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshsh512.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshsha.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sshzlib.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\be_misc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\windows\wincons.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\nogss.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="PuttyLib.def">
@@ -236,55 +260,22 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="putty\INT64.H">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="putty\MISC.H">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="putty\NETWORK.H">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="pl_consts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="pl_misc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="putty\PROXY.H">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="putty\PUTTY.H">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PuttyLib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="putty\PUTTYMEM.H">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="putty\puttyps.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="putty\RESOURCE.H">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="putty\SFTP.H">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\shared\sftp4tc_share.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="putty\SSH.H">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="StdAfx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="putty\STORAGE.H">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="putty\TREE234.H">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="putty\windows\win_res.h">
@@ -299,10 +290,64 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="putty\sshgssc.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="puttyver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\dialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\int64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\ldisc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\licence.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\misc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\network.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\pgssapi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\proxy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\psftp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\putty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\ssh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\sshblowf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\sshbn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\sshgss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\sshgssc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\storage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\tree234.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\winsecur.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

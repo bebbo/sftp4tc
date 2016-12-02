@@ -61,7 +61,7 @@ int init_Procs(tRequestProcW prequestProc, tProgressProcW pprogressProc, tCryptP
 	return 1;
 }
 
-HANDLE myCreateFile(char * name, DWORD a, DWORD b, LPSECURITY_ATTRIBUTES p,
+HANDLE myCreateFile(const char * name, DWORD a, DWORD b, LPSECURITY_ATTRIBUTES p,
 	DWORD d, DWORD e, HANDLE f) {
 	wchar_t buff[1024] = { 0 };
 	int cp = cfg.codePage;
