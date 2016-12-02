@@ -21,7 +21,7 @@ class Guard {
 public:
 	PsftpMapper * & mapper;
 	Guard();
-	Guard(Server * server, config_tag * cfg = 0);
+	Guard(Server * server, Conf * cfg = 0);
 	~Guard();
 	bool connect();
 	bool isLoaded();
@@ -33,7 +33,7 @@ Guard::Guard() :
 	mapper = new PsftpMapper(TEXT("~"), TEXT(""));
 }
 
-Guard::Guard(Server * server, config_tag * cfg) :
+Guard::Guard(Server * server, Conf * cfg) :
 		intern(0), server(server), mapper(server->currentMapper) {
 }
 

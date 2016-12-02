@@ -1,7 +1,10 @@
-VERSON 1.4.63.9 [2016-04-16]
+VERSION 1.4.67.1 [2016-12-01]
+* Updated to PuTTY 0.67
+
+VERSION 1.4.63.9 [2016-04-16]
 *FIXED #10 Handle missing "." in ls response for empty folders.
 
-VERSON 1.4.63.8 [2016-01-15]
+VERSION 1.4.63.8 [2016-01-15]
 *FIXED #9 Automatically establish a connection on navigation to \\Secure FTP Connections\SOMENAME
 
 VERSION 1.4.63.7 [2015-11-20]

@@ -56,7 +56,7 @@ int makekey(unsigned char *data, int len, struct RSAKey *result,
 	p += n;
 	len -= n;
     }
-    return (int)(p - data);
+    return p - data;
 }
 
 int makeprivate(unsigned char *data, int len, struct RSAKey *result)
@@ -264,6 +264,7 @@ static Bignum rsa_privkey_op(Bignum input, struct RSAKey *key)
 	    bitsleft--;
 	    bignum_set_bit(random, bits, v);
 	}
+        bn_restore_invariant(random);
 
 	/*
 	 * Now check that this number is strictly greater than
@@ -392,7 +393,7 @@ void rsa_fingerprint(char *str, int len, struct RSAKey *key)
 		digest[i]);
     strncpy(str, buffer, len);
     str[len - 1] = '\0';
-    slen = (int)strlen(str);
+    slen = strlen(str);
     if (key->comment && slen < len - 1) {
 	str[slen] = ' ';
 	strncpy(str + slen + 1, key->comment, len - slen - 1);
@@ -507,7 +508,7 @@ int rsa_public_blob_len(void *data, int maxlen)
 	return -1;
     p += n;
 
-    return (int)(p - (unsigned char *)data);
+    return p - (unsigned char *)data;
 }
 
 void freersakey(struct RSAKey *key)
@@ -767,6 +768,8 @@ static int rsa2_pubkey_bits(void *blob, int len)
     int ret;
 
     rsa = rsa2_newkey((char *) blob, len);
+    if (!rsa)
+	return -1;
     ret = bignum_bitcount(rsa->modulus);
     rsa2_freekey(rsa);
 

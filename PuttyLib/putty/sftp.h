@@ -60,10 +60,10 @@
 /*
  * External references. The sftp client module sftp.c expects to be
  * able to get at these functions.
- *
+ * 
  * sftp_recvdata must never return less than len. It either blocks
  * until len is available, or it returns failure.
- *
+ * 
  * Both functions return 1 on success, 0 on failure.
  */
 int sftp_senddata(char *data, int len);
@@ -272,16 +272,22 @@ int xfer_tail_complete(struct fxp_xfer *xfer);
 int xfer_done(struct fxp_xfer *xfer);
 void xfer_set_error(struct fxp_xfer *xfer);
 void xfer_cleanup(struct fxp_xfer *xfer);
-
 #ifndef TREE234_H
 	struct config_tag {
 		void * tree;
 	};
 #endif
 
+#ifndef DONE_TYPEDEFS
+#define DONE_TYPEDEFS
+typedef struct conf_tag Conf;
+typedef struct backend_tag Backend;
+typedef struct terminal_tag Terminal;
+#endif
+
 struct Sftp4tc {
 	// original handle
-	struct config_tag * config;
+	Conf * config;
 
 	// values copied from config
 

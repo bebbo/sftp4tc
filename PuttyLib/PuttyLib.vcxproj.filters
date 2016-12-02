@@ -15,31 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="putty\BE_ALL.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\CONFIG.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="putty\cproxy.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\DIALOG.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\IMPORT.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\INT64.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\LOGGING.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\MISC.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\NOPRINT.C">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="putty\pinger.c">
@@ -48,34 +24,13 @@
     <ClCompile Include="pl_psftp.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="putty\PORTFWD.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="putty\pproxy.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\PROXY.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\PSFTP.C">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PuttyLib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="putty\SERCFG.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SETTINGS.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SFTP.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\shared\sftp4tc_share.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\SSH.C">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="putty\SSHAES.C">
@@ -144,18 +99,6 @@
     <ClCompile Include="putty\timing.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="putty\TREE234.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\VERSION.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\WCWIDTH.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\WILDCARD.C">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="putty\windows\wincfg.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -201,12 +144,6 @@
     <ClCompile Include="putty\windows\wincons.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="putty\cmdline.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="putty\x11fwd.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="putty\windows\winhandl.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -214,6 +151,63 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="putty\windows\winhelp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\psftp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\config.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\be_all.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\dialog.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\import.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\int64.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\logging.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\misc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\noprint.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\settings.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\sftp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\tree234.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\version.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\wcwidth.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\wildcard.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\develop\workspaces\workspace\sftp4tc\PuttyLib\putty\proxy.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\callback.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\ssh.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="putty\winsecur.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -308,7 +302,7 @@
     <ClInclude Include="putty\sshgssc.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="putty\windows\resource.h">
+    <ClInclude Include="puttyver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

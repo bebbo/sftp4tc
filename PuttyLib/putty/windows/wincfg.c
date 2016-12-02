@@ -172,6 +172,7 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 		      "Disabled", I(B_IND_DISABLED),
 		      "Flashing", I(B_IND_FLASH),
 		      "Steady", I(B_IND_STEADY), NULL);
+
     /*
      * The sunken-edge border is a Windows GUI feature.
      */
@@ -198,7 +199,7 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 		      "Default", I(FQ_DEFAULT), NULL);
 #endif
 
-	/*
+    /*
      * Cyrillic Lock is a horrid misfeature even on Windows, and
      * the least we can do is ensure it never makes it to any other
      * platform (at least unless someone fixes it!).

@@ -102,6 +102,16 @@ void modalfatalbox(char *p, ...)
     cleanup_exit(1);
 }
 
+void nonfatal(char *p, ...)
+{
+    va_list ap;
+    fprintf(stderr, "ERROR: ");
+    va_start(ap, p);
+    vfprintf(stderr, p, ap);
+    va_end(ap);
+    fputc('\n', stderr);
+}
+
 /*
  * Stubs to let everything else link sensibly.
  */
@@ -780,11 +790,11 @@ int main(int argc, char **argv)
 		ssh2blob = ssh2_userkey_loadpub(infilename, &ssh2alg,
 						&ssh2bloblen, NULL, &error);
                 if (ssh2blob) {
-		ssh2algf = find_pubkey_alg(ssh2alg);
-		if (ssh2algf)
-		    bits = ssh2algf->pubkey_bits(ssh2blob, ssh2bloblen);
-		else
-		    bits = -1;
+                    ssh2algf = find_pubkey_alg(ssh2alg);
+                    if (ssh2algf)
+                        bits = ssh2algf->pubkey_bits(ssh2blob, ssh2bloblen);
+                    else
+                        bits = -1;
                 }
 	    } else {
 		ssh2key = ssh2_load_userkey(infilename, passphrase, &error);
@@ -1024,6 +1034,8 @@ int main(int argc, char **argv)
       case SSHCOM:
 	assert(sshver == 2);
 	assert(ssh2key);
+	random_ref(); /* both foreign key types require randomness,
+                       * for IV or padding */
 	ret = export_ssh2(outfilename, outtype, ssh2key, passphrase);
 	if (!ret) {
 	    fprintf(stderr, "puttygen: unable to export key\n");

@@ -137,15 +137,15 @@ static void rlogin_startup(Rlogin rlogin, const char *ruser)
 
     sk_write(rlogin->s, &z, 1);
     p = conf_get_str(rlogin->conf, CONF_localusername);
-    sk_write(rlogin->s, p, (int)strlen(p));
+    sk_write(rlogin->s, p, strlen(p));
     sk_write(rlogin->s, &z, 1);
-    sk_write(rlogin->s, ruser, (int)strlen(ruser));
+    sk_write(rlogin->s, ruser, strlen(ruser));
     sk_write(rlogin->s, &z, 1);
     p = conf_get_str(rlogin->conf, CONF_termtype);
-    sk_write(rlogin->s, p, (int)strlen(p));
+    sk_write(rlogin->s, p, strlen(p));
     sk_write(rlogin->s, "/", 1);
     p = conf_get_str(rlogin->conf, CONF_termspeed);
-    sk_write(rlogin->s, p, (int)strspn(p, "0123456789"));
+    sk_write(rlogin->s, p, strspn(p, "0123456789"));
     rlogin->bufsize = sk_write(rlogin->s, &z, 1);
 
     rlogin->prompt = NULL;
@@ -226,15 +226,10 @@ static const char *rlogin_init(void *frontend_handle, void **backend_handle,
 
 	sfree(*realhost);
 	*realhost = dupstr(loghost);
-	colon = strrchr(*realhost, ':');
-	if (colon) {
-	    /*
-	     * FIXME: if we ever update this aspect of ssh.c for
-	     * IPv6 literal management, this should change in line
-	     * with it.
-	     */
+
+	colon = host_strrchr(*realhost, ':');
+	if (colon)
 	    *colon++ = '\0';
-	}
     }
 
     /*
