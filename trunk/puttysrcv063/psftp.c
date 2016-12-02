@@ -2746,10 +2746,12 @@ static int psftp_connect(char *userhost, char *user, int portnumber)
     if ((conf_get_int(conf, CONF_sshprot) & ~1) != 2)   /* is it 2 or 3? */
 	conf_set_int(conf, CONF_sshprot, 2);
 
+#ifndef __SFTP4TC__
     /*
      * Enact command-line overrides.
      */
     cmdline_run_saved(conf);
+#endif
 
     /*
      * Muck about with the hostname in various ways.

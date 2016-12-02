@@ -53,7 +53,7 @@ struct conf_entry {
     struct value value;
 };
 
-struct config_tag {
+struct conf_tag {
     tree234 *tree;
 };
 
@@ -165,7 +165,7 @@ static void free_entry(struct conf_entry *entry)
 
 Conf *conf_new(void)
 {
-    Conf *conf = snew(struct config_tag);
+    Conf *conf = snew(struct conf_tag);
 
     conf->tree = newtree234(conf_cmp);
 
@@ -545,7 +545,7 @@ int conf_deserialise(Conf *conf, void *vdata, int maxsize)
 		sfree(entry);
 		goto done;
 	    }
-	    entry->key.secondary.i = GET_32BIT_MSB_FIRST(data);
+	    entry->key.secondary.i = toint(GET_32BIT_MSB_FIRST(data));
 	    data += 4, maxsize -= 4;
 	    break;
 	  case TYPE_STR:

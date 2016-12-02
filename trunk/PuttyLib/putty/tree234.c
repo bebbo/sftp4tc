@@ -1475,7 +1475,8 @@ int main(void)
 	printf("cleanup: tree size %d\n", count234(tree));
 	j = randomnumber(&seed);
 	j %= count234(tree);
-	printf("deleting string %s from index %d\n", array[j], j);
+	printf("deleting string %s from index %d\n",
+               (const char *)array[j], j);
 	delpostest(j);
     }
 

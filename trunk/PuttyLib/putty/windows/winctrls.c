@@ -406,7 +406,7 @@ char *staticwrap(struct ctlpos *cp, HWND hwnd, char *text, int *lines)
     oldfont = SelectObject(hdc, newfont);
 
     while (*p) {
-	if (!GetTextExtentExPoint(hdc, p, (int)strlen(p), width,
+	if (!GetTextExtentExPoint(hdc, p, strlen(p), width,
 				  &nfit, pwidths, &size) ||
 	    (size_t)nfit >= strlen(p)) {
 	    /*
@@ -963,10 +963,10 @@ static void pl_moveitem(HWND hwnd, int listid, int src, int dst)
     int tlen, val;
     char *txt;
     /* Get the item's data. */
-    tlen = (int)SendDlgItemMessage (hwnd, listid, LB_GETTEXTLEN, src, 0);
+    tlen = SendDlgItemMessage (hwnd, listid, LB_GETTEXTLEN, src, 0);
     txt = snewn(tlen+1, char);
     SendDlgItemMessage (hwnd, listid, LB_GETTEXT, src, (LPARAM) txt);
-    val = (int)SendDlgItemMessage (hwnd, listid, LB_GETITEMDATA, src, 0);
+    val = SendDlgItemMessage (hwnd, listid, LB_GETITEMDATA, src, 0);
     /* Deselect old location. */
     SendDlgItemMessage (hwnd, listid, LB_SETSEL, FALSE, src);
     /* Delete it at the old location. */
@@ -1669,7 +1669,7 @@ void winctrl_layout(struct dlgparam *dp, struct winctrls *wc,
 		base_id += num_ids;
 	} else {
             sfree(data);
-	}
+        }
 
 	if (colstart >= 0) {
 	    /*
@@ -2495,7 +2495,7 @@ void dlg_auto_set_fixed_pitch_flag(void *dlg)
     struct dlgparam *dp = (struct dlgparam *)dlg;
     struct Sftp4tc *sftp4tc = (struct Sftp4tc *)dp->data;
 	Conf * conf = sftp4tc->config;
-	FontSpec *fs;
+    FontSpec *fs;
     int quality;
     HFONT hfont;
     HDC hdc;
@@ -2547,23 +2547,6 @@ void dlg_set_fixed_pitch_flag(void *dlg, int flag)
     dp->fixed_pitch_fonts = flag;
 }
 
-struct perctrl_privdata {
-    union control *ctrl;
-    void *data;
-    int needs_free;
-};
-
-static int perctrl_privdata_cmp(void *av, void *bv)
-{
-    struct perctrl_privdata *a = (struct perctrl_privdata *)av;
-    struct perctrl_privdata *b = (struct perctrl_privdata *)bv;
-    if (a->ctrl < b->ctrl)
-	return -1;
-    else if (a->ctrl > b->ctrl)
-	return +1;
-    return 0;
-}
-
 void dp_init(struct dlgparam *dp)
 {
     dp->nctrltrees = 0;
@@ -2573,7 +2556,6 @@ void dp_init(struct dlgparam *dp)
     memset(dp->shortcuts, 0, sizeof(dp->shortcuts));
     dp->hwnd = NULL;
     dp->wintitle = dp->errtitle = NULL;
-    dp->privdata = newtree234(perctrl_privdata_cmp);
     dp->fixed_pitch_fonts = TRUE;
 }
 
@@ -2585,67 +2567,6 @@ void dp_add_tree(struct dlgparam *dp, struct winctrls *wc)
 
 void dp_cleanup(struct dlgparam *dp)
 {
-    struct perctrl_privdata *p;
-
-    if (dp->privdata) {
-	while ( (p = index234(dp->privdata, 0)) != NULL ) {
-	    del234(dp->privdata, p);
-	    if (p->needs_free)
-		sfree(p->data);
-	    sfree(p);
-	}
-	freetree234(dp->privdata);
-	dp->privdata = NULL;
-    }
     sfree(dp->wintitle);
     sfree(dp->errtitle);
-}
-
-void *dlg_get_privdata(union control *ctrl, void *dlg)
-{
-    struct dlgparam *dp = (struct dlgparam *)dlg;
-    struct perctrl_privdata tmp, *p;
-    tmp.ctrl = ctrl;
-    p = find234(dp->privdata, &tmp, NULL);
-    if (p)
-	return p->data;
-    else
-	return NULL;
-}
-
-void dlg_set_privdata(union control *ctrl, void *dlg, void *ptr)
-{
-    struct dlgparam *dp = (struct dlgparam *)dlg;
-    struct perctrl_privdata tmp, *p;
-    tmp.ctrl = ctrl;
-    p = find234(dp->privdata, &tmp, NULL);
-    if (!p) {
-	p = snew(struct perctrl_privdata);
-	p->ctrl = ctrl;
-	p->needs_free = FALSE;
-	add234(dp->privdata, p);
-    }
-    p->data = ptr;
-}
-
-void *dlg_alloc_privdata(union control *ctrl, void *dlg, size_t size)
-{
-    struct dlgparam *dp = (struct dlgparam *)dlg;
-    struct perctrl_privdata tmp, *p;
-    tmp.ctrl = ctrl;
-    p = find234(dp->privdata, &tmp, NULL);
-    if (!p) {
-	p = snew(struct perctrl_privdata);
-	p->ctrl = ctrl;
-	p->needs_free = FALSE;
-	add234(dp->privdata, p);
-    }
-    assert(!p->needs_free);
-    p->needs_free = TRUE;
-    /*
-     * This is an internal allocation routine, so it's allowed to
-     * use smalloc directly.
-     */
-    p->data = smalloc(size);
-    return p->data;
 }

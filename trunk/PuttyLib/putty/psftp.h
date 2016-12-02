@@ -37,7 +37,7 @@ int ssh_sftp_loop_iteration(void);
 /*
  * Read a command line for PSFTP from standard input. Caller must
  * free.
- *
+ * 
  * If `backend_required' is TRUE, should also listen for activity
  * at the backend (rekeys, clientalives, unexpected closures etc)
  * and respond as necessary, and if the backend closes it should
@@ -72,13 +72,13 @@ void gui_enable(char *arg);
  * transfer utilities is going to want to do things with them that
  * aren't present in stdio. Hence we supply an alternative
  * abstraction for file access functions.
- *
+ * 
  * This abstraction tells you the size and access times when you
  * open an existing file (platforms may choose the meaning of the
  * file times if it's not clear; whatever they choose will be what
  * PSCP sends to the server as mtime and atime), and lets you set
  * the times when saving a new file.
- *
+ * 
  * On the other hand, the abstraction is pretty simple: it supports
  * only opening a file and reading it, or creating a file and writing
  * it. None of this read-and-write, seeking-back-and-forth stuff.
@@ -115,7 +115,7 @@ uint64 get_file_posn(WFile *f);
  * it allows a slightly more sane error message.
  */
 enum {
-  FILE_TYPE_NONEXISTENT, FILE_TYPE_FILE, FILE_TYPE_DIRECTORY, FILE_TYPE_WEIRD
+    FILE_TYPE_NONEXISTENT, FILE_TYPE_FILE, FILE_TYPE_DIRECTORY, FILE_TYPE_WEIRD
 };
 int file_type(char *name);
 
@@ -131,11 +131,11 @@ void close_directory(DirHandle *dir);
 /*
  * Test a filespec to see whether it's a local wildcard or not.
  * Return values:
- *
+ * 
  *  - WCTYPE_WILDCARD (this is a wildcard).
  *  - WCTYPE_FILENAME (this is a single file name).
  *  - WCTYPE_NONEXISTENT (whichever it was, nothing of that name exists).
- *
+ * 
  * Some platforms may choose not to support local wildcards when
  * they come from the command line; in this case they simply never
  * return WCTYPE_WILDCARD, but still test the file's existence.
@@ -143,7 +143,7 @@ void close_directory(DirHandle *dir);
  * inside the PSFTP CLI.)
  */
 enum {
-  WCTYPE_NONEXISTENT, WCTYPE_FILENAME, WCTYPE_WILDCARD
+    WCTYPE_NONEXISTENT, WCTYPE_FILENAME, WCTYPE_WILDCARD
 };
 int test_wildcard(char *name, int cmdline);
 
@@ -161,7 +161,7 @@ void finish_wildcard_matching(WildcardMatcher *dir);
  * in some way malicious. The idea is that this function is applied
  * to filenames returned from FXP_READDIR, which means we can panic
  * if we see _anything_ resembling a directory separator.
- *
+ * 
  * Returns TRUE if the filename is kosher, FALSE if dangerous.
  */
 int vet_filename(char *name);

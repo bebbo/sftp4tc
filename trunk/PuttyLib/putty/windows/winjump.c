@@ -412,8 +412,10 @@ static IShellLink *make_shell_link(const char *appname,
     /* Check if this is a valid session, otherwise don't add. */
     if (sessionname) {
         psettings_tmp = open_settings_r(sessionname, &cfg);
-        if (!psettings_tmp)
+        if (!psettings_tmp) {
+            sfree(app_path);
             return NULL;
+        }
         close_settings_r(psettings_tmp);
     }
 
@@ -429,7 +431,11 @@ static IShellLink *make_shell_link(const char *appname,
     ret->lpVtbl->SetPath(ret, app_path);
 
     if (sessionname) {
-        param_string = dupcat("@", sessionname, NULL);
+        /* The leading space is reported to work around a Windows 10
+         * behaviour change in which an argument string starting with
+         * '@' causes the SetArguments method to silently do the wrong
+         * thing. */
+        param_string = dupcat(" @", sessionname, NULL);
     } else {
         param_string = dupstr("");
     }
