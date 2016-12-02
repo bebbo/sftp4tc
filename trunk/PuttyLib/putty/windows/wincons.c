@@ -13,6 +13,7 @@
 
 extern HWND gGlobalHwnd;
 
+
 int console_batch_mode = FALSE;
 
 static void *console_logctx = NULL;
@@ -43,17 +44,7 @@ void cleanup_exit(int code)
 //    exit(code);
 }
 
-void set_busy_status(void *frontend, int status)
-{
-}
-
-void notify_remote_exit(void *frontend)
-{
-}
-
-void timer_change_notify(unsigned long next)
-{
-}
+#ifndef __SFTP4TC__
 
 int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
                         char *keystr, char *fingerprint,
@@ -186,10 +177,6 @@ int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
 #endif
 }
 
-void update_specials_menu(void *frontend)
-{
-}
-
 /*
  * Ask whether the selected algorithm is acceptable (since it was
  * below the configured 'warn' threshold).
@@ -309,7 +296,6 @@ void old_keyfile_warning(void)
     fputs(message, stderr);
 }
 
-#ifndef __SFTP4TC__
 /*
  * Display the fingerprints of the PGP Master Keys to the user.
  */
@@ -353,117 +339,104 @@ int console_get_userpass_input(prompts_t *p, unsigned char *in, int inlen)
 {
     HANDLE hin, hout;
     size_t curr_prompt;
-
+	
     /*
-     * Zero all the results, in case we abort half-way through.
-     */
+	* Zero all the results, in case we abort half-way through.
+	*/
     {
-	int i;
-	for (i = 0; i < (int)p->n_prompts; i++)
-            prompt_set_result(p->prompts[i], "");
+		int i;
+		for (i = 0; i < (int)p->n_prompts; i++)
+			memset(p->prompts[i]->result, 0, p->prompts[i]->resultsize);
     }
-
-    /*
-     * The prompts_t might contain a message to be displayed but no
-     * actual prompt. More usually, though, it will contain
-     * questions that the user needs to answer, in which case we
-     * need to ensure that we're able to get the answers.
-     */
-    if (p->n_prompts) {
-	if (console_batch_mode)
-	    return 0;
-	hin = GetStdHandle(STD_INPUT_HANDLE);
-	if (hin == INVALID_HANDLE_VALUE) {
-	    fprintf(stderr, "Cannot get standard input handle\n");
-	    cleanup_exit(1);
-	}
+	
+    if (console_batch_mode)
+		return 0;
+	
+    hin = GetStdHandle(STD_INPUT_HANDLE);
+    hout = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hin == INVALID_HANDLE_VALUE || hout == INVALID_HANDLE_VALUE) {
+		fprintf(stderr, "Cannot get standard input/output handles\n");
+		cleanup_exit(1);
     }
-
+	
     /*
-     * And if we have anything to print, we need standard output.
-     */
-    if ((p->name_reqd && p->name) || p->instruction || p->n_prompts) {
-	hout = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (hout == INVALID_HANDLE_VALUE) {
-	    fprintf(stderr, "Cannot get standard output handle\n");
-	    cleanup_exit(1);
-	}
-    }
-
-    /*
-     * Preamble.
-     */
+	* Preamble.
+	*/
     /* We only print the `name' caption if we have to... */
     if (p->name_reqd && p->name) {
 		int l = (int)strlen(p->name);
-	console_data_untrusted(hout, p->name, l);
-	if (p->name[l-1] != '\n')
-	    console_data_untrusted(hout, "\n", 1);
+		console_data_untrusted(hout, p->name, l);
+		if (p->name[l-1] != '\n')
+			console_data_untrusted(hout, "\n", 1);
     }
     /* ...but we always print any `instruction'. */
     if (p->instruction) {
-	size_t l = strlen(p->instruction);
-	console_data_untrusted(hout, p->instruction, l);
-	if (p->instruction[l-1] != '\n')
-	    console_data_untrusted(hout, "\n", 1);
+		int l = (int)strlen(p->instruction);
+		console_data_untrusted(hout, p->instruction, l);
+		if (p->instruction[l-1] != '\n')
+			console_data_untrusted(hout, "\n", 1);
     }
-
-    for (curr_prompt = 0; curr_prompt < p->n_prompts; curr_prompt++) {
-
-	DWORD savemode, newmode;
-        int len;
-	prompt_t *pr = p->prompts[curr_prompt];
-
-
-	GetConsoleMode(hin, &savemode);
-	newmode = savemode | ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT;
-	if (!pr->echo)
-	    newmode &= ~ENABLE_ECHO_INPUT;
-	else
-	    newmode |= ENABLE_ECHO_INPUT;
-	SetConsoleMode(hin, newmode);
-
-	console_data_untrusted(hout, pr->prompt, strlen(pr->prompt));
-
-        len = 0;
-        while (1) {
-            DWORD ret = 0;
-            BOOL r;
-
-            prompt_ensure_result_size(pr, len * 5 / 4 + 512);
-
-            r = ReadFile(hin, pr->result + len, pr->resultsize - len - 1,
-                         &ret, NULL);
-
-            if (!r || ret == 0) {
-                len = -1;
-                break;
-            }
-            len += ret;
-            if (pr->result[len - 1] == '\n') {
-                len--;
-                if (pr->result[len - 1] == '\r')
-                    len--;
-                break;
-            }
-        }
-
-	SetConsoleMode(hin, savemode);
-
-	if (!pr->echo) {
-	    DWORD dummy;
-	    WriteFile(hout, "\r\n", 2, &dummy, NULL);
-	}
-
-        if (len < 0) {
-            return 0;                  /* failure due to read error */
-        }
-
-	pr->result[len] = '\0';
 	
-    }
+    for (curr_prompt = 0; curr_prompt < p->n_prompts; curr_prompt++) {
+		int r;
+		//DWORD savemode, newmode, i = 0;
+		prompt_t *pr = p->prompts[curr_prompt];
+		//BOOL r;
 
+		DBG((buffer, "[PSFTP] %s\r\n", pr->prompt));
+
+		if (console_password) {			
+			DBG((buffer, "[PSFTP] using provided password %s\r\n", console_password));			
+
+			strncpy(pr->result, console_password, pr->resultsize - 1);
+			pr->result[pr->resultsize - 1] = '\0';
+			
+			free(console_password);
+			console_password = 0;
+			continue;
+		}
+
+		DBG((buffer, "[PSFTP] reading prompt\r\n"));
+		
+		r = getPasswordDialog(pr->prompt, 
+			pr->echo, 
+			pr->result, 
+			(int)pr->resultsize);
+
+		DBG((buffer, "[PSFTP] got %d : %s\r\n", r, pr->result));
+		if (!r) return 0;
+
+		/*
+		GetConsoleMode(hin, &savemode);
+		newmode = savemode | ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT;
+		if (!pr->echo)
+			newmode &= ~ENABLE_ECHO_INPUT;
+		else
+			newmode |= ENABLE_ECHO_INPUT;
+		SetConsoleMode(hin, newmode);
+		
+		console_data_untrusted(hout, pr->prompt, strlen(pr->prompt));
+		
+		r = ReadFile(hin, pr->result, pr->result_len - 1, &i, NULL);
+		
+		SetConsoleMode(hin, savemode);
+		
+		if ((int) i > pr->result_len)
+			i = pr->result_len - 1;
+		else
+			i = i - 2;
+		pr->result[i] = '\0';
+		
+		if (!pr->echo) {
+			DWORD dummy;
+			WriteFile(hout, "\r\n", 2, &dummy, NULL);
+		}
+		*/
+		
+    }
+	
     return 1; /* success */
+	
 }
 
 void frontend_keypress(void *handle)
@@ -472,4 +445,21 @@ void frontend_keypress(void *handle)
      * This is nothing but a stub, in console code.
      */
     return;
+}
+
+void update_specials_menu(void *frontend)
+{
+}
+
+
+void set_busy_status(void *frontend, int status)
+{
+}
+
+void notify_remote_exit(void *frontend)
+{
+}
+
+void timer_change_notify(unsigned long next)
+{
 }

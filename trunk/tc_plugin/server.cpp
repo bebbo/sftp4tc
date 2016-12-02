@@ -416,7 +416,7 @@ bool Server::getHomeDir(bstring & response) {
 #ifdef UNICODE
 	BCONVERT(wchar_t, 256, response, myCfg->homeDir);
 #else
-	response = cfg.homeDir;
+	response = myCfg->homeDir;
 #endif
 	return true;
 }
@@ -765,7 +765,7 @@ Sftp4tc * const Server::doConfig() {
 		char sessName[256];
 		qudConvert(sessName, sessionName.c_str(), 255);
 #else
-		char const * sessName = server->sessionName.c_str();
+		char const * sessName = sessionName.c_str();
 #endif
 	Sftp4tc * r = guard.mapper->doConfig(gMainWin, 0, 0, sessName);
 	WLock wlock(global);
@@ -783,7 +783,7 @@ Sftp4tc * const Server::doSelfConfig() {
 		char sessName[256];
 		qudConvert(sessName, sessionName.c_str(), 255);
 #else
-		char const * sessName = server->sessionName.c_str();
+		char const * sessName = sessionName.c_str();
 #endif
 	return guard.mapper->doConfig(gMainWin, 1, myCfg ? 1 : 0, sessName);
 }
