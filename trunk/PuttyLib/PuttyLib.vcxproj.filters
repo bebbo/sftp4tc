@@ -135,9 +135,6 @@
     <ClCompile Include="putty\wildcard.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\develop\workspaces\workspace\sftp4tc\PuttyLib\putty\proxy.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="putty\callback.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -234,6 +231,9 @@
     <ClCompile Include="putty\nogss.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="putty\proxy.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="PuttyLib.def">
@@ -314,9 +314,6 @@
     <ClInclude Include="putty\pgssapi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="putty\proxy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="putty\psftp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -348,6 +345,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="putty\winsecur.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="putty\proxy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
