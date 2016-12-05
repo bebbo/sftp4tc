@@ -312,7 +312,6 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="C:\develop\workspaces\workspace\sftp4tc\PuttyLib\putty\proxy.c" />
     <ClCompile Include="putty\be_all.c" />
     <ClCompile Include="putty\be_misc.c" />
     <ClCompile Include="putty\callback.c" />
@@ -376,6 +375,7 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="putty\proxy.c" />
     <ClCompile Include="putty\psftp.c" />
     <ClCompile Include="putty\settings.c" />
     <ClCompile Include="..\shared\sftp4tc_share.c" />
