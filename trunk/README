@@ -1,4 +1,8 @@
+VERSION 1.4.67.2 [2016-12-03]
+* FIXED #13 proxy connects are working again.
+
 VERSION 1.4.67.1 [2016-12-02]
+* FIXED #12 support 'ecdsa-sha2-nistp256'
 * Updated to PuTTY 0.67.
 * Added features like sshecc from development branch.
 
