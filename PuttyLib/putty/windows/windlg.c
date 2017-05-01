@@ -720,6 +720,8 @@ struct Sftp4tc * do_config(HWND hwnd, int midsession, int protcfginfo)
 	default_protocol = PROT_SSH;
 	default_port = 22;
 
+	if (cfg.session[0])
+		strcpy(theSelectedSession, cfg.session);
 	if (!midsession)
 		load_settings(0, &cfg);
 
