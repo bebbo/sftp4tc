@@ -727,7 +727,8 @@ static void sessionsaver_handler(union control *ctrl, void *dlg,
 	    if (top == ssd->sesslist.nsessions) {
 	        top -= 1;
 	    }
-	    dlg_listbox_select(ssd->listbox, dlg, top);
+		if (ssd->listbox)
+			dlg_listbox_select(ssd->listbox, dlg, top);
 	}
     } else if (event == EVENT_ACTION) {
 	int mbl = FALSE;
@@ -748,15 +749,19 @@ static void sessionsaver_handler(union control *ctrl, void *dlg,
 	} else if (ctrl == ssd->savebutton) {
 	    int isdef = !strcmp(ssd->savedsession, "Default Settings");
 	    if (!ssd->savedsession[0]) {
-		int i = dlg_listbox_index(ssd->listbox, dlg);
-		if (i < 0) {
-		    dlg_beep(dlg);
-		    return;
-		}
-		isdef = !strcmp(ssd->sesslist.sessions[i], "Default Settings");
-                sfree(ssd->savedsession);
-                ssd->savedsession = dupstr(isdef ? "" :
-                                           ssd->sesslist.sessions[i]);
+			if (ssd->listbox) {
+				int i = dlg_listbox_index(ssd->listbox, dlg);
+				if (i < 0) {
+					dlg_beep(dlg);
+					return;
+				}
+				isdef = !strcmp(ssd->sesslist.sessions[i], "Default Settings");
+				sfree(ssd->savedsession);
+				ssd->savedsession = dupstr(isdef ? "" :
+					ssd->sesslist.sessions[i]);
+			}
+			else
+				ssd->savedsession = dupstr(conf->session);
 	    }
             {
                 char *errmsg = save_settings(ssd->savedsession, conf);
@@ -768,7 +773,8 @@ static void sessionsaver_handler(union control *ctrl, void *dlg,
 	    get_sesslist(&ssd->sesslist, FALSE);
 	    get_sesslist(&ssd->sesslist, TRUE);
 	    dlg_refresh(ssd->editbox, dlg);
-	    dlg_refresh(ssd->listbox, dlg);
+		if (ssd->listbox)
+			dlg_refresh(ssd->listbox, dlg);
 	} else if (!ssd->midsession &&
 		   ssd->delbutton && ctrl == ssd->delbutton) {
 	    int i = dlg_listbox_index(ssd->listbox, dlg);
@@ -1405,7 +1411,10 @@ void setup_config_box(struct controlbox *b, int midsession,
 	ctrl_alloc_with_free(b, sizeof(struct sessionsaver_data),
                              sessionsaver_data_free);
     memset(ssd, 0, sizeof(*ssd));
-    ssd->savedsession = dupstr("");
+	if (midsession)
+		ssd->savedsession = dupstr(theSelectedSession);
+	else
+		ssd->savedsession = dupstr("");
     ssd->midsession = midsession;
 
     /*

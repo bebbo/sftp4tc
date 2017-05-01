@@ -1,3 +1,6 @@
+VERSION 1.4.67.3 [2017-05-01]
+* FIXED #14 fix midsession config changes.
+
 VERSION 1.4.67.2 [2016-12-03]
 * FIXED #13 proxy connects are working again.
 
