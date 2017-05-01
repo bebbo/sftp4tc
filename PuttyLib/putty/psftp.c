@@ -2963,7 +2963,6 @@ back = &ssh_backend;
 if (1 == ProgressProc("connecting", connectMsg, 5))
 return 1;
 
-firstPwdPrompt = 1;
 #endif
 
 err = back->init(NULL, &backhandle, conf, conf_get_str(conf, CONF_host),

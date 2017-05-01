@@ -14,5 +14,4 @@ extern int ProgressProc(char *SourceName, char *TargetName, int PercentDone);
 extern int getPasswordDialog(char * caption, int isPw, char * dest, int len);
 extern int CryptProc(int cryptoNr, int mode, char *ConnectionName, char *Password, int maxlen);
 
-extern int firstPwdPrompt;
 #endif

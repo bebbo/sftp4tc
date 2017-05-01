@@ -266,15 +266,13 @@ int ProgressProc(char *SourceName, char *TargetName, int PercentDone) {
 //------------------------------------------------------------------------
 // call the request proc - also perform multibyte conversion, if necessary
 
-int firstPwdPrompt;
-
 int getPasswordDialog(char * caption, int showClearText, char * dest, int len) {
 	wchar_t buf2[1024];
 	int cp = cfg.codePage;
 	int r = 1;
 
 	buf2[0] = 0;
-	if (!cfg.storePassword || !firstPwdPrompt || showClearText || !gCryptProc || gCryptProc(gPluginNumber, gCryptoNumber, FS_CRYPT_LOAD_PASSWORD, gSessionName, buf2, 1023) != FS_FILE_OK) {
+	if (!cfg.storePassword || showClearText || !gCryptProc || gCryptProc(gPluginNumber, gCryptoNumber, FS_CRYPT_LOAD_PASSWORD, gSessionName, buf2, 1023) != FS_FILE_OK) {
 		wchar_t buf1[1024];
 
 		int xlen = MultiByteToWideChar(cp, 0, caption, -1, buf1, 1024);
@@ -288,7 +286,6 @@ int getPasswordDialog(char * caption, int showClearText, char * dest, int len) {
 			gCryptProc(gPluginNumber, gCryptoNumber, FS_CRYPT_SAVE_PASSWORD, gSessionName, buf2, 1023);
 		}
 	}
-	firstPwdPrompt = 0;
 	WideCharToMultiByte(cp, 0, buf2, -1, dest, len, 0, 0);
 	return r;
 }
